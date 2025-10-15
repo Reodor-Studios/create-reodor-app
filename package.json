@@ -23,9 +23,9 @@
     "supabase:functions:deploy": "supabase functions deploy",
     "supabase:load:secrets": "sh supabase secrets set --env-file ./supabase/.env",
     "gen:types": "bun run db:types && bun run db:types:zod && bun run remove:public:prefix",
-    "email:dev": "cd transactional && bun run dev",
-    "email:build": "cd transactional && bun run build",
-    "email:export": "cd transactional && bun run export",
+    "email:dev": "sh scripts/ensure-transactional-deps-installed.sh && cd transactional && bun run dev",
+    "email:build": "sh scripts/ensure-transactional-deps-installed.sh && cd transactional && bun run build",
+    "email:export": "sh scripts/ensure-transactional-deps-installed.sh && cd transactional && bun run export",
     "email:sync": "bun run with-env bun scripts/sync-email-template.sh"
   },
   "dependencies": {
