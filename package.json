@@ -56,6 +56,7 @@
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "@tanstack/react-query": "^5.90.3",
+    "@tanstack/react-query-devtools": "^5.90.2",
     "@tiptap/core": "^3.7.0",
     "@tiptap/extension-code-block-lowlight": "^3.7.0",
     "@tiptap/extension-list": "^3.7.0",

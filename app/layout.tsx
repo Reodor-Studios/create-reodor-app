@@ -1,24 +1,51 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import {
+  Fraunces,
+  Geist,
+  Inter,
+  JetBrains_Mono,
+  PT_Serif,
+} from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import TanstackQueryProvider from "@/providers/tanstack-query-provider";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { cn, getPublicUrl } from "@/lib/utils";
+import { companyConfig, createPageMetadata } from "@/lib/brand";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+const defaultUrl = getPublicUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  ...createPageMetadata("home"),
+  appleWebApp: {
+    title: companyConfig.name,
+    statusBarStyle: "black-translucent",
+  },
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const ptSerif = PT_Serif({
+  variable: "--font-serif",
+  display: "swap",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
+  display: "swap",
+  subsets: ["latin"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   display: "swap",
   subsets: ["latin"],
 });
@@ -30,7 +57,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
+      <body
+        className={cn(
+          ptSerif.variable,
+          jetBrainsMono.variable,
+          inter.variable,
+          fraunces.variable,
+          "antialiased"
+        )}
+      >
         <TanstackQueryProvider>
           <ThemeProvider
             attribute="class"
@@ -45,6 +80,7 @@ export default function RootLayout({
             </div>
             <Toaster richColors />
           </ThemeProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
         </TanstackQueryProvider>
       </body>
     </html>

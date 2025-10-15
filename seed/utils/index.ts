@@ -2,3 +2,4 @@
 export * from "./shared";
 export * from "./profiles";
 export * from "./todos";
+export * from "./media";

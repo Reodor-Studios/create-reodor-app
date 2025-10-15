@@ -1,6 +1,7 @@
 import { createSeedClient } from "@snaplet/seed";
 import {
     createTestUsersWithAuth,
+    createTodoAttachments,
     createTodoItems,
     createUserEmailIdentities,
     createUserProfiles,
