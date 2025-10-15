@@ -102,6 +102,28 @@ export async function createTestUsersWithAuth(seed: SeedClient) {
 }
 
 /**
+ * Creates profiles for all users
+ * This is needed because triggers are disabled during seed execution
+ */
+export async function createUserProfiles(
+    seed: SeedClient,
+    users: usersScalars[],
+) {
+    console.log("-- Creating user profiles...");
+
+    await seed.profiles(
+        users.map((user) => ({
+            id: user.id,
+            email: user.email!,
+            full_name: user.raw_user_meta_data?.full_name || null,
+            avatar_url: user.raw_user_meta_data?.avatar_url || null,
+        })),
+    );
+
+    console.log(`-- Created ${users.length} profiles`);
+}
+
+/**
  * Creates email identities for all users for Supabase authentication
  */
 export async function createUserEmailIdentities(

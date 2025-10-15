@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      media: {
+        Row: {
+          created_at: string
+          file_path: string
+          id: string
+          media_type: Database["public"]["Enums"]["media_type"]
+          owner_id: string
+          todo_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          id?: string
+          media_type: Database["public"]["Enums"]["media_type"]
+          owner_id: string
+          todo_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          id?: string
+          media_type?: Database["public"]["Enums"]["media_type"]
+          owner_id?: string
+          todo_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -88,6 +133,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      media_type: "avatar" | "todo_attachment" | "other"
       priority_level: "low" | "medium" | "high"
     }
     CompositeTypes: {
@@ -216,6 +262,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      media_type: ["avatar", "todo_attachment", "other"],
       priority_level: ["low", "medium", "high"],
     },
   },

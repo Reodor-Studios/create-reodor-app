@@ -19,6 +19,12 @@ create trigger todos_updated_at
   for each row
   execute function public.handle_updated_at();
 
+-- Trigger for media updated_at
+create trigger media_updated_at
+  before update on public.media
+  for each row
+  execute function public.handle_updated_at();
+
 -- Function to automatically create profile on user signup
 create or replace function public.handle_new_user()
 returns trigger as $$

@@ -115,10 +115,10 @@ public = true
 file_size_limit = "2MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
 
-[storage.buckets.todo-media]
+[storage.buckets.todo_attachments]
 public = false
 file_size_limit = "5MiB"
-allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"]
 
 [auth]
 enabled = true

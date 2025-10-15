@@ -16,5 +16,6 @@ export default defineConfig({
     "public*",
     // We also want to alter some of the tables under the auth schema
     "auth.users",
+    "auth.identities",
   ],
 });
