@@ -9,22 +9,27 @@ export const testUsersData: AuthUser[] = [
     {
         email: "admin@example.com",
         full_name: "Admin User",
+        role: "admin",
     },
     {
         email: "alice@example.com",
         full_name: "Alice Johnson",
+        role: "user",
     },
     {
         email: "bob@example.com",
         full_name: "Bob Smith",
+        role: "user",
     },
     {
         email: "charlie@example.com",
         full_name: "Charlie Brown",
+        role: "user",
     },
     {
         email: "diana@example.com",
         full_name: "Diana Prince",
+        role: "user",
     },
 ];
 
@@ -80,6 +85,7 @@ function createAuthUserWithSupabaseMetadata(user: AuthUser) {
             sub: "",
             email: user.email,
             full_name: user.full_name,
+            role: user.role || "user",
             email_verified: true,
             phone_verified: false,
         },
@@ -117,6 +123,7 @@ export async function createUserProfiles(
             email: user.email!,
             full_name: user.raw_user_meta_data?.full_name || null,
             avatar_url: user.raw_user_meta_data?.avatar_url || null,
+            role: user.raw_user_meta_data?.role || "user",
         })),
     );
 

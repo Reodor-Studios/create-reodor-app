@@ -3582,6 +3582,20 @@
           "maxLength": null
         },
         {
+          "id": "public.profiles.role",
+          "name": "role",
+          "columnName": "role",
+          "type": "user_role",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "users",
           "type": "users",
           "isRequired": true,
@@ -6666,6 +6680,17 @@
         },
         {
           "name": "medium"
+        }
+      ]
+    },
+    "user_role": {
+      "schemaName": "public",
+      "values": [
+        {
+          "name": "admin"
+        },
+        {
+          "name": "user"
         }
       ]
     },

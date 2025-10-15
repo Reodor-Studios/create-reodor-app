@@ -7,10 +7,21 @@
 import { z } from "zod";
 import { type Json } from "./../types/database.types";
 
+export const MediaTypeSchema = z.union([
+  z.literal("avatar"),
+  z.literal("todo_attachment"),
+  z.literal("other"),
+]);
+
 export const PriorityLevelSchema = z.union([
   z.literal("low"),
   z.literal("medium"),
   z.literal("high"),
+]);
+
+export const UserRoleSchema = z.union([
+  z.literal("user"),
+  z.literal("admin"),
 ]);
 
 export const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
@@ -25,12 +36,60 @@ export const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
     .nullable(),
 );
 
+export const MediaRowSchema = z.object({
+  created_at: z.string(),
+  file_path: z.string(),
+  id: z.string(),
+  media_type: MediaTypeSchema,
+  owner_id: z.string(),
+  todo_id: z.string().nullable(),
+  updated_at: z.string(),
+});
+
+export const MediaInsertSchema = z.object({
+  created_at: z.string().optional(),
+  file_path: z.string(),
+  id: z.string().optional(),
+  media_type: MediaTypeSchema,
+  owner_id: z.string(),
+  todo_id: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const MediaUpdateSchema = z.object({
+  created_at: z.string().optional(),
+  file_path: z.string().optional(),
+  id: z.string().optional(),
+  media_type: MediaTypeSchema.optional(),
+  owner_id: z.string().optional(),
+  todo_id: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const MediaRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("media_owner_id_fkey"),
+    columns: z.tuple([z.literal("owner_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("media_todo_id_fkey"),
+    columns: z.tuple([z.literal("todo_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("todos"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
 export const ProfilesRowSchema = z.object({
   avatar_url: z.string().nullable(),
   created_at: z.string(),
   email: z.string(),
   full_name: z.string().nullable(),
   id: z.string(),
+  role: UserRoleSchema,
   updated_at: z.string(),
 });
 
@@ -40,6 +99,7 @@ export const ProfilesInsertSchema = z.object({
   email: z.string(),
   full_name: z.string().optional().nullable(),
   id: z.string(),
+  role: UserRoleSchema.optional(),
   updated_at: z.string().optional(),
 });
 
@@ -49,6 +109,7 @@ export const ProfilesUpdateSchema = z.object({
   email: z.string().optional(),
   full_name: z.string().optional().nullable(),
   id: z.string().optional(),
+  role: UserRoleSchema.optional(),
   updated_at: z.string().optional(),
 });
 

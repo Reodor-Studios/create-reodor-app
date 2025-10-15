@@ -1,102 +1,92 @@
-import type { MetadataRoute } from 'next'
-import { createServiceClient } from '@/lib/supabase/service'
+import type { MetadataRoute } from "next";
+import { createServiceClient } from "@/lib/supabase/service";
+import { getPublicUrl } from "@/lib/utils";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nabostylisten.no'
+const baseUrl = getPublicUrl();
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = createServiceClient()
-  
+  const supabase = createServiceClient();
+
   // Static routes with their priorities and update frequencies
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: "weekly",
       priority: 1.0,
-    },
-    {
-      url: `${baseUrl}/bli-stylist`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/tjenester`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
     },
     {
       url: `${baseUrl}/kontakt`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/om-oss`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/faq`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${baseUrl}/privacy`,
       lastModified: new Date(),
-      changeFrequency: 'yearly',
+      changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${baseUrl}/terms-of-service`,
       lastModified: new Date(),
-      changeFrequency: 'yearly',
+      changeFrequency: "yearly",
       priority: 0.3,
     },
-    {
-      url: `${baseUrl}/handlekurv`,
-      lastModified: new Date(),
-      changeFrequency: 'never',
-      priority: 0.4,
-    },
-  ]
+  ];
 
   try {
-    // Fetch published services for individual service pages
-    const { data: services } = await supabase
-      .from('services')
-      .select('id, updated_at')
-      .eq('is_published', true)
+    // Fetch user profiles (excluding admin profiles for privacy)
+    // Note: Only include profiles if you have public profile pages
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, updated_at")
+      .eq("role", "user");
 
-    const serviceRoutes: MetadataRoute.Sitemap = services?.map((service) => ({
-      url: `${baseUrl}/tjenester/${service.id}`,
-      lastModified: service.updated_at ? new Date(service.updated_at) : new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    })) || []
-
-    // Fetch approved stylist profiles (those with role 'stylist')
-    // Note: Approved stylists are those who have completed the application process
-    // and have their role set to 'stylist' in the profiles table
-    const { data: stylists } = await supabase
-      .from('profiles')
-      .select('id, updated_at')
-      .eq('role', 'stylist')
-
-    const stylistRoutes: MetadataRoute.Sitemap = stylists?.map((stylist) => ({
-      url: `${baseUrl}/profiler/${stylist.id}`,
-      lastModified: stylist.updated_at ? new Date(stylist.updated_at) : new Date(),
-      changeFrequency: 'weekly' as const,
+    const profileRoutes: MetadataRoute.Sitemap = profiles?.map((profile) => ({
+      url: `${baseUrl}/profiles/${profile.id}`,
+      lastModified: profile.updated_at
+        ? new Date(profile.updated_at)
+        : new Date(),
+      changeFrequency: "weekly" as const,
       priority: 0.6,
-    })) || []
+    })) || [];
 
-    return [...staticRoutes, ...serviceRoutes, ...stylistRoutes]
+    // Note: Todos are typically private user data and should not be included in a public sitemap
+    // If you have public todo pages, you can uncomment and adjust the following code:
+    /*
+    const { data: todos } = await supabase
+      .from("todos")
+      .select("id, updated_at")
+      .eq("is_public", true); // Add this column if you have public todos
+
+    const todoRoutes: MetadataRoute.Sitemap =
+      todos?.map((todo) => ({
+        url: `${baseUrl}/todos/${todo.id}`,
+        lastModified: todo.updated_at
+          ? new Date(todo.updated_at)
+          : new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.4,
+      })) || [];
+    */
+
+    return [...staticRoutes, ...profileRoutes];
   } catch (error) {
     // If there's an error fetching dynamic content, return static routes only
-    console.error('Error generating sitemap:', error)
-    return staticRoutes
+    console.error("Error generating sitemap:", error);
+    return staticRoutes;
   }
 }

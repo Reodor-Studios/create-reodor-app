@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { submitContactForm } from "@/server/contact.actions";
 import { ContactFormData } from "@/types";
-import { Spinner } from "./ui/kibo-ui/spinner";
+import { Spinner } from "./ui/spinner";
 
 export const ContactForm = () => {
   const [formData, setFormData] = useState<ContactFormData>({

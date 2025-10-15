@@ -27,6 +27,7 @@ export function generateToken(): string {
 export type AuthUser = {
   email: string;
   full_name: string;
+  role?: "user" | "admin";
 };
 
 /**

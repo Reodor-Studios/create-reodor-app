@@ -61,6 +61,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
@@ -69,6 +70,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
@@ -77,6 +79,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Relationships: []
@@ -135,6 +138,7 @@ export type Database = {
     Enums: {
       media_type: "avatar" | "todo_attachment" | "other"
       priority_level: "low" | "medium" | "high"
+      user_role: "user" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -264,6 +268,7 @@ export const Constants = {
     Enums: {
       media_type: ["avatar", "todo_attachment", "other"],
       priority_level: ["low", "medium", "high"],
+      user_role: ["user", "admin"],
     },
   },
 } as const
