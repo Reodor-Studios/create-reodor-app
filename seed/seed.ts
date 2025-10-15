@@ -30,12 +30,14 @@ async function main() {
     // 2. Create todo items for users
     console.log("\n-- Phase 2: Todo Items");
     const todos = await createTodoItems(seed, allUsers);
+    const attachments = await createTodoAttachments(seed, todos);
 
     console.log("\n--  Database seeding completed successfully!");
     console.log("--");
     console.log("-- =� Seeding Summary:");
     console.log(`--   =e Users: ${allUsers.length}`);
     console.log(`--    Todo Items: ${todos.length}`);
+    console.log(`--    Todo Attachments: ${attachments.length}`);
     console.log("--");
     console.log("-- = Test Accounts:");
     console.log("--   =� admin@example.com");

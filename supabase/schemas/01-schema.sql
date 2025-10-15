@@ -1,6 +1,9 @@
 -- Priority enum type
 create type public.priority_level as enum ('low', 'medium', 'high');
 
+-- User role enum type
+create type public.user_role as enum ('user', 'admin');
+
 -- Media type enum
 create type public.media_type as enum (
   'avatar',
@@ -14,6 +17,7 @@ create table public.profiles (
   email text unique not null,
   full_name text,
   avatar_url text,
+  role public.user_role default 'user' not null,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );

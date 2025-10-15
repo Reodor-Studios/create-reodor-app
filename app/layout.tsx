@@ -14,6 +14,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { cn, getPublicUrl } from "@/lib/utils";
 import { companyConfig, createPageMetadata } from "@/lib/brand";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const defaultUrl = getPublicUrl();
 

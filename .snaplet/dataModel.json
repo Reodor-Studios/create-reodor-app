@@ -1534,6 +1534,156 @@
       ],
       "uniqueConstraints": []
     },
+    "media": {
+      "id": "public.media",
+      "schemaName": "public",
+      "tableName": "media",
+      "fields": [
+        {
+          "id": "public.media.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "public.media.owner_id",
+          "name": "owner_id",
+          "columnName": "owner_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.media.file_path",
+          "name": "file_path",
+          "columnName": "file_path",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.media.media_type",
+          "name": "media_type",
+          "columnName": "media_type",
+          "type": "media_type",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.media.todo_id",
+          "name": "todo_id",
+          "columnName": "todo_id",
+          "type": "uuid",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.media.created_at",
+          "name": "created_at",
+          "columnName": "created_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.media.updated_at",
+          "name": "updated_at",
+          "columnName": "updated_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "profiles",
+          "type": "profiles",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "mediaToprofiles",
+          "relationFromFields": [
+            "owner_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "todos",
+          "type": "todos",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "mediaTotodos",
+          "relationFromFields": [
+            "todo_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "media_pkey",
+          "fields": [
+            "id"
+          ],
+          "nullNotDistinct": false
+        }
+      ]
+    },
     "messages": {
       "id": "realtime.messages",
       "schemaName": "realtime",
@@ -3450,6 +3600,20 @@
           "hasDefaultValue": false
         },
         {
+          "name": "media",
+          "type": "media",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "mediaToprofiles",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
           "name": "todos",
           "type": "todos",
           "isRequired": false,
@@ -4591,6 +4755,50 @@
         }
       ]
     },
+    "seed_files": {
+      "id": "supabase_migrations.seed_files",
+      "schemaName": "supabase_migrations",
+      "tableName": "seed_files",
+      "fields": [
+        {
+          "id": "supabase_migrations.seed_files.path",
+          "name": "path",
+          "columnName": "path",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "supabase_migrations.seed_files.hash",
+          "name": "hash",
+          "columnName": "hash",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "seed_files_pkey",
+          "fields": [
+            "path"
+          ],
+          "nullNotDistinct": false
+        }
+      ]
+    },
     "sessions": {
       "id": "auth.sessions",
       "schemaName": "auth",
@@ -5625,6 +5833,20 @@
           "isGenerated": false,
           "sequence": false,
           "hasDefaultValue": false
+        },
+        {
+          "name": "media",
+          "type": "media",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "mediaTotodos",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
         }
       ],
       "uniqueConstraints": [
@@ -6416,6 +6638,20 @@
         },
         {
           "name": "SUCCESS"
+        }
+      ]
+    },
+    "media_type": {
+      "schemaName": "public",
+      "values": [
+        {
+          "name": "avatar"
+        },
+        {
+          "name": "other"
+        },
+        {
+          "name": "todo_attachment"
         }
       ]
     },
