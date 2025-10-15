@@ -14,7 +14,7 @@ export default defineConfig({
     "!*",
     // We want to alter all the tables under public schema
     "public*",
-    // We also want to alter the users table under the auth schema
+    // We also want to alter some of the tables under the auth schema
     "auth.users",
   ],
 });
