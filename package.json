@@ -1,10 +1,32 @@
 {
   "private": true,
   "scripts": {
+    "type:check": "tsc --noEmit",
+    "with-env": "dotenv -e .env --",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "next lint",
+    "ensure:docker": "sh scripts/ensure-docker.sh",
+    "seed:sync": "bunx @snaplet/seed sync",
+    "seed": "bunx tsx seed/seed.ts > supabase/seed.sql",
+    "db:start": "bun ensure:docker && supabase start",
+    "db:diff": "bun ensure:docker && supabase db diff --local --debug -f",
+    "migrate:up": "bun ensure:docker && supabase migration up",
+    "db:push": "supabase db push",
+    "db:reset": "bun ensure:docker && supabase db reset",
+    "db:reset:no-seed": "bun ensure:docker && supabase db reset --no-seed",
+    "db:types": "bun ensure:docker && supabase gen types typescript --local --schema public > types/database.types.ts",
+    "db:types:zod": "supazod -i types/database.types.ts -o schemas/database.schema.ts -s public",
+    "remove:public:prefix": "tsx scripts/remove-public-prefix.ts",
+    "supabase:emails:export": "sh scripts/export-email-templates.sh",
+    "supabase:functions:deploy": "supabase functions deploy",
+    "supabase:load:secrets": "sh supabase secrets set --env-file ./supabase/.env",
+    "gen:types": "bun run db:types && bun run db:types:zod && bun run remove:public:prefix",
+    "email:dev": "cd transactional && bun run dev",
+    "email:build": "cd transactional && bun run build",
+    "email:export": "cd transactional && bun run export",
+    "email:sync": "bun run with-env bun scripts/sync-email-template.sh"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.4",
@@ -68,15 +90,21 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@snaplet/copycat": "^6.0.0",
+    "@snaplet/seed": "0.98.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
     "postcss": "^8",
+    "postgres": "^3.4.7",
+    "supazod": "^4.1.0",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }
