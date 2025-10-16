@@ -61,7 +61,7 @@ export default {
         sans: ["var(--font-sans)", "sans-serif"],
         serif: ["var(--font-serif)", "serif"],
         mono: ["var(--font-mono)", "monospace"],
-        fraunces: ["var(--font-fraunces)", "serif"],
+        grotesk: ["var(--font-grotesk)", "sans-serif"],
       },
     },
   },

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import {
-  Fraunces,
+  Space_Grotesk,
   Geist,
   Inter,
   JetBrains_Mono,
@@ -45,8 +45,8 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-grotesk",
   display: "swap",
   subsets: ["latin"],
 });
@@ -63,7 +63,7 @@ export default function RootLayout({
           ptSerif.variable,
           jetBrainsMono.variable,
           inter.variable,
-          fraunces.variable,
+          spaceGrotesk.variable,
           "antialiased"
         )}
       >
