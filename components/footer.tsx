@@ -1,120 +1,95 @@
-interface MenuItem {
-  title: string;
-  links: {
-    text: string;
-    url: string;
-  }[];
-}
+"use client";
 
-interface Footer2Props {
-  logo?: {
-    url: string;
-    src: string;
-    alt: string;
-    title: string;
-  };
-  tagline?: string;
-  menuItems?: MenuItem[];
-  copyright?: string;
-  bottomLinks?: {
-    text: string;
-    url: string;
-  }[];
-}
+import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/use-auth";
+import { isAdmin } from "@/lib/permissions";
+import { companyConfig } from "@/lib/brand";
+import { navigationItems } from "@/lib/navigation";
 
-export const Footer = ({
-  logo = {
-    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/block-1.svg",
-    alt: "blocks for shadcn/ui",
-    title: "Shadcnblocks.com",
-    url: "https://www.shadcnblocks.com",
-  },
-  tagline = "Components made easy.",
-  menuItems = [
-    {
-      title: "Product",
-      links: [
-        { text: "Overview", url: "#" },
-        { text: "Pricing", url: "#" },
-        { text: "Marketplace", url: "#" },
-        { text: "Features", url: "#" },
-        { text: "Integrations", url: "#" },
-        { text: "Pricing", url: "#" },
-      ],
-    },
-    {
-      title: "Company",
-      links: [
-        { text: "About", url: "#" },
-        { text: "Team", url: "#" },
-        { text: "Blog", url: "#" },
-        { text: "Careers", url: "#" },
-        { text: "Contact", url: "#" },
-        { text: "Privacy", url: "#" },
-      ],
-    },
-    {
-      title: "Resources",
-      links: [
-        { text: "Help", url: "#" },
-        { text: "Sales", url: "#" },
-        { text: "Advertise", url: "#" },
-      ],
-    },
-    {
-      title: "Social",
-      links: [
-        { text: "Twitter", url: "#" },
-        { text: "Instagram", url: "#" },
-        { text: "LinkedIn", url: "#" },
-      ],
-    },
-  ],
-  copyright = "© 2024 Shadcnblocks.com. All rights reserved.",
-  bottomLinks = [
-    { text: "Terms and Conditions", url: "#" },
-    { text: "Privacy Policy", url: "#" },
-  ],
-}: Footer2Props) => {
+export const Footer = () => {
+  const currentYear = new Date().getFullYear();
+  const { profile, loading } = useAuth();
+
+  // Build company links from navigationItems plus standard company pages
+  const companyLinks = [
+    ...navigationItems
+      .filter((item) => item.href) // Only include items with href
+      .map((item) => ({ name: item.title, href: item.href! })),
+    { name: "Om oss", href: "/om-oss" },
+    { name: "Kontakt", href: "/kontakt" },
+  ];
+
+  // Add admin link if user is admin and not loading
+  if (!loading && profile && isAdmin(profile.role)) {
+    companyLinks.push({ name: "Administrator", href: "/admin" });
+  }
+
+  const legalLinks = [
+    { name: "Personvern", href: "/privacy" },
+    { name: "Vilkår", href: "/terms-of-service" },
+    { name: "Ofte stilte spørsmål (FAQ)", href: "/faq" },
+  ];
+
   return (
-    <section className="py-32">
-      <div className="container">
-        <footer>
-          <div className="grid grid-cols-2 gap-8 lg:grid-cols-6">
-            <div className="col-span-2 mb-8 lg:mb-0">
-              <div className="flex items-center gap-2 lg:justify-start">
-                LOGO GOES HERE
-              </div>
-              <p className="mt-4 font-bold">{tagline}</p>
-            </div>
-            {menuItems.map((section, sectionIdx) => (
-              <div key={sectionIdx}>
-                <h3 className="mb-4 font-bold">{section.title}</h3>
-                <ul className="text-muted-foreground space-y-4">
-                  {section.links.map((link, linkIdx) => (
-                    <li
-                      key={linkIdx}
-                      className="hover:text-primary font-medium"
-                    >
-                      <a href={link.url}>{link.text}</a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+    <footer className="bg-background border-t">
+      <div className="w-full max-w-none mx-auto px-6 lg:px-12 py-12">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="sm:col-span-2 md:col-span-1">
+            <Link href="/" className="flex items-center mb-4">
+              <h1 className="font-bold text-xl text-primary">{companyConfig.name}</h1>
+            </Link>
+            <p className="text-sm text-muted-foreground mb-4">
+              {companyConfig.tagline}
+            </p>
           </div>
-          <div className="text-muted-foreground mt-24 flex flex-col justify-between gap-4 border-t pt-8 text-sm font-medium md:flex-row md:items-center">
-            <p>{copyright}</p>
-            <ul className="flex gap-4">
-              {bottomLinks.map((link, linkIdx) => (
-                <li key={linkIdx} className="hover:text-primary underline">
-                  <a href={link.url}>{link.text}</a>
+
+          {/* Company Links */}
+          <div>
+            <h3 className="font-fraunces font-semibold mb-4">Selskap</h3>
+            <ul className="space-y-2">
+              {companyLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.name}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
-        </footer>
+
+          {/* Legal Links */}
+          <div>
+            <h3 className="font-fraunces font-semibold mb-4">Juridisk</h3>
+            <ul className="space-y-2">
+              {legalLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <Separator className="my-8" />
+
+        {/* Bottom Footer */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            © {currentYear} {companyConfig.name}. Alle rettigheter reservert.
+          </p>
+        </div>
       </div>
-    </section>
+    </footer>
   );
 };

@@ -1,10 +1,18 @@
-import { SignUpForm } from "@/components/sign-up-form";
+import { AuthCard } from "@/components/auth";
 
-export default function Page() {
+interface PageProps {
+  searchParams: Promise<{
+    redirectTo?: string;
+  }>;
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const { redirectTo } = await searchParams;
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <SignUpForm />
+        <AuthCard initialMode="signup" redirectTo={redirectTo} />
       </div>
     </div>
   );

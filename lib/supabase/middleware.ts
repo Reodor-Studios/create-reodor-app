@@ -2,6 +2,37 @@ import { Database } from "@/types/database.types";
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+// Define public routes that don't require authentication
+const publicRoutes = [
+  "/",
+  "/auth",
+  "/om-oss",
+  "/kontakt",
+  "/privacy",
+  "/terms-of-service",
+  "/faq",
+  "/manifest.json", // PWA manifest file
+  "/sitemap.xml", // SEO sitemap
+  "/robots.txt", // SEO robots file
+];
+
+// Define route patterns for dynamic public routes
+const publicRoutePatterns = [
+  /^\/auth(\/.*)?$/, // /auth and all sub-routes (includes /auth/oauth callback)
+  /^\/profiler\/[^/]+$/, // /profiler/[profileId]
+  /^\/api\/cron(\/.*)?$/, // /api/cron and all sub-routes (for Vercel cron jobs)
+];
+
+function isPublicRoute(pathname: string): boolean {
+  // Check exact matches first
+  if (publicRoutes.includes(pathname)) {
+    return true;
+  }
+
+  // Check pattern matches
+  return publicRoutePatterns.some((pattern) => pattern.test(pathname));
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -41,13 +72,9 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  // Check if the route requires authentication
+  if (!user && !isPublicRoute(request.nextUrl.pathname)) {
+    // No user and not a public route - redirect to login
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
