@@ -89,6 +89,7 @@ export const ProfilesRowSchema = z.object({
   email: z.string(),
   full_name: z.string().nullable(),
   id: z.string(),
+  phone_number: z.string().nullable(),
   role: UserRoleSchema,
   updated_at: z.string(),
 });
@@ -99,6 +100,7 @@ export const ProfilesInsertSchema = z.object({
   email: z.string(),
   full_name: z.string().optional().nullable(),
   id: z.string(),
+  phone_number: z.string().optional().nullable(),
   role: UserRoleSchema.optional(),
   updated_at: z.string().optional(),
 });
@@ -109,6 +111,7 @@ export const ProfilesUpdateSchema = z.object({
   email: z.string().optional(),
   full_name: z.string().optional().nullable(),
   id: z.string().optional(),
+  phone_number: z.string().optional().nullable(),
   role: UserRoleSchema.optional(),
   updated_at: z.string().optional(),
 });

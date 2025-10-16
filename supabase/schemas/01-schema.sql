@@ -17,6 +17,7 @@ create table public.profiles (
   email text unique not null,
   full_name text,
   avatar_url text,
+  phone_number text,
   role public.user_role default 'user' not null,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null

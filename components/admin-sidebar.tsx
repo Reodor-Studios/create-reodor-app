@@ -3,18 +3,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  FileText,
-  Scissors,
-  CreditCard,
-  Percent,
-  Wrench,
-  Users,
-  Map,
-  MessageSquare,
-} from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { LayoutDashboard } from "lucide-react";
 
 interface AdminSidebarProps {
   className?: string;
@@ -26,57 +15,6 @@ const adminSidebarItems = [
     href: "/admin",
     icon: LayoutDashboard,
     description: "Dashboard og statistikk",
-  },
-  {
-    title: "Søknader",
-    href: "/admin/soknader",
-    icon: FileText,
-    description: "Håndter stylist-søknader",
-  },
-  {
-    title: "Tjenestekategorier",
-    href: "/admin/tjenester",
-    icon: Scissors,
-    description: "Administrer kategorier",
-  },
-  {
-    title: "Tilbakemeldinger",
-    href: "/admin/tilbakemeldinger",
-    icon: MessageSquare,
-    description: "Administrer brukertilbakemeldinger",
-  },
-  {
-    title: "Betalinger",
-    href: "/admin/betalinger",
-    icon: CreditCard,
-    description: "Administrer betalinger og refusjon",
-  },
-  {
-    title: "Rabattkoder",
-    href: "/admin/rabattkoder",
-    icon: Percent,
-    description: "Administrer rabattkoder og kampanjer",
-  },
-  {
-    title: "Partner",
-    href: "/admin/partner",
-    icon: Users,
-    description: "Administrer partner-program",
-  },
-  {
-    title: "Kart",
-    href: "/admin/kart",
-    icon: Map,
-    description: "Geografisk oversikt over brukere",
-  },
-];
-
-const devToolsItems = [
-  {
-    title: "Utvikler-verktøy",
-    href: "/admin/dev-tools",
-    icon: Wrench,
-    description: "Testing av betalingsflyt og cron jobs",
   },
 ];
 

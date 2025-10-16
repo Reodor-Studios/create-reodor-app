@@ -3,17 +3,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  User,
-  DollarSign,
-  BookOpen,
-  Settings,
-  Calendar,
-  MessageCircle,
-  Scissors,
-  Star,
-  Users,
-} from "lucide-react";
+import { User } from "lucide-react";
 
 interface ProfileSidebarProps {
   profileId: string;
@@ -29,61 +19,8 @@ const getSidebarItems = (userRole?: string) => {
       icon: User,
       description: "Rediger profilinformasjon",
     },
-    {
-      title: "Mine bookinger",
-      href: "/mine-bookinger",
-      icon: BookOpen,
-      description: "Oversikt over bookinger",
-    },
-    {
-      title: "Chat",
-      href: "/chat",
-      icon: MessageCircle,
-      description: "Meldinger og samtaler",
-    },
-    {
-      title: "Anmeldelser",
-      href: "/anmeldelser",
-      icon: Star,
-      description: "Se og administrer anmeldelser",
-    },
+    // ... more sidebar items can be added here depending on the application you're creating
   ];
-
-  // Add stylist-specific items
-  if (userRole === "stylist") {
-    baseItems.push({
-      title: "Tilgjengelighet",
-      href: "/tilgjengelighet",
-      icon: Calendar,
-      description: "Administrer kalender",
-    });
-    baseItems.push({
-      title: "Mine tjenester",
-      href: "/mine-tjenester",
-      icon: Scissors,
-      description: "Administrer dine tjenester",
-    });
-    baseItems.push({
-      title: "Inntekter",
-      href: "/inntekter",
-      icon: DollarSign,
-      description: "Inntekter og utbetalinger",
-    });
-    baseItems.push({
-      title: "Partner",
-      href: "/partner",
-      icon: Users,
-      description: "Partner-program",
-    });
-  }
-
-  // Add common items at the end
-  baseItems.push({
-    title: "Preferanser",
-    href: "/preferanser",
-    icon: Settings,
-    description: "Innstillinger og preferanser",
-  });
 
   return baseItems;
 };
