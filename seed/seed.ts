@@ -4,7 +4,6 @@ import {
     createTodoAttachments,
     createTodoItems,
     createUserEmailIdentities,
-    createUserProfiles,
 } from "./utils";
 
 /**
@@ -24,7 +23,7 @@ async function main() {
     // 1. Create users with authentication
     console.log("\n-- Phase 1: User Management");
     const allUsers = await createTestUsersWithAuth(seed);
-    await createUserProfiles(seed, allUsers);
+    // Note: User profiles are automatically created by the on_auth_user_created trigger
     await createUserEmailIdentities(seed, allUsers);
 
     // 2. Create todo items for users

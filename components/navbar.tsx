@@ -81,11 +81,19 @@ export const Navbar = () => {
           {/* Desktop Navigation - Hidden on mobile */}
           <Separator orientation="vertical" className="h-6 hidden lg:block" />
           <div className="hidden lg:flex items-center">
-            {navigationItems.map((item) => (
-              <Button key={item.title} variant="ghost" size="sm" asChild>
-                <Link href={item.href!}>{item.title}</Link>
-              </Button>
-            ))}
+            {navigationItems
+              .filter((item) => {
+                // Only show /oppgaver if user is authenticated
+                if (item.href === "/oppgaver") {
+                  return !!user;
+                }
+                return true;
+              })
+              .map((item) => (
+                <Button key={item.title} variant="ghost" size="sm" asChild>
+                  <Link href={item.href!}>{item.title}</Link>
+                </Button>
+              ))}
           </div>
         </div>
 
@@ -179,18 +187,26 @@ export const Navbar = () => {
                     <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
                       Navigasjon
                     </h3>
-                    {navigationItems.map((item) => (
-                      <Button
-                        key={item.title}
-                        variant="ghost"
-                        className="w-full justify-start text-base"
-                        asChild
-                      >
-                        <Link href={item.href!} onClick={handleLinkClick}>
-                          <ChevronRight className="w-4 h-4" /> {item.title}
-                        </Link>
-                      </Button>
-                    ))}
+                    {navigationItems
+                      .filter((item) => {
+                        // Only show /oppgaver if user is authenticated
+                        if (item.href === "/oppgaver") {
+                          return !!user;
+                        }
+                        return true;
+                      })
+                      .map((item) => (
+                        <Button
+                          key={item.title}
+                          variant="ghost"
+                          className="w-full justify-start text-base"
+                          asChild
+                        >
+                          <Link href={item.href!} onClick={handleLinkClick}>
+                            <ChevronRight className="w-4 h-4" /> {item.title}
+                          </Link>
+                        </Button>
+                      ))}
                   </div>
 
                   {/* User Profile Links */}
