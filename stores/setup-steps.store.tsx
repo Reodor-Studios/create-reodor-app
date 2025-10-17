@@ -213,6 +213,45 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "initial",
   },
   {
+    id: "explore-server-directory",
+    title: "Explore the Server Directory (Your Backend)",
+    description: (
+      <>
+        Dive into <InlineCode>server/</InlineCode> to see how Next.js App
+        Router Server Actions work. This directory is <strong>your entire backend</strong>—think
+        of it as your Flask server or Express API endpoints. Each{" "}
+        <InlineCode>.actions.ts</InlineCode> file contains server-side
+        functions for data mutations, authentication, and business logic. The
+        naming convention (<InlineCode>.actions.ts</InlineCode>) makes fuzzy
+        search easy and helps AI agents follow patterns. Check out{" "}
+        <InlineCode>server/todo.actions.ts</InlineCode> to see complete CRUD
+        patterns with authentication, authorization, and type-safe database
+        queries.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "understand-server-action-patterns",
+    title: "Understand Server Action Patterns",
+    description: (
+      <>
+        Study <InlineCode>server/todo.actions.ts</InlineCode> and{" "}
+        <InlineCode>server/profile.actions.ts</InlineCode> to understand server
+        action best practices: (1) Always start with <InlineCode>"use server"</InlineCode> directive,
+        (2) Check authentication and authorization, (3) Use type-safe database
+        types from <InlineCode>@/types</InlineCode>, (4) Return{" "}
+        <InlineCode>{`{ error, data }`}</InlineCode> objects for consistent
+        error handling, (5) Only export async functions (no utility functions).
+        See <InlineCode>CLAUDE.md</InlineCode> for complete patterns. This
+        structure creates tight TypeScript contracts from database → backend →
+        frontend, making AI-assisted development much faster with excellent
+        type diagnostics.
+      </>
+    ),
+    category: "initial",
+  },
+  {
     id: "setup-supabase",
     title: "Set Up Supabase Project",
     description: (

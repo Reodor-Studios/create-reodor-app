@@ -1164,6 +1164,693 @@ Is the function runtime-agnostic (works everywhere)?
 
 </details>
 
+### The `server/` Directory - Your Entire Backend API
+
+The `server/` directory is the heart of your backend. It contains **all your server actions** - the functions that handle data mutations, authentication, and server-side business logic. If you're coming from other frameworks, think of this directory as:
+
+- **Python/Flask developers**: This is your entire Flask server with all route handlers
+- **Node.js/Express developers**: Every file here is like an Express router with API endpoints
+- **Ruby/Rails developers**: These are your controllers and model actions
+
+```
+server/
+├── admin/                      # Admin-specific server actions
+│   └── todo-stats.actions.ts   # Admin dashboard statistics
+├── auth.actions.ts             # Authentication operations (10KB)
+├── contact.actions.ts          # Contact form handling
+├── profile.actions.ts          # Profile CRUD operations
+└── todo.actions.ts             # Todo CRUD operations (largest file)
+```
+
+<details>
+<summary>Why organize the backend this way?</summary>
+
+**Traditional Backend Architecture:**
+
+In a typical Express or Flask app, you might have:
+
+```
+backend/
+├── routes/
+│   ├── auth.js
+│   ├── todos.js
+│   └── profiles.js
+├── controllers/
+│   ├── auth.controller.js
+│   ├── todos.controller.js
+│   └── profiles.controller.js
+├── models/
+│   ├── User.js
+│   └── Todo.js
+└── middleware/
+    └── auth.js
+```
+
+**This Project's Architecture:**
+
+```
+server/
+├── auth.actions.ts      # All auth logic in one place
+├── todo.actions.ts      # All todo logic in one place
+└── profile.actions.ts   # All profile logic in one place
+```
+
+**Why this is simpler:**
+
+1. **No separation of concerns needed** - Server actions handle both routing and logic
+2. **Fewer files** - One file per feature instead of route + controller + model
+3. **Type safety built-in** - TypeScript types flow from database → backend → frontend
+4. **Less boilerplate** - No need to set up Express routers, middleware, etc.
+5. **Co-located with frontend** - Server actions live in the same repo as React components
+
+</details>
+
+#### What Are Server Actions?
+
+Server actions are **Next.js App Router's way of handling backend operations**. They're functions that:
+
+- Always run on the server (never in the browser)
+- Are marked with `"use server"` directive at the top of the file
+- Can be called directly from React components (no REST API needed)
+- Provide type-safe communication between frontend and backend
+- Have access to server-side resources (database, file system, environment variables)
+
+**Key characteristics:**
+
+```typescript
+"use server";
+
+// ✅ MUST: "use server" at the top
+// ✅ MUST: All exports are async functions (your API endpoints)
+// ✅ MUST: Return { error, data } objects for consistent error handling
+// ❌ MUST NOT: Export utility functions (put those elsewhere)
+
+import { createClient } from "@/lib/supabase/server";
+
+export async function getTodo(id: string) {
+  const supabase = await createClient();
+  return await supabase.from("todos").select("*").eq("id", id);
+}
+```
+
+<details>
+<summary>Server Actions vs API Routes - When to use each?</summary>
+
+**Both run on the server, but they serve different purposes:**
+
+**Server Actions (`server/*.actions.ts`)** - Use for:
+
+- ✅ Form submissions from React components
+- ✅ Data mutations (create, update, delete)
+- ✅ Operations called from client components
+- ✅ Type-safe RPC-style calls from your UI
+- ✅ Operations that need authentication context
+
+**API Routes (`app/api/*/route.ts`)** - Use for:
+
+- ✅ Webhooks from external services (Stripe, GitHub)
+- ✅ Cron jobs and scheduled tasks
+- ✅ Non-React clients (mobile apps, third-party integrations)
+- ✅ Standard REST endpoints
+- ✅ Fine control over HTTP headers, status codes
+
+**In this project:**
+
+- Todo CRUD operations → `server/todo.actions.ts`
+- Profile updates → `server/profile.actions.ts`
+- Stripe webhooks → `app/api/webhooks/stripe/route.ts`
+- Cron jobs → `app/api/cron/*/route.ts`
+
+**Rule of thumb:** If it's called from a React component, use server actions. If it's called from outside your app, use API routes.
+
+</details>
+
+#### Example: Todo Server Actions
+
+Let's examine `server/todo.actions.ts` to understand the patterns:
+
+```typescript
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import type { DatabaseTables } from "@/types";
+
+// 1. Type-safe filter definition
+export type TodoFilters = {
+  search?: string;
+  completed?: boolean;
+  priority?: "low" | "medium" | "high";
+  sortBy?: "newest" | "oldest" | "due_date" | "priority";
+  page?: number;
+  limit?: number;
+};
+
+// 2. Simple CRUD operation
+export async function getTodo(id: string) {
+  const supabase = await createClient();
+  return await supabase.from("todos").select("*").eq("id", id);
+}
+
+// 3. Complex operation with authentication and authorization
+export async function deleteTodo(id: string) {
+  const supabase = await createClient();
+
+  // Get current user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (!user || userError) {
+    return { error: "User not authenticated", data: null };
+  }
+
+  // Verify ownership (authorization)
+  const { data: existingTodo, error: todoError } = await supabase
+    .from("todos")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (todoError || !existingTodo) {
+    return { error: "Todo not found", data: null };
+  }
+
+  if (existingTodo.user_id !== user.id) {
+    return { error: "Not authorized to delete this todo", data: null };
+  }
+
+  return await supabase.from("todos").delete().eq("id", id);
+}
+
+// 4. Advanced operation with filtering, sorting, pagination
+export async function getTodos(userId: string, options: TodoFilters = {}) {
+  const supabase = await createClient();
+
+  // Authentication check
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (!user || userError || user.id !== userId) {
+    return { error: "Unauthorized access", data: null, total: 0 };
+  }
+
+  const { page = 1, limit = 10, search, completed, priority, sortBy = "newest" } = options;
+
+  // Build query with filters
+  let query = supabase.from("todos").select("*, media(id, file_path)").eq("user_id", userId);
+
+  if (search) {
+    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+  }
+
+  // ... more filters and sorting logic
+
+  const { data, error } = await query.range((page - 1) * limit, page * limit - 1);
+
+  return { data, error, total: data?.length || 0 };
+}
+```
+
+**Key patterns to notice:**
+
+1. **Authentication first** - Every operation checks the current user
+2. **Authorization checks** - Verify the user can access/modify the resource
+3. **Type safety** - `DatabaseTables["todos"]["Insert"]` ensures correct types
+4. **Consistent return pattern** - `{ error, data }` objects throughout
+5. **No utility functions** - Only exported async functions (API endpoints)
+
+<details>
+<summary>Why this pattern is perfect for AI-assisted development</summary>
+
+**The Type Safety Chain:**
+
+```
+PostgreSQL Schema
+    ↓ (bun gen:types)
+TypeScript Types (types/database.types.ts)
+    ↓ (used in)
+Server Actions (server/*.actions.ts)
+    ↓ (imported by)
+React Components (components/)
+    ↓ (calls via)
+TanStack Query (type-safe mutations)
+```
+
+**Benefits for AI Coding:**
+
+1. **Tight TypeScript Contracts**
+
+   - Database schema defines the contract
+   - TypeScript enforces it from backend to frontend
+   - AI agents can see exact types at every layer
+   - Compilation errors caught before runtime
+
+2. **Clear Error Messages**
+
+   ```typescript
+   // ❌ AI sees this error immediately
+   const todo = await createTodo({
+     title: "Buy milk",
+     priorty: "high", // Typo! TypeScript error: Property 'priorty' does not exist
+   });
+   ```
+
+3. **Fast Diagnostics**
+
+   - AI can run `bun type:check` to verify changes
+   - No need to run the app to catch type errors
+   - Errors point to exact line and column
+
+4. **Self-Documenting Code**
+   - Function signatures show exactly what's expected
+   - Return types show exactly what you'll get back
+   - No need to guess or read documentation
+
+**Example AI workflow:**
+
+```
+You: "Add a priority filter to the todos list"
+
+AI: *Reads server/todo.actions.ts*
+AI: *Sees TodoFilters type already has priority*
+AI: *Updates getTodos function to use the filter*
+AI: *Updates React component to pass the filter*
+AI: *Runs bun type:check*
+AI: "✅ All types check out, changes complete!"
+
+Time saved: 10 minutes of trial-and-error debugging
+```
+
+**Traditional REST API approach:**
+
+```
+You: "Add a priority filter"
+
+AI: *Guesses the API endpoint structure*
+AI: *Adds filter parameter to fetch call*
+AI: "Try running the app to see if it works"
+
+You: *Runs app, gets 400 error*
+You: "The API expects 'priority_level' not 'priority'"
+
+AI: *Fixes the parameter name*
+You: *Runs app again, works now*
+
+Time wasted: 10 minutes of trial-and-error
+```
+
+</details>
+
+#### Naming Conventions and Organization
+
+**File naming pattern:**
+
+```
+[feature].actions.ts    # Server actions for a feature
+```
+
+**Why this convention?**
+
+1. **Fuzzy search friendly** - In VS Code, `Cmd+P` → "auth.ac" finds `auth.actions.ts` immediately
+2. **Clear purpose** - The `.actions.ts` suffix makes it obvious this is backend code
+3. **Pattern consistency** - AI agents can reliably find server action files
+4. **IDE organization** - All action files group together in file explorers
+
+**Organization by feature:**
+
+```
+server/
+├── auth.actions.ts         # All authentication operations
+├── todo.actions.ts         # All todo operations
+├── profile.actions.ts      # All profile operations
+├── contact.actions.ts      # All contact form operations
+└── admin/                  # Admin-specific operations
+    └── todo-stats.actions.ts
+```
+
+**Each file contains:**
+
+- ✅ `"use server"` directive at the top
+- ✅ Only exported async functions (your API endpoints)
+- ✅ Server-side Supabase client imports: `import { createClient } from "@/lib/supabase/server"`
+- ✅ Type imports from database types: `import type { DatabaseTables } from "@/types"`
+- ❌ NO utility functions (those go in `lib/` or feature directories)
+- ❌ NO client-side code (no `useState`, `useEffect`, etc.)
+
+<details>
+<summary>What if I need utility functions?</summary>
+
+**Server actions files must ONLY contain exported async functions.** If you need utility functions, create them in runtime-agnostic locations:
+
+**Bad practice ❌:**
+
+```typescript
+"use server";
+
+// ❌ Utility function in server action file
+function formatTodoTitle(title: string) {
+  return title.trim().toLowerCase();
+}
+
+export async function createTodo(data: TodoData) {
+  const formattedTitle = formatTodoTitle(data.title);
+  // ...
+}
+```
+
+**Good practice ✅:**
+
+```typescript
+// lib/todo-utils.ts (runtime-agnostic utility)
+export function formatTodoTitle(title: string) {
+  return title.trim().toLowerCase();
+}
+
+// server/todo.actions.ts
+"use server";
+import { formatTodoTitle } from "@/lib/todo-utils";
+
+export async function createTodo(data: TodoData) {
+  const formattedTitle = formatTodoTitle(data.title);
+  // ...
+}
+```
+
+**Why this matters:**
+
+1. **Server actions are RPC endpoints** - They should be thin wrappers around business logic
+2. **Utility functions should be reusable** - Extract them so both client and server can use them
+3. **Better for testing** - Utility functions can be tested independently
+4. **Clearer architecture** - Separation of concerns between API layer and business logic
+
+**Where to put utility functions:**
+
+- **Runtime-agnostic logic**: `lib/utils.ts` (works in browser and server)
+- **Server-only logic**: `lib/server-utils.ts`
+- **Feature-specific logic**: `lib/[feature]-utils.ts`
+- **Form validation**: Use Zod schemas from `schemas/database.schema.ts`
+
+</details>
+
+#### How Server Actions Are Called
+
+**From React Client Components:**
+
+```typescript
+"use client";
+
+import { getTodos, createTodo, deleteTodo } from "@/server/todo.actions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+export function TodosList() {
+  const queryClient = useQueryClient();
+
+  // Fetch data
+  const { data: todos, isLoading } = useQuery({
+    queryKey: ["todos", userId],
+    queryFn: () => getTodos(userId),
+  });
+
+  // Mutate data
+  const deleteMutation = useMutation({
+    mutationFn: deleteTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+      toast.success("Todo deleted!");
+    },
+  });
+
+  // Server action called directly, type-safe!
+  const handleDelete = (id: string) => deleteMutation.mutate(id);
+
+  return (
+    <div>
+      {todos?.data?.map((todo) => (
+        <TodoCard key={todo.id} todo={todo} onDelete={handleDelete} />
+      ))}
+    </div>
+  );
+}
+```
+
+**From React Server Components:**
+
+```typescript
+// app/oppgaver/page.tsx (Server Component)
+import { getTodos } from "@/server/todo.actions";
+import { createClient } from "@/lib/supabase/server";
+
+export default async function TodosPage() {
+  // Server action called directly in server component
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/sign-in");
+  }
+
+  const { data: todos } = await getTodos(user.id);
+
+  return (
+    <div>
+      <h1>My Todos</h1>
+      <TodosList initialTodos={todos} />
+    </div>
+  );
+}
+```
+
+**From Forms with Progressive Enhancement:**
+
+```typescript
+"use client";
+
+import { createTodo } from "@/server/todo.actions";
+import { useForm } from "react-hook-form";
+
+export function TodoForm() {
+  const form = useForm();
+
+  const onSubmit = async (data) => {
+    // Server action called from form submission
+    const result = await createTodo(data);
+
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success("Todo created!");
+    }
+  };
+
+  return <form onSubmit={form.handleSubmit(onSubmit)}>...</form>;
+}
+```
+
+#### Best Practices for Server Actions
+
+Based on the patterns in `CLAUDE.md`, follow these conventions:
+
+**1. Authentication Pattern:**
+
+```typescript
+export async function myAction() {
+  const supabase = await createClient();
+
+  // Always check authentication first
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (!user || userError) {
+    return { error: "User not authenticated", data: null };
+  }
+
+  // Continue with the operation
+}
+```
+
+**2. Authorization Pattern:**
+
+```typescript
+export async function deleteResource(id: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Verify ownership before modifying
+  const { data: resource } = await supabase.from("resources").select("user_id").eq("id", id).single();
+
+  if (resource.user_id !== user.id) {
+    return { error: "Not authorized", data: null };
+  }
+
+  // Now safe to delete
+  return await supabase.from("resources").delete().eq("id", id);
+}
+```
+
+**3. Type Safety Pattern:**
+
+```typescript
+import type { DatabaseTables } from "@/types";
+
+export async function createResource(data: DatabaseTables["resources"]["Insert"]) {
+  // TypeScript knows exactly what fields are required/optional
+  const supabase = await createClient();
+  return await supabase.from("resources").insert(data);
+}
+```
+
+**4. Error Handling Pattern:**
+
+```typescript
+export async function myAction() {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("table").select();
+
+    if (error) {
+      return { error: error.message, data: null };
+    }
+
+    return { error: null, data };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "An error occurred",
+      data: null,
+    };
+  }
+}
+```
+
+**5. Validation Pattern (using Zod):**
+
+```typescript
+import { Todos_Insert } from "@/schemas/database.schema";
+
+export async function createTodo(data: unknown) {
+  // Runtime validation using auto-generated Zod schema
+  const result = Todos_Insert.safeParse(data);
+
+  if (!result.success) {
+    return { error: "Invalid data", details: result.error, data: null };
+  }
+
+  // Now data is validated and typed
+  const supabase = await createClient();
+  return await supabase.from("todos").insert(result.data);
+}
+```
+
+<details>
+<summary>Complete reference: Server Actions conventions from CLAUDE.md</summary>
+
+From `CLAUDE.md`, the complete server action pattern:
+
+```typescript
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { [tableName]InsertSchema } from "@/schemas/database.schema";
+import type { Database } from "@/types/database.types";
+
+// Get single resource
+export async function get[EntityName](id: string) {
+  const supabase = await createClient();
+  return await supabase.from("[table]").select("*").eq("id", id);
+}
+
+// Create resource with validation
+export async function create[EntityName](
+  data: Database["public"]["Tables"]["[table]"]["Insert"]
+) {
+  // 1. Validate input
+  const { success, data: validatedData } = [tableName]InsertSchema.safeParse(data);
+  if (!success) {
+    return { error: "Invalid data", data: null };
+  }
+
+  // 2. Create resource
+  const supabase = await createClient();
+  return await supabase.from("[table]").insert(validatedData);
+}
+
+// Update resource
+export async function update[EntityName](
+  id: string,
+  data: Database["public"]["Tables"]["[table]"]["Update"]
+) {
+  const supabase = await createClient();
+
+  // Authentication check
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (!user || userError) {
+    return { error: "Not authenticated", data: null };
+  }
+
+  // Authorization check
+  const { data: existing } = await supabase
+    .from("[table]")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (existing?.user_id !== user.id) {
+    return { error: "Not authorized", data: null };
+  }
+
+  // Update
+  return await supabase
+    .from("[table]")
+    .update(data)
+    .eq("id", id)
+    .select()
+    .single();
+}
+
+// Delete resource
+export async function delete[EntityName](id: string) {
+  const supabase = await createClient();
+
+  // Authentication check
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (!user || userError) {
+    return { error: "Not authenticated", data: null };
+  }
+
+  // Authorization check
+  const { data: existing } = await supabase
+    .from("[table]")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (existing?.user_id !== user.id) {
+    return { error: "Not authorized", data: null };
+  }
+
+  // Delete
+  return await supabase.from("[table]").delete().eq("id", id);
+}
+```
+
+**Key points from CLAUDE.md:**
+
+- Always use `"use server"` directive
+- Use server-side Supabase client: `@/lib/supabase/server`
+- Import types from database: `@/types/database.types`
+- Use generated Zod schemas for validation: `@/schemas/database.schema`
+- Follow consistent return pattern: `{ error, data }`
+- Implement authentication and authorization checks
+- Use descriptive function names: `createTodo`, `updateTodo`, `deleteTodo`
+
+</details>
+
 ### The `providers/` Directory - React Context Wrappers
 
 The `providers/` directory contains React context providers that wrap your entire application. These are used in `app/layout.tsx` to provide global functionality across all pages.
