@@ -432,3 +432,134 @@ Use the BlurFade component from `@/components/magicui/blur-fade` for consistent 
 - Use Sonner toast library for user feedback
 - Implement error boundaries for component-level errors. See `components/error-boundary.tsx`.
 - Use PostHog for error tracking and analytics
+
+## Authentication Patterns
+
+### User Roles
+
+- **User**
+- **Admin**
+
+### Protected Routes
+
+- Middleware handles authentication at the route level
+- Client-side checks for role-based access control
+- Redirect to login for unauthenticated users
+
+### Authentication Flow
+
+- Email/OTP or Google OAuth via Supabase Auth
+- Automatic profile creation on signup
+
+## State Management
+
+### Zustand Stores
+
+- **Setup Steps** - Demo Zustand store in `stores/` directory for new developers
+
+### TanStack Query Keys
+
+- Use consistent query key patterns: `['entity', 'action', ...params]`
+- Implement proper cache invalidation
+- Use infinite queries for paginated lists
+- Always invalidate relevant queries after mutations
+
+## Development Workflow
+
+### Package Management
+
+- Use `bun` for all package operations
+- Install dependencies: `bun add <package>`
+- Install dev dependencies: `bun add -D <package>`
+- Add shadcn components: `bunx --bun shadcn@latest add <component>`
+
+### Database Development
+
+- Generate types from local database: `bun gen:types`
+- Create migrations: `bun supabase:db:diff <migration_name>`
+- Apply migrations: `bun supabase:migrate:up`
+
+### Documentation Standards
+
+All new features and significant functionality changes must be documented in the `docs/` directory:
+
+#### Business Documentation (`docs/business/`)
+
+- **Purpose**: Document features from a business/user perspective
+- **Audience**: Product managers, stakeholders, customer support
+- **Content**:
+  - Feature overview and business purpose
+  - User workflows and use cases
+  - Business rules and validation logic
+  - Integration points with other features
+  - Success metrics and KPIs
+  - Future enhancement opportunities
+- **Format**: Comprehensive markdown files with clear structure
+- **Examples**: User journeys, feature specifications, business logic explanations
+
+#### Technical Documentation (`docs/technical/`)
+
+- **Purpose**: Document implementation details and architecture decisions
+- **Audience**: Developers, DevOps, technical stakeholders
+- **Content**:
+  - API documentation and schemas
+  - Database design and relationships
+  - Architecture patterns and decisions
+  - Performance considerations
+  - Security implementations
+  - Deployment procedures
+- **Format**: Technical specifications, code examples, diagrams
+- **Examples**: API references, database schemas, system architecture
+
+#### Documentation Requirements
+
+- **When to Document**: Create documentation for all new features, significant refactors, or complex business logic
+- **Update Policy**: Keep documentation current with code changes
+- **Review Process**: Documentation should be reviewed alongside code changes
+- **Naming Convention**: Use kebab-case for file names, descriptive titles
+
+### Code Quality
+
+- Implement proper error handling
+- Do NOT run `bun dev` or `bun build` to validate your changes. I will do that.
+- After completing large multi-file changes that affect TypeScript types or interfaces, run `bun type:check` to verify type correctness across the entire codebase before considering the task complete.
+
+## Scheduled Tasks & Automation
+
+### Cron Jobs
+
+- **Infrastructure**: Cron Jobs for scheduled task execution
+- **Security**: Protected endpoints using `CRON_SECRET` environment variable
+- **Location**: API routes in `/app/api/cron/[job-name]/route.ts`
+
+### Testing Cron Jobs Locally
+
+```bash
+# Test with curl (requires CRON_SECRET env var)
+curl -H "Authorization: Bearer your-secret-here" \
+  http://localhost:3000/api/cron/demo
+```
+
+## Database Seeding
+
+### Seed Script Workflow
+
+1. **Initial Seeding**:
+
+   ```bash
+   bun seed      # Run the seed script first
+   bun db:reset  # Then reset the database
+   ```
+
+2. **After Database Schema Changes**:
+
+   ```bash
+   bun seed:sync          # Sync Snaplet with the new database schema
+   bun seed               # Run the seed script
+   bun db:reset           # Reset the database
+   ```
+
+### Important Notes
+
+- After modifying database schemas, you MUST run `seed:sync` to synchronize Snaplet with the database before seeding again
+- This ensures that Snaplet generates data that matches your current schema
