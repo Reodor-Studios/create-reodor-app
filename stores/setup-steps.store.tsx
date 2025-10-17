@@ -336,12 +336,91 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "database",
   },
   {
-    id: "setup-resend",
-    title: "Configure Email Service",
+    id: "setup-resend-account",
+    title: "Create Resend Account",
     description: (
       <>
-        Create a Resend account and get your API key. Configure email templates
-        and sender domains for transactional emails.
+        Create a Resend account at <InlineCode>resend.com</InlineCode> and get
+        your API key from the dashboard. Resend provides transactional email
+        delivery with excellent developer experience and React Email integration.
+      </>
+    ),
+    category: "services",
+  },
+  {
+    id: "configure-resend-env",
+    title: "Configure Email Environment Variables",
+    description: (
+      <>
+        Add Resend configuration to <InlineCode>.env.local</InlineCode>:{" "}
+        <InlineCode>RESEND_API_KEY</InlineCode> (from Resend dashboard),{" "}
+        <InlineCode>DEV_EMAIL_FROM</InlineCode> (test sender),{" "}
+        <InlineCode>DEV_EMAIL_TO</InlineCode> (test recipient),{" "}
+        <InlineCode>PROD_EMAIL_FROM</InlineCode> (production sender), and
+        optionally <InlineCode>ADMIN_EMAIL</InlineCode> (for admin copies). The{" "}
+        <InlineCode>lib/resend-utils.ts</InlineCode> wrapper automatically
+        routes emails to test addresses in development to prevent accidental
+        emails to real users.
+      </>
+    ),
+    category: "services",
+  },
+  {
+    id: "setup-resend-domain",
+    title: "Configure Resend Sending Domain",
+    description: (
+      <>
+        Set up your sending domain in the Resend dashboard (Settings → Domains →
+        Add Domain). Add the required DNS records (SPF, DKIM, DMARC) to verify
+        domain ownership and ensure high email deliverability. Use this verified
+        domain in your <InlineCode>DEV_EMAIL_FROM</InlineCode> and{" "}
+        <InlineCode>PROD_EMAIL_FROM</InlineCode> environment variables.
+      </>
+    ),
+    category: "services",
+  },
+  {
+    id: "setup-resend-supabase-integration",
+    title: "Connect Supabase Auth to Resend",
+    description: (
+      <>
+        Configure Supabase to use Resend as the SMTP server for authentication
+        emails (OTP codes, magic links, password resets). In the Resend
+        dashboard, go to Settings → Integrations → Supabase and follow the setup
+        instructions. This ensures all Supabase Auth emails are sent through
+        Resend with your branding and better deliverability.
+      </>
+    ),
+    category: "services",
+  },
+  {
+    id: "explore-email-templates",
+    title: "Explore React Email Templates",
+    description: (
+      <>
+        Browse the <InlineCode>transactional/emails/</InlineCode> directory to
+        see branded email templates built with React Email. Check out{" "}
+        <InlineCode>transactional/emails/utils/styles.ts</InlineCode> for the
+        shared design system that ensures consistent branding across all emails.
+        You can preview templates locally by running{" "}
+        <InlineCode>bun email:dev</InlineCode> to start the React Email preview
+        server.
+      </>
+    ),
+    category: "services",
+  },
+  {
+    id: "learn-ai-email-generation",
+    title: "Learn AI-Assisted Email Generation",
+    description: (
+      <>
+        Use AI agents to quickly generate new branded email templates. Describe
+        the email content, CTAs, and required information in plain English, and
+        the AI will generate a complete React Email template following the
+        existing branded style patterns from{" "}
+        <InlineCode>transactional/emails/utils/styles.ts</InlineCode>. See{" "}
+        <InlineCode>docs/getting-started.md</InlineCode> for detailed examples
+        and prompts.
       </>
     ),
     category: "services",

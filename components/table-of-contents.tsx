@@ -68,10 +68,15 @@ export function TableOfContents({ getStepsByCategory }: TableOfContentsProps) {
   const scrollToSection = (category: SetupStep["category"]) => {
     const section = document.getElementById(`section-${category}`);
     if (section) {
-      const yOffset = -80; // Negative offset to scroll less
-      const y =
-        section.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: "smooth" });
+      // Get the absolute position of the element from the top of the document
+      const elementPosition = section.offsetTop;
+      // Adjust with offset (e.g., 120px for header/navbar height)
+      const offsetPosition = elementPosition - 120;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
       setIsOpen(false); // Close TOC after navigation
     }
   };

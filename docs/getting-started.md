@@ -1851,6 +1851,484 @@ export async function delete[EntityName](id: string) {
 
 </details>
 
+### The `transactional/` Directory - Branded Email Templates
+
+The `transactional/` directory contains all your React Email templates with consistent branded styling. This is where you define the emails your application sends to users.
+
+```
+transactional/
+├── emails/                           # Email template components
+│   ├── account-deleted-notification.tsx
+│   ├── account-deletion-confirmation.tsx
+│   ├── contact-form-email.tsx
+│   ├── otp-code.tsx
+│   ├── welcome.tsx
+│   └── utils/
+│       └── styles.ts                # Shared branded styles
+├── package.json                     # React Email dependencies
+└── tsconfig.json                    # TypeScript config for emails
+```
+
+<details>
+<summary>Why use React Email?</summary>
+
+**Traditional email development is painful:**
+
+```html
+<!-- ❌ Old way: Raw HTML with inline styles -->
+<table width="600" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="font-family: Arial, sans-serif; color: #333333;">
+      <h1 style="font-size: 24px; margin: 0;">Welcome!</h1>
+    </td>
+  </tr>
+</table>
+```
+
+**React Email makes it modern:**
+
+```tsx
+// ✅ New way: React components with TypeScript
+import { Heading, Text } from "@react-email/components";
+
+<Heading style={styles.heading}>Welcome!</Heading>;
+```
+
+**Benefits:**
+
+1. **Component-based** - Reuse email sections across templates
+2. **Type-safe** - TypeScript catches errors before sending
+3. **Preview in browser** - See emails during development
+4. **Shared styles** - Consistent branding across all emails
+5. **Version control** - Email templates in git, just like code
+
+</details>
+
+#### Email Configuration (`lib/resend.ts` and `lib/resend-utils.ts`)
+
+**`lib/resend.ts`** - Simple Resend client initialization:
+
+```typescript
+import { Resend } from "resend";
+
+export const resend = new Resend(process.env.RESEND_API_KEY);
+```
+
+**`lib/resend-utils.ts`** - Environment-aware email sending wrapper:
+
+This utility is **critical** - it separates development and production email behavior:
+
+```typescript
+import "server-only"; // Ensures this never runs in browser
+import { resend } from "@/lib/resend";
+
+export async function sendEmail({ to, subject, react, sendAdminCopy = false }) {
+  const isDevelopment = process.env.NODE_ENV === "development";
+
+  // In development: emails go to DEV_EMAIL_TO
+  // In production: emails go to actual recipients
+  const toAddresses = isDevelopment ? [process.env.DEV_EMAIL_TO] : to;
+
+  // In development: from DEV_EMAIL_FROM
+  // In production: from PROD_EMAIL_FROM
+  const fromAddress = isDevelopment ? process.env.DEV_EMAIL_FROM : process.env.PROD_EMAIL_FROM;
+
+  await resend.emails.send({
+    from: fromAddress,
+    to: toAddresses,
+    subject,
+    react,
+  });
+}
+```
+
+**Why this matters:**
+
+- **Development safety** - Never accidentally email real users during testing
+- **Easy testing** - All emails go to your test inbox in dev mode
+- **Production ready** - Switch to real recipients automatically in production
+- **Admin copies** - Optionally CC admin on important emails
+
+<details>
+<summary>How to use sendEmail in server actions</summary>
+
+```typescript
+"use server";
+
+import { sendEmail } from "@/lib/resend-utils";
+import { WelcomeEmail } from "@/transactional/emails/welcome";
+
+export async function sendWelcomeEmail(userEmail: string, userName: string) {
+  const { error } = await sendEmail({
+    to: [userEmail],
+    subject: "Welcome to Our App!",
+    react: <WelcomeEmail userName={userName} />,
+    sendAdminCopy: true, // Admin gets notified of new user
+  });
+
+  if (error) {
+    console.error("Failed to send welcome email:", error);
+    return { error };
+  }
+
+  return { error: null };
+}
+```
+
+**In development:**
+
+- Email goes to `process.env.DEV_EMAIL_TO` (your test inbox)
+- From address is `process.env.DEV_EMAIL_FROM`
+- Subject line includes "[DEV]" prefix (configured in Resend dashboard)
+
+**In production:**
+
+- Email goes to actual user's email
+- From address is `process.env.PROD_EMAIL_FROM`
+- Admin copy goes to `process.env.ADMIN_EMAIL` if `sendAdminCopy: true`
+
+</details>
+
+#### Shared Branded Styles (`transactional/emails/utils/styles.ts`)
+
+All email templates share the same design system, defined in `styles.ts`. This ensures brand consistency across every email your app sends.
+
+**Brand colors:**
+
+```typescript
+export const colors = {
+  // From your globals.css design system
+  background: "#f8f6ff",
+  foreground: "#453a6b",
+  primary: "#9b8cc8",
+  secondary: "#fee7dc",
+  accent: "#e8f5e8", // Green for success
+  destructive: "#ff3333", // Red for warnings
+  // ... and more
+};
+```
+
+**Pre-built section styles:**
+
+```typescript
+export const sectionStyles = {
+  infoSection: {}, // Primary info (muted purple background)
+  detailsSection: {}, // Additional details (peach background)
+  messageSection: {}, // User messages (peach with border)
+  actionSection: {}, // CTA buttons (centered)
+  customerSection: {}, // Customer info (green accent)
+  tipsSection: {}, // Helpful tips (muted with left border)
+  reminderSection: {}, // Important reminders (yellow warning)
+  settingsSection: {}, // Account settings links
+};
+```
+
+**Pre-built button styles:**
+
+```typescript
+export const buttonStyles = {
+  primary: {}, // Main action button (purple)
+  accept: {}, // Positive action (green)
+  decline: {}, // Negative action (red)
+  view: {}, // View details (larger purple button)
+};
+```
+
+<details>
+<summary>Example: Using shared styles in an email template</summary>
+
+```tsx
+import { baseStyles, sectionStyles, buttonStyles, colors } from "./utils/styles";
+import { Button, Container, Heading, Text, Section } from "@react-email/components";
+
+export function BookingConfirmationEmail({ bookingDate, serviceName }) {
+  return (
+    <Container style={baseStyles.container}>
+      <Heading style={baseStyles.heading}>Booking Confirmed!</Heading>
+
+      {/* Info section with booking details */}
+      <Section style={sectionStyles.infoSection}>
+        <Text style={baseStyles.paragraph}>Service: {serviceName}</Text>
+        <Text style={baseStyles.paragraph}>Date: {bookingDate}</Text>
+      </Section>
+
+      {/* CTA section */}
+      <Section style={sectionStyles.actionSection}>
+        <Button href="https://yourapp.com/bookings" style={buttonStyles.view}>
+          View Booking
+        </Button>
+      </Section>
+
+      {/* Tips section */}
+      <Section style={sectionStyles.tipsSection}>
+        <Text style={textStyles.tipsHeader}>💡 Pro Tip</Text>
+        <Text style={textStyles.tipsText}>Add this booking to your calendar!</Text>
+      </Section>
+    </Container>
+  );
+}
+```
+
+Every section automatically gets the correct:
+
+- Background color
+- Border styling
+- Padding and margins
+- Text colors
+- Responsive sizing
+
+This makes creating new emails fast and ensures they all look professional and on-brand!
+
+</details>
+
+#### Example Email Templates
+
+The project includes several example templates demonstrating common patterns:
+
+**`welcome.tsx`** - New user onboarding:
+
+- Welcome message with personalization
+- CTA to complete profile
+- Tips section for getting started
+- Settings link
+
+**`otp-code.tsx`** - One-time password email:
+
+- Large, prominent OTP code display
+- Expiration warning
+- Security tips
+- Help text if they didn't request it
+
+**`account-deletion-confirmation.tsx`** - Account deletion request:
+
+- Urgent action required banner
+- Two-button layout (Confirm/Cancel)
+- Warning about data loss
+- Timeline for deletion
+
+**`contact-form-email.tsx`** - Contact form submission notification:
+
+- Customer details
+- Message content
+- Quick action buttons
+- Admin notification
+
+<details>
+<summary>Real-world example: OTP Code email</summary>
+
+```tsx
+// transactional/emails/otp-code.tsx
+import * as React from "react";
+import { Button, Container, Heading, Hr, Section, Text } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, colors } from "./utils/styles";
+
+interface OtpCodeEmailProps {
+  code: string;
+  expiresInMinutes?: number;
+}
+
+export default function OtpCodeEmail({ code, expiresInMinutes = 15 }: OtpCodeEmailProps) {
+  return (
+    <Container style={baseStyles.container}>
+      <Heading style={baseStyles.heading}>Your Login Code</Heading>
+
+      <Text style={baseStyles.paragraph}>
+        Use this code to complete your login. This code is valid for {expiresInMinutes} minutes.
+      </Text>
+
+      {/* Large OTP code display */}
+      <Section style={sectionStyles.infoSection}>
+        <Text
+          style={{
+            fontSize: "48px",
+            fontWeight: "700",
+            textAlign: "center",
+            letterSpacing: "8px",
+            margin: "20px 0",
+            color: colors.primary,
+          }}
+        >
+          {code}
+        </Text>
+      </Section>
+
+      {/* Security warning */}
+      <Section style={sectionStyles.reminderSection}>
+        <Text style={textStyles.reminderHeader}>⚠️ Security Notice</Text>
+        <Text style={textStyles.reminderText}>
+          Never share this code with anyone. We will never ask for your code via email, phone, or
+          text.
+        </Text>
+      </Section>
+
+      {/* Help text */}
+      <Section style={sectionStyles.tipsSection}>
+        <Text style={textStyles.tipsHeader}>Didn't request this code?</Text>
+        <Text style={textStyles.tipsText}>
+          If you didn't request this code, you can safely ignore this email. Someone may have
+          entered your email address by mistake.
+        </Text>
+      </Section>
+
+      <Hr style={baseStyles.hr} />
+
+      <Text style={baseStyles.footer}>
+        This code was requested from your account. If you have any questions, contact our support
+        team.
+      </Text>
+    </Container>
+  );
+}
+```
+
+**What this demonstrates:**
+
+- Large, readable OTP code display
+- Security warning section (yellow banner)
+- Help text for false positives
+- Consistent spacing and typography
+- All using shared branded styles
+
+</details>
+
+#### Using AI to Generate Email Templates
+
+**This is where AI shines!** Instead of manually coding HTML tables and inline styles, describe what you want and let AI generate the template using your branded styles.
+
+**Example prompt for AI:**
+
+```
+Create a new email template for booking cancellation notifications.
+
+Requirements:
+- Email subject: "Booking Cancellation Confirmed"
+- Show cancelled booking details (service name, date, time)
+- Include cancellation reason if provided
+- Show refund information (amount, method, timeline)
+- Add "Rebook" CTA button
+- Use the existing branded styles from transactional/emails/utils/styles.ts
+
+Follow the pattern of other email templates in the transactional/emails/ directory.
+The template should use React Email components and TypeScript.
+```
+
+**AI will generate:**
+
+```tsx
+import { Button, Container, Heading, Hr, Section, Text } from "@react-email/components";
+import { baseStyles, sectionStyles, buttonStyles, textStyles, colors } from "./utils/styles";
+
+interface BookingCancellationEmailProps {
+  serviceName: string;
+  bookingDate: string;
+  cancellationReason?: string;
+  refundAmount: number;
+  refundMethod: string;
+  refundTimeline: string;
+}
+
+export default function BookingCancellationEmail({
+  serviceName,
+  bookingDate,
+  cancellationReason,
+  refundAmount,
+  refundMethod,
+  refundTimeline,
+}: BookingCancellationEmailProps) {
+  return (
+    <Container style={baseStyles.container}>
+      <Heading style={baseStyles.heading}>Booking Cancellation Confirmed</Heading>
+
+      {/* Booking details */}
+      <Section style={sectionStyles.detailsSection}>
+        <Text style={textStyles.secondaryDetailLabel}>Service</Text>
+        <Text style={textStyles.secondaryDetailValue}>{serviceName}</Text>
+
+        <Text style={textStyles.secondaryDetailLabel}>Original Date</Text>
+        <Text style={textStyles.secondaryDetailValue}>{bookingDate}</Text>
+
+        {cancellationReason && (
+          <>
+            <Text style={textStyles.secondaryDetailLabel}>Cancellation Reason</Text>
+            <Text style={textStyles.secondaryDetailValue}>{cancellationReason}</Text>
+          </>
+        )}
+      </Section>
+
+      {/* Refund info */}
+      <Section style={sectionStyles.infoSection}>
+        <Text style={textStyles.sectionHeader}>Refund Information</Text>
+        <Text style={baseStyles.paragraph}>
+          Amount: ${refundAmount.toFixed(2)}
+          <br />
+          Method: {refundMethod}
+          <br />
+          Timeline: {refundTimeline}
+        </Text>
+      </Section>
+
+      {/* CTA */}
+      <Section style={sectionStyles.actionSection}>
+        <Button href="https://yourapp.com/bookings/new" style={buttonStyles.primary}>
+          Book Again
+        </Button>
+      </Section>
+    </Container>
+  );
+}
+```
+
+**Benefits of AI-generated templates:**
+
+1. **Fast** - Generate complex templates in seconds
+2. **Branded** - AI follows your existing style patterns
+3. **Type-safe** - Proper TypeScript interfaces
+4. **Consistent** - Uses shared styles like other templates
+5. **Customizable** - Easy to tweak the generated code
+
+**Workflow:**
+
+1. Describe email content and CTAs in plain English
+2. Reference existing templates and shared styles
+3. Let AI generate the template
+4. Review and customize as needed
+5. Test with React Email preview server
+
+<details>
+<summary>Testing emails locally with React Email</summary>
+
+React Email provides a development server to preview your emails:
+
+```bash
+# Navigate to transactional directory
+cd transactional
+
+# Start preview server
+bun dev
+```
+
+This opens `localhost:3000` showing all your email templates with hot reload!
+
+**Features:**
+
+- Live preview of all templates
+- Switch between templates
+- Test with different props
+- See mobile vs desktop views
+- Export to HTML
+
+**Example:** Testing the OTP code email with different values:
+
+```tsx
+// In the React Email preview
+<OtpCodeEmail code="123456" expiresInMinutes={15} />
+<OtpCodeEmail code="ABC123" expiresInMinutes={5} />
+```
+
+Instantly see how different codes and expiration times look!
+
+</details>
+
 ### The `providers/` Directory - React Context Wrappers
 
 The `providers/` directory contains React context providers that wrap your entire application. These are used in `app/layout.tsx` to provide global functionality across all pages.
