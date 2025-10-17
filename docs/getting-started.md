@@ -594,6 +594,7 @@ Agent: "I see the cancellation rules include a 24-hour policy with prorated refu
 According to `CLAUDE.md`, create documentation for:
 
 - **Business Documentation** (`docs/business/`)
+
   - Feature overview and business purpose
   - User workflows and use cases
   - Business rules and validation logic
@@ -712,9 +713,7 @@ export function UserDropdown() {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onClick={signOut}>
-          Sign Out
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={signOut}>Sign Out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -878,6 +877,7 @@ export function createClient() {
 ```
 
 **When to use:**
+
 - Client components (those with `"use client"`)
 - Browser-based file uploads
 - Real-time subscriptions
@@ -908,6 +908,7 @@ export async function createClient() {
 ```
 
 **When to use:**
+
 - Server components (React Server Components)
 - API routes (`app/api/*/route.ts`)
 - Server actions (`"use server"` functions)
@@ -923,12 +924,14 @@ Automatically refreshes user sessions on each request to keep users logged in. T
 **Security and functionality requirements differ:**
 
 **Browser client (`client.ts`)**:
+
 - Uses cookies to maintain session
 - Can't access server-only environment variables
 - Subject to CORS restrictions
 - Limited by browser security model
 
 **Server client (`server.ts`)**:
+
 - Full access to session cookies
 - Can use service role key for admin operations
 - No CORS restrictions
@@ -947,7 +950,7 @@ export async function getUsers() {
 }
 
 // ✅ CORRECT - Using server client in server action
-"use server";
+("use server");
 import { createClient } from "@/lib/supabase/server"; // Server client!
 
 export async function getUsers() {
@@ -957,6 +960,7 @@ export async function getUsers() {
 ```
 
 **Rule of thumb:**
+
 - See `"use client"`? → Use `lib/supabase/client.ts`
 - See `"use server"` or in `app/**/page.tsx`? → Use `lib/supabase/server.ts`
 
@@ -995,6 +999,7 @@ export const companyConfig = {
 - **Consistent references** - Footer, navbar, meta tags all use the same data
 
 **Where it's used:**
+
 - SEO meta tags (`app/layout.tsx`)
 - Footer contact information
 - Legal pages (Terms, Privacy)
@@ -1036,6 +1041,7 @@ This sets defaults for all queries in your app (cache duration, retry logic, etc
 Add a new file in `lib/` when you integrate a new external service:
 
 **Create `lib/stripe.ts` when you add Stripe:**
+
 ```typescript
 import Stripe from "stripe";
 
@@ -1046,6 +1052,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 ```
 
 **Create `lib/postmark.ts` if you switch email providers:**
+
 ```typescript
 import { ServerClient } from "postmark";
 
@@ -1053,6 +1060,7 @@ export const postmark = new ServerClient(process.env.POSTMARK_API_KEY!);
 ```
 
 **Benefits of this pattern:**
+
 - Easy to mock in tests (`jest.mock("@/lib/stripe")`)
 - API keys centralized and validated
 - Easy to swap implementations
@@ -1087,12 +1095,15 @@ export function cn(...inputs: ClassValue[]) {
 
 // ✅ Data transformation
 export function groupBy<T>(arr: T[], key: keyof T) {
-  return arr.reduce((acc, item) => {
-    const group = String(item[key]);
-    acc[group] = acc[group] || [];
-    acc[group].push(item);
-    return acc;
-  }, {} as Record<string, T[]>);
+  return arr.reduce(
+    (acc, item) => {
+      const group = String(item[key]);
+      acc[group] = acc[group] || [];
+      acc[group].push(item);
+      return acc;
+    },
+    {} as Record<string, T[]>
+  );
 }
 ```
 
@@ -1224,9 +1235,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <PHProvider>
-          <TanstackQueryProvider>
-            {children}
-          </TanstackQueryProvider>
+          <TanstackQueryProvider>{children}</TanstackQueryProvider>
         </PHProvider>
       </body>
     </html>
@@ -1243,9 +1252,361 @@ export default function RootLayout({ children }) {
 
 </details>
 
+### Database Architecture - From SQL to Type-Safe Code
+
+This project uses a powerful database workflow that automatically generates type-safe schemas from your PostgreSQL database. Understanding this flow is critical for productive development.
+
+#### The Type Generation Pipeline
+
+```
+PostgreSQL Database
+       ↓ (supabase gen types)
+TypeScript Types (types/database.types.ts)
+       ↓ (supazod)
+Zod Schemas (schemas/database.schema.ts)
+       ↓ (used in)
+Server Actions & Form Validation
+```
+
+**Command to regenerate all types:**
+
+```bash
+bun gen:types  # Runs db:types → db:types:zod → remove:public:prefix
+```
+
+<details>
+<summary>Why this three-step process?</summary>
+
+**Step 1: PostgreSQL → TypeScript**
+
+- Supabase CLI reads your database schema
+- Generates TypeScript types in `types/database.types.ts`
+- Includes tables, enums, functions, and their relationships
+- Gives you autocomplete for database queries
+
+**Step 2: TypeScript → Zod**
+
+- Supazod converts TypeScript types to Zod schemas
+- Output: `schemas/database.schema.ts`
+- Configuration: `supazod.config.json` (rarely needs changes)
+- Enables runtime validation and form schema generation
+
+**Step 3: Cleanup**
+
+- Removes `public.` prefix from schema names
+- Makes imports cleaner: `Todos_Insert` instead of `public_Todos_Insert`
+
+**Benefits:**
+
+1. **Single source of truth** - Database schema drives everything
+2. **Type safety** - Catch errors at compile time
+3. **Runtime validation** - Zod validates data at runtime
+4. **Form integration** - React Hook Form uses Zod schemas directly
+5. **Always in sync** - Run `bun gen:types` after schema changes
+
+</details>
+
+### The `supabase/schemas/` Directory - Declarative Database Design
+
+The `supabase/schemas/` directory contains declarative SQL files that define your database structure. These files are used to generate migrations with `bun db:diff`.
+
+```
+supabase/schemas/
+├── 00-extensions.sql    # PostgreSQL extensions (uuid-ossp, etc.)
+├── 01-schema.sql        # Tables, enums, indexes
+├── 02-policies.sql      # Row Level Security policies
+└── 03-functions.sql     # Database functions and triggers
+```
+
+**Workflow:**
+
+1. **Modify schema files** - Edit SQL files to add tables, columns, policies
+2. **Generate migration** - `bun db:diff migration_name` compares with local DB
+3. **Review migration** - Check generated SQL in `supabase/migrations/`
+4. **Apply migration** - `bun migrate:up` applies the new migration
+5. **Regenerate types** - `bun gen:types` updates TypeScript/Zod schemas
+
+<details>
+<summary>Why organize schemas this way?</summary>
+
+**Separation of concerns:**
+
+- **00-extensions.sql** - PostgreSQL extensions (uuid-ossp, pgcrypto, etc.)
+- **01-schema.sql** - Core data structures (tables, columns, enums, indexes)
+- **02-policies.sql** - Row Level Security (who can access what)
+- **03-functions.sql** - Stored procedures, triggers, and computed logic
+
+**Benefits:**
+
+1. **Easier to review** - Each file has a clear purpose
+2. **Better diffs** - Git shows what changed where
+3. **Logical grouping** - Related code stays together
+4. **Migration generation** - Supabase compares these files with your local DB
+5. **Documentation** - Files serve as living documentation
+
+**Example from `01-schema.sql`:**
+
+```sql
+-- Priority enum type
+create type public.priority_level as enum ('low', 'medium', 'high');
+
+-- Todos table
+create table public.todos (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  title text not null,
+  description text,
+  completed boolean default false not null,
+  priority public.priority_level,
+  due_date timestamptz,
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+-- Indexes for performance
+create index todos_user_id_idx on public.todos(user_id);
+create index todos_completed_idx on public.todos(completed);
+```
+
+**Example from `02-policies.sql`:**
+
+```sql
+-- Users can view their own todos
+create policy "Users can view their own todos"
+  on public.todos for select
+  using (auth.uid() = user_id);
+
+-- Users can create their own todos
+create policy "Users can create their own todos"
+  on public.todos for insert
+  with check (auth.uid() = user_id);
+```
+
+**Example from `03-functions.sql`:**
+
+```sql
+-- Function to automatically update updated_at timestamp
+create or replace function public.handle_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Trigger for todos updated_at
+create trigger todos_updated_at
+  before update on public.todos
+  for each row
+  execute function public.handle_updated_at();
+```
+
+**Important:** Always run `bun gen:types` after modifying these files to keep your TypeScript/Zod schemas in sync!
+
+</details>
+
+### The `seed/` Directory - Test Data That Saves Production
+
+The `seed/` directory contains scripts to populate your database with realistic test data. This is crucial for testing edge cases before they hit production.
+
+```
+seed/
+├── seed.ts              # Main seed orchestration
+├── utils/
+│   ├── index.ts         # Exported utility functions
+│   ├── shared.ts        # Shared seed utilities
+│   └── ...              # Feature-specific seed utils
+└── (generated by Snaplet after sync)
+```
+
+**Key Commands:**
+
+```bash
+bun seed:sync   # Sync Snaplet with current database schema
+bun seed        # Generate seed.sql from seed.ts
+bun db:reset    # Reset DB and apply migrations + seed data
+```
+
+<details>
+<summary>Why seed scripts are critical (especially with AI agents)</summary>
+
+**The Problem:**
+
+You're building a discount code feature with:
+
+- Expiry dates
+- Maximum usage limits
+- Minimum order amounts
+- User-specific restrictions
+- Combination rules
+
+Without seed data, you manually test each scenario. With 5 edge cases, you're manually creating 5 discount codes, 5 orders, 5 users... over and over again every time you reset your database.
+
+**The Solution with AI Agents:**
+
+```
+You: "I'm adding a discount codes feature with expiry dates, max usage,
+     and minimum order amounts. Update the seed script to test these scenarios:
+
+     1. Valid discount - everything works
+     2. Expired discount - should reject
+     3. Max usage reached - should reject
+     4. Order below minimum - should reject
+     5. Already used by user (single-use) - should reject"
+
+Agent: *Updates database schema in supabase/schemas/01-schema.sql*
+Agent: *Updates seed/seed.ts to create these exact scenarios*
+Agent: *Generates migration with bun db:diff*
+```
+
+Now run `bun db:reset` and you instantly have 5 test scenarios ready to verify your logic works correctly!
+
+**Real-world example from the codebase:**
+
+```typescript
+// seed/seed.ts
+async function main() {
+  const seed = await createSeedClient({ dryRun: true });
+  await seed.$resetDatabase();
+
+  // 1. Create users with different roles
+  const allUsers = await createTestUsersWithAuth(seed);
+  //    - Admin user with elevated permissions
+  //    - Regular users for testing RLS policies
+  //    - Edge case: User with no profile data
+
+  // 2. Create todos with various states
+  const todos = await createTodoItems(seed, allUsers);
+  //    - Completed todos
+  //    - Overdue todos (due_date in past)
+  //    - High priority todos
+  //    - Todos with no priority (null value)
+  //    - Todos with attachments
+
+  // 3. Create media/attachments
+  const attachments = await createTodoAttachments(seed, todos);
+  //    - Valid image attachments
+  //    - Edge case: Orphaned media (no todo)
+  //    - Different media types (avatar, todo_attachment)
+}
+```
+
+**Benefits for long-term development:**
+
+1. **Consistency** - Every developer gets the same test data
+2. **Speed** - Reset database in seconds, not minutes
+3. **Documentation** - Seed script documents edge cases
+4. **CI/CD** - Automated tests use seed data
+5. **AI-friendly** - Agents can generate comprehensive test scenarios
+
+**When to update seed scripts:**
+
+- Adding new tables/columns
+- New features with edge cases
+- Discovered bugs that need test coverage
+- Complex business rules that need validation
+
+**Pro tip:** When working with AI agents, always ask them to update the seed script alongside schema changes. This ensures you have test data for all scenarios immediately!
+
+</details>
+
+### The `schemas/` Directory - Runtime Validation
+
+The `schemas/` directory contains auto-generated Zod schemas derived from your database types. These enable runtime validation and form schema generation.
+
+```
+schemas/
+└── database.schema.ts    # Auto-generated Zod schemas from database types
+```
+
+**Generation:**
+
+```bash
+bun gen:types  # Regenerates database.schema.ts from database types
+```
+
+<details>
+<summary>How to use Zod schemas from the database</summary>
+
+**In Server Actions:**
+
+```typescript
+"use server";
+
+import { Todos_Insert } from "@/schemas/database.schema";
+import { createClient } from "@/lib/supabase/server";
+
+export async function createTodo(data: unknown) {
+  // Runtime validation
+  const result = Todos_Insert.safeParse(data);
+
+  if (!result.success) {
+    return { error: "Invalid data", details: result.error };
+  }
+
+  const supabase = await createClient();
+  return await supabase.from("todos").insert(result.data);
+}
+```
+
+**In Forms with React Hook Form:**
+
+```typescript
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Todos_Insert } from "@/schemas/database.schema";
+
+export function TodoForm() {
+  const form = useForm({
+    resolver: zodResolver(Todos_Insert),
+    defaultValues: {
+      title: "",
+      completed: false,
+      priority: "medium",
+    },
+  });
+
+  // Form now validates against database schema!
+}
+```
+
+**Benefits:**
+
+1. **Runtime safety** - Catches invalid data before database insertion
+2. **Form validation** - React Hook Form validates against database schema
+3. **Type inference** - `z.infer<typeof Todos_Insert>` gives you TypeScript types
+4. **Always in sync** - Regenerate with `bun gen:types` after schema changes
+5. **Error messages** - Zod provides detailed validation errors
+
+</details>
+
+### The `supazod.config.json` File - Type Generation Config
+
+This file configures how Supazod generates Zod schemas from TypeScript types. **This is set up once and rarely needs modification.**
+
+```json
+{
+  "namingConfig": {
+    "tableOperationPattern": "{table}_{operation}",
+    "enumPattern": "{name}",
+    "capitalizeNames": true,
+    "separator": "_"
+  }
+}
+```
+
+**Generated naming examples:**
+
+- `Todos_Insert` - Schema for inserting a todo
+- `Todos_Update` - Schema for updating a todo
+- `Todos_Select` - Schema for selecting/querying todos
+- `PriorityLevel` - Enum schema for priority_level type
+
+**When to modify:** Only if you want different naming conventions (rare).
+
 ### Other Important Directories
 
-Beyond `app/`, `components/`, `docs/`, `hooks/`, `lib/`, and `providers/`, here are other key folders:
+Beyond `app/`, `components/`, `docs/`, `hooks/`, `lib/`, `providers/`, and the database directories, here are other key folders:
 
 - **`server/`** - Server actions for data mutations
 - **`stores/`** - Zustand stores for client state management
@@ -1570,9 +1931,652 @@ The beauty of this system is that you never handle passwords directly - Supabase
 
 </details>
 
+## Step 11: Link Local Development to Remote Supabase (Optional)
+
+While you can develop entirely locally, linking your local environment to a remote Supabase project enables database schema synchronization and prepares you for production deployment.
+
+### Create a Remote Supabase Project
+
+1. Go to **<https://supabase.com>** and sign up/sign in
+2. Click "New Project"
+3. Fill in your project details:
+   - **Name**: Choose a descriptive name
+   - **Database Password**: Generate a strong password (save this!)
+   - **Region**: Select the closest to your users
+4. Click "Create new project" (this takes ~2 minutes)
+
+### Link Your Local Project
+
+Once your remote project is created:
+
+```bash
+# Login to Supabase CLI
+supabase login
+
+# Link your local project to the remote project
+# Find your project ref in the Supabase dashboard URL: https://supabase.com/dashboard/project/[project-ref]
+supabase link --project-ref <your-project-ref>
+```
+
+The CLI will ask you for your database password (the one you created when setting up the project).
+
+<details>
+<summary>What does linking do?</summary>
+
+Linking creates a connection between your local development environment and your remote Supabase project. This enables:
+
+- **Pulling remote schema** - Download the production database schema to your local machine
+- **Pushing migrations** - Deploy local database changes to production
+- **Type generation** - Generate types from either local or remote database
+- **Configuration sync** - Share configuration between environments
+
+**Important security note:** Your database password is stored locally in your Supabase config. This is safe for development, but never commit the `.env` file or Supabase config with credentials to version control!
+
+</details>
+
+### Understanding the Database Development Workflow
+
+Now that you understand the basics, let's dive into how you'll actually work with the database day-to-day. This workflow is **critical** to understand - it's how you'll extend your schema safely and deploy changes to production.
+
+## The Database Development Lifecycle
+
+### The Complete Flow
+
+```
+1. Modify Schema Files (supabase/schemas/*.sql)
+   ↓
+2. Generate Migration (bun db:diff <migration-name>)
+   ↓
+3. Review Generated SQL (supabase/migrations/<timestamp>_<name>.sql)
+   ↓
+4. Apply Migration Locally (bun db:reset or supabase migration up)
+   ↓
+5. Generate Types (bun gen:types)
+   ↓
+6. Test Your Changes (bun dev)
+   ↓
+7. Commit to Git (migration files + schema files)
+   ↓
+8. Push to GitHub (automatic deployment via GitHub integration)
+   ↓
+9. Production Database Updated (migrations run automatically)
+```
+
+Let's break down each step in detail.
+
+### Step 1: Modify Schema Files
+
+All database changes start in `supabase/schemas/`. This is your **single source of truth** for database structure.
+
+**Example - Adding a new `bookings` table:**
+
+Edit `supabase/schemas/01-schema.sql`:
+
+```sql
+-- Booking status enum
+create type public.booking_status as enum (
+  'pending',
+  'confirmed',
+  'cancelled',
+  'completed'
+);
+
+-- Bookings table
+create table public.bookings (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  service_name text not null,
+  booking_date timestamptz not null,
+  status public.booking_status default 'pending' not null,
+  notes text,
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+-- Indexes for performance
+create index bookings_user_id_idx on public.bookings(user_id);
+create index bookings_booking_date_idx on public.bookings(booking_date);
+create index bookings_status_idx on public.bookings(status);
+```
+
+Then add RLS policies in `supabase/schemas/02-policies.sql`:
+
+```sql
+-- Enable RLS
+alter table public.bookings enable row level security;
+
+-- Users can view their own bookings
+create policy "Users can view their own bookings"
+  on public.bookings for select
+  using (auth.uid() = user_id);
+
+-- Users can create their own bookings
+create policy "Users can create their own bookings"
+  on public.bookings for insert
+  with check (auth.uid() = user_id);
+
+-- Users can update their own bookings
+create policy "Users can update their own bookings"
+  on public.bookings for update
+  using (auth.uid() = user_id);
+
+-- Admins can view all bookings
+create policy "Admins can view all bookings"
+  on public.bookings for select
+  using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+```
+
+<details>
+<summary>Why edit schema files instead of writing migrations directly?</summary>
+
+**Declarative vs Imperative approach:**
+
+**Traditional approach (Imperative):**
+
+- Write SQL migrations by hand: "ALTER TABLE users ADD COLUMN email TEXT"
+- Error-prone: Easy to forget constraints, indexes, or ordering
+- Hard to review: Migrations are long lists of ALTER statements
+- Difficult to understand: Current schema spread across 100+ migration files
+
+**This project's approach (Declarative):**
+
+- Define the **desired state** in schema files: "Users table should have these columns"
+- Supabase CLI generates migrations by comparing desired state vs current database
+- Easy to review: See the complete table definition in one place
+- Self-documenting: Schema files show current structure at a glance
+
+**Example benefit:**
+
+If you need to understand the `bookings` table structure, you:
+
+- **Declarative**: Open `01-schema.sql`, find the CREATE TABLE statement ✅
+- **Imperative**: Read through 50 migration files to piece together the current structure ❌
+
+</details>
+
+### Step 2: Generate Migration
+
+After modifying schema files, generate a migration that captures the difference between your schema files and your current local database:
+
+```bash
+bun db:diff add_bookings_table
+```
+
+This command:
+
+1. Reads your schema files (`supabase/schemas/*.sql`)
+2. Compares them to your running local database
+3. Generates SQL migration file with the differences
+4. Saves it to `supabase/migrations/<timestamp>_add_bookings_table.sql`
+
+**Output:**
+
+```
+Diffing schemas: public
+Finished supabase db diff on branch main.
+```
+
+<details>
+<summary>What if the migration looks wrong?</summary>
+
+**Always review the generated migration!** Sometimes the diff tool can't perfectly detect your intent.
+
+**Common issues:**
+
+1. **Dropping and recreating instead of altering**
+
+   - Problem: Migration drops a column and recreates it (data loss!)
+   - Fix: Manually edit migration to use ALTER TABLE instead
+
+2. **Incorrect order of operations**
+
+   - Problem: Migration tries to add foreign key before creating the referenced table
+   - Fix: Reorder statements in the migration file
+
+3. **Missing data migrations**
+   - Problem: Adding a NOT NULL column without default value
+   - Fix: Add a data migration to populate existing rows first
+
+**If the migration is incorrect:**
+
+```bash
+# Delete the bad migration file
+rm supabase/migrations/<timestamp>_bad_migration.sql
+
+# Fix your schema files
+# Regenerate the migration
+bun db:diff add_bookings_table_fixed
+```
+
+**Pro tip:** Keep your local database clean by regularly running `bun db:reset` before generating migrations. This ensures the diff is against a known good state.
+
+</details>
+
+### Step 3: Review Generated SQL
+
+**CRITICAL: Always manually review the generated migration before applying it!**
+
+Open `supabase/migrations/<timestamp>_add_bookings_table.sql` and verify:
+
+- ✅ Tables are created in the correct order (dependencies first)
+- ✅ Indexes are added for foreign keys and frequently queried columns
+- ✅ RLS policies are present and correct
+- ✅ No `DROP` statements that would lose data
+- ✅ Enums are created before tables that use them
+- ✅ Functions/triggers are created correctly
+
+<details>
+<summary>Example migration review checklist</summary>
+
+```sql
+-- ✅ GOOD: Safe operations
+CREATE TABLE public.bookings (...);
+CREATE INDEX bookings_user_id_idx ON public.bookings(user_id);
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own bookings" ON public.bookings...;
+
+-- ⚠️ WARNING: Review carefully
+ALTER TABLE public.users ALTER COLUMN email SET NOT NULL;
+-- Could fail if existing rows have NULL emails
+
+-- ❌ DANGEROUS: Data loss
+DROP TABLE public.old_bookings;
+-- All data in this table will be lost!
+
+-- ❌ DANGEROUS: Recreating instead of altering
+DROP TABLE public.users;
+CREATE TABLE public.users (...);
+-- All user data would be lost!
+```
+
+**If you see dangerous operations:**
+
+1. Stop and review your schema changes
+2. Consider if this is really what you want
+3. If needed, manually edit the migration to be safer
+4. Add data migration steps to preserve existing data
+
+</details>
+
+### Step 4: Apply Migration Locally
+
+Once you've reviewed and approved the migration, apply it to your local database:
+
+```bash
+# Option 1: Apply just the new migration
+supabase migration up
+
+# Option 2: Reset database (applies ALL migrations from scratch)
+bun db:reset
+```
+
+**When to use each:**
+
+- `supabase migration up` - Quick iteration, just applies new migrations
+- `bun db:reset` - Clean slate, ensures consistent state, applies seed data
+
+<details>
+<summary>What if the migration fails?</summary>
+
+**Common failure scenarios:**
+
+**1. Constraint violation:**
+
+```
+ERROR: column "email" contains null values
+```
+
+**Solution:** Add a default value or data migration to populate existing rows
+
+**2. Dependency order issue:**
+
+```
+ERROR: relation "profiles" does not exist
+```
+
+**Solution:** Reorder your migration to create dependencies first
+
+**3. RLS policy conflict:**
+
+```
+ERROR: policy "Users can view their own bookings" already exists
+```
+
+**Solution:** The policy might be duplicated. Check your schema files.
+
+**Recovery steps:**
+
+```bash
+# Reset to clean state
+bun db:reset
+
+# If reset fails, nuclear option:
+supabase db reset --db-url postgresql://postgres:postgres@localhost:54322/postgres
+
+# Fix the migration file
+# Try applying again
+supabase migration up
+```
+
+</details>
+
+### Step 5: Generate TypeScript Types
+
+After applying migrations, regenerate your TypeScript types and Zod schemas:
+
+```bash
+bun gen:types
+```
+
+This command runs three operations:
+
+1. **Generates TypeScript types** from database schema → `types/database.types.ts`
+2. **Generates Zod schemas** from TypeScript types → `schemas/database.schema.ts`
+3. **Cleans up** the generated files (removes `public.` prefix)
+
+<details>
+<summary>Why regenerate types after every schema change?</summary>
+
+**Type safety across the entire stack:**
+
+Without regenerating types, you get:
+
+```typescript
+// ❌ TypeScript doesn't know about the new column
+const booking = await supabase.from("bookings").insert({
+  user_id: userId,
+  service_name: "Hair Cut",
+  bookign_date: new Date(), // Typo! But TypeScript won't catch it
+});
+```
+
+After regenerating types:
+
+```typescript
+// ✅ Full autocomplete and type checking
+const booking = await supabase.from("bookings").insert({
+  user_id: userId,
+  service_name: "Hair Cut",
+  booking_date: new Date(), // Typo caught at compile time!
+  status: "pending",
+  // TypeScript knows all required fields
+});
+```
+
+**Benefits:**
+
+- Autocomplete for table names, column names, enum values
+- Type errors if you use wrong data types
+- Compile-time errors instead of runtime errors
+- Zod schemas for form validation match database exactly
+
+</details>
+
+### Step 6: Test Your Changes
+
+Start your development server and test the new features:
+
+```bash
+bun dev
+```
+
+Create components that use the new tables:
+
+- Server actions in `server/bookings.actions.ts`
+- React components that query/mutate data
+- Forms with validation using the generated Zod schemas
+
+**Example server action:**
+
+```typescript
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { Bookings_Insert } from "@/schemas/database.schema";
+
+export async function createBooking(data: unknown) {
+  // Runtime validation using generated Zod schema
+  const result = Bookings_Insert.safeParse(data);
+  if (!result.success) {
+    return { error: "Invalid data", details: result.error };
+  }
+
+  const supabase = await createClient();
+  return await supabase.from("bookings").insert(result.data);
+}
+```
+
+### Step 7-9: Deploy to Production
+
+Once your changes are tested locally, deploy them to production:
+
+```bash
+# Commit your changes (migration files + schema files)
+git add supabase/migrations/ supabase/schemas/ types/ schemas/
+git commit -m "Add bookings table with RLS policies"
+
+# Push to GitHub
+git push origin main
+```
+
+**If you have GitHub integration configured (see below), migrations are automatically applied to production when you push to your main branch.**
+
+## Automated Database Deployments via GitHub Integration
+
+### Why Automate Database Deployments?
+
+**Manual deployments are dangerous:**
+
+❌ **Manual process** (risky):
+
+```bash
+# Developer runs this in production (DANGEROUS!)
+supabase db push --linked
+
+# Problems:
+# - Easy to forget steps
+# - No audit trail of who deployed what
+# - No rollback mechanism
+# - Can deploy untested migrations
+# - Deployments happen at random times
+# - No review process
+```
+
+✅ **Automated process** (safe):
+
+```
+1. Developer pushes to GitHub
+2. GitHub integration detects changes
+3. Migrations run automatically on merge to main
+4. Full audit trail in GitHub
+5. Can revert by reverting the commit
+6. Migrations tested in Preview Branches first
+```
+
+**Benefits of automation:**
+
+1. **Safety** - Migrations reviewed in PRs before deployment
+2. **Consistency** - Same process every time, no human error
+3. **Audit trail** - Git history shows what changed when
+4. **Preview environments** - Test migrations in Preview Branches
+5. **Rollback capability** - Revert the commit to undo changes
+6. **No manual steps** - Developers never run commands in production
+
+<details>
+<summary>Real-world scenario: Why automation matters</summary>
+
+**Scenario: Adding a critical index to speed up queries**
+
+**Manual deployment:**
+
+```
+11:30 AM - Developer: "Hey, can someone deploy this index? It's urgent."
+11:35 AM - DevOps: "Sure, let me ssh into production..."
+11:37 AM - DevOps: "Wait, which migration file?"
+11:40 AM - Developer: "The latest one"
+11:42 AM - DevOps: "Running supabase db push..."
+11:45 AM - DevOps: "Done!"
+11:50 AM - Developer: "The index wasn't created?"
+11:52 AM - DevOps: "Oh, I forgot to pull latest from git first..."
+12:00 PM - DevOps: "Okay, running again..."
+12:05 PM - Developer: "Still not working... did you link to prod?"
+```
+
+**Automated deployment:**
+
+```
+11:30 AM - Developer creates PR with migration
+11:35 AM - Preview Branch deployed, migration tested
+11:40 AM - Team reviews PR, approves
+11:45 AM - Merge to main
+11:46 AM - GitHub Action automatically applies migration to production
+11:47 AM - Migration complete, index created
+11:48 AM - Developer verifies: "Perfect, queries are fast now!"
+```
+
+**Key differences:**
+
+- Manual: 35 minutes, multiple errors, stress
+- Automated: 18 minutes, zero errors, confidence
+
+</details>
+
+### Setting Up GitHub Integration
+
+**Prerequisites:**
+
+- Remote Supabase project created
+- GitHub repository for your codebase
+- Supabase project linked locally
+
+**Setup steps:**
+
+1. **Go to Supabase Dashboard**
+
+   - Navigate to your project
+   - Go to "Settings" → "Integrations"
+
+2. **Enable GitHub Integration**
+
+   - Click "Connect to GitHub"
+   - Authorize Supabase to access your repository
+   - Select your repository
+   - Set the Supabase directory path (usually `supabase/`)
+
+3. **Configure Deployment Options**
+
+   - ✅ **Enable "Deploy to production on push to main"**
+   - ✅ **Enable "Preview Branches"** - Creates temporary environments for PRs
+   - ✅ **Enable "Supabase changes only"** - Only deploy when Supabase files change
+
+4. **Configure What Gets Deployed**
+
+The GitHub integration automatically deploys:
+
+- ✅ **New migrations** in `supabase/migrations/`
+- ✅ **Edge functions** declared in `config.toml`
+- ✅ **Storage buckets** declared in `config.toml`
+
+**NOT deployed automatically (manual config changes):**
+
+- ❌ API settings (CORS, rate limits)
+- ❌ Auth providers (OAuth configuration)
+- ❌ Seed files (production data is never auto-seeded)
+
+<details>
+<summary>Why aren't config changes auto-deployed?</summary>
+
+**Configuration changes are different from schema changes:**
+
+**Schema changes** (migrations):
+
+- Versioned in git
+- Applied sequentially
+- Can be tested in Preview Branches
+- Have clear rollback path
+
+**Config changes** (API settings, auth providers):
+
+- Often environment-specific (different OAuth keys in prod vs staging)
+- Changes take effect immediately (no migration history)
+- May require secrets that shouldn't be in git
+- Often need manual verification
+
+**Best practice:**
+
+- Schema changes: Automate via migrations ✅
+- Config changes: Manual review + deployment ✅
+
+**Example:** You wouldn't want to accidentally deploy development Google OAuth credentials to production!
+
+</details>
+
+### The Preview Branch Workflow
+
+When you enable Preview Branches, Supabase automatically:
+
+1. **Creates a temporary database** for each PR
+2. **Applies your migrations** to the preview database
+3. **Comments on your PR** with the preview URL
+4. **Deletes the preview** when the PR is closed
+
+**Example workflow:**
+
+```
+1. Developer creates PR: "Add bookings table"
+2. Supabase creates preview branch with unique URL
+3. GitHub comment: "Preview deployed to: https://abcd1234.supabase.co"
+4. Team reviews PR and tests against preview database
+5. Tests pass, PR approved and merged to main
+6. GitHub integration automatically applies migration to production
+7. Preview branch automatically cleaned up
+```
+
+**Benefits:**
+
+- Test migrations in isolated environment
+- No risk to production data
+- Multiple developers can work on different PRs simultaneously
+- Catch migration issues before production
+
+### Workflow Summary
+
+**Development flow:**
+
+```
+1. Edit supabase/schemas/*.sql     # Declarative schema changes
+2. bun db:diff <migration-name>    # Generate migration
+3. Review generated SQL            # ALWAYS review!
+4. supabase migration up           # Apply locally
+5. bun gen:types                   # Regenerate types
+6. Test your changes               # Verify it works
+7. git commit + git push           # Deploy automatically
+```
+
+**What gets deployed:**
+
+```
+supabase/migrations/    → Applied to production database
+supabase/functions/     → Deployed as Edge Functions
+config.toml changes     → Updated configuration
+```
+
+**What stays local:**
+
+```
+supabase/seed/          → Local test data only
+.env files              → Never committed
+Local Supabase config   → Development only
+```
+
 ## What's Next?
 
-Congratulations! You now have a fully functional local development environment.
+Congratulations! You now have a fully functional local development environment and understand the complete database development workflow.
 
 ### Follow the Interactive Setup Steps
 
@@ -1580,10 +2584,10 @@ Head over to **<http://localhost:3000>** and work through the interactive setup 
 
 The setup steps are organized into categories:
 
-- **Getting Started** - Clone, install, explore the codebase
-- **Database & Configuration** - Supabase, environment variables, migrations
+- **Initial Setup** - Clone, install, explore the codebase
+- **Database Development** - Supabase setup, schema workflow, migrations
 - **External Services** - Email, analytics, mapping services
-- **Deployment** - Running locally and deploying to production
+- **Deployment** - GitHub integration and production deployment
 
 ### Things to Try
 
