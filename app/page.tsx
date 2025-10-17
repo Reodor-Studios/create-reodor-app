@@ -15,9 +15,9 @@ import {
   Sparkles,
   RotateCcw,
   ArrowDown,
-  Github as GithubIcon,
   Info,
 } from "lucide-react";
+import { Github } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Prism from "@/components/Prism";
@@ -89,7 +89,7 @@ function StepCard({ step, delay }: { step: SetupStep; delay: number }) {
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                 )}
               </label>
-              <p
+              <div
                 className={`text-sm leading-relaxed transition-all ${
                   step.completed
                     ? "text-muted-foreground/70"
@@ -97,7 +97,7 @@ function StepCard({ step, delay }: { step: SetupStep; delay: number }) {
                 }`}
               >
                 {step.description}
-              </p>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -220,7 +220,7 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <GithubIcon className="mr-2 w-4 h-4" />
+                  <Github className="mr-2 w-4 h-4" />
                   View on GitHub
                 </a>
               </Button>
@@ -249,14 +249,16 @@ export default function Home() {
               <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <AlertDescription className="text-blue-800 dark:text-blue-200">
                 <p className="font-semibold mb-2">
-                  This page demonstrates Zustand state management with localStorage persistence
+                  This page demonstrates Zustand state management with
+                  localStorage persistence
                 </p>
                 <p className="text-sm">
-                  Your progress is automatically saved and persists across browser sessions.
-                  Check out the implementation in{" "}
-                  <InlineCode>stores/setup-steps.store.ts</InlineCode> and{" "}
-                  <InlineCode>app/page.tsx</InlineCode> to see how it works.
-                  Try refreshing the page or closing and reopening your browser - your checked items will remain!
+                  Your progress is automatically saved and persists across
+                  browser sessions. Check out the implementation in{" "}
+                  <InlineCode>stores/setup-steps.store.tsx</InlineCode> and{" "}
+                  <InlineCode>app/page.tsx</InlineCode> to see how it works. Try
+                  refreshing the page or closing and reopening your browser -
+                  your checked items will remain!
                 </p>
               </AlertDescription>
             </Alert>
