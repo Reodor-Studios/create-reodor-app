@@ -12,7 +12,7 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
     {
         title: "Oppgaver",
-        href: "/todos",
+        href: "/oppgaver",
         description: "Se og administrer dine oppgaver",
     },
 ];

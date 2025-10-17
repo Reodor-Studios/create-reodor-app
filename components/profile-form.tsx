@@ -430,10 +430,6 @@ export function ProfileForm({
                       <strong>Dette vil permanent slette:</strong>
                       <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
                         <li>Din personlige profil og kontoinformasjon</li>
-                        <li>Alle dine bestillinger og historikk</li>
-                        <li>Samtaler med stylister</li>
-                        <li>Anmeldelser og vurderinger du har gitt</li>
-                        <li>Lagrede betalingsmetoder og adresser</li>
                       </ul>
 
                       <p className="mt-3 font-medium text-destructive">

@@ -71,6 +71,7 @@ export default async function ProfilePage({ params }: PageProps) {
     .single();
 
   if (profileError || !profile) {
+    console.error("Error fetching profile:", profileError);
     notFound();
   }
 

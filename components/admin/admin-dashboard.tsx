@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Calendar, Package, DollarSign, Activity } from "lucide-react";
+import { Users, Calendar, Package, DollarSign, Activity, LayoutDashboard } from "lucide-react";
+import { companyConfig } from "@/lib/brand";
+import OverviewTab from "@/components/admin/tabs/overview-tab";
 
 // Placeholder components for tabs not yet implemented
 function UsersTab() {
@@ -128,6 +130,12 @@ function OperationsTab() {
 
 const tabs = [
   {
+    value: "overview",
+    label: "Oversikt",
+    icon: LayoutDashboard,
+    component: OverviewTab,
+  },
+  {
     value: "users",
     label: "Brukere",
     icon: Users,
@@ -144,7 +152,7 @@ export default function AdminDashboard() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
         <p className="text-muted-foreground">
-          Velkommen til administrator-panelet for Nabostylisten
+          Velkommen til administrator-panelet for {companyConfig.name}
         </p>
       </div>
 

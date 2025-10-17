@@ -161,3 +161,22 @@ export const TodosRelationshipsSchema = z.tuple([
     referencedColumns: z.tuple([z.literal("id")]),
   }),
 ]);
+
+export const GetUserTodoStatsArgsSchema = z.object({
+  user_uuid: z.string(),
+});
+
+export const GetUserTodoStatsReturnsSchema = z.array(
+  z.object({
+    completed_todos: z.number(),
+    completion_rate: z.number(),
+    high_priority_todos: z.number(),
+    low_priority_todos: z.number(),
+    medium_priority_todos: z.number(),
+    no_priority_todos: z.number(),
+    overdue_todos: z.number(),
+    pending_todos: z.number(),
+    total_todos: z.number(),
+    user_id: z.string(),
+  }),
+);

@@ -41,7 +41,7 @@ export default function NotFound() {
               <Link href="/">Gå til hovedsiden</Link>
             </Button>
             <Button variant="outline" asChild className="w-full">
-              <Link href="/tjenester">Se tjenester</Link>
+              <Link href="/oppgaver">Se oppgaver</Link>
             </Button>
           </div>
         </CardContent>

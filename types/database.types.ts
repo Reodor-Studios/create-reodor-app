@@ -136,7 +136,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_todo_stats: {
+        Args: { user_uuid: string }
+        Returns: {
+          completed_todos: number
+          completion_rate: number
+          high_priority_todos: number
+          low_priority_todos: number
+          medium_priority_todos: number
+          no_priority_todos: number
+          overdue_todos: number
+          pending_todos: number
+          total_todos: number
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       media_type: "avatar" | "todo_attachment" | "other"

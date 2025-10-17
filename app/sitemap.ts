@@ -56,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq("role", "user");
 
     const profileRoutes: MetadataRoute.Sitemap = profiles?.map((profile) => ({
-      url: `${baseUrl}/profiles/${profile.id}`,
+      url: `${baseUrl}/profiler/${profile.id}`,
       lastModified: profile.updated_at
         ? new Date(profile.updated_at)
         : new Date(),
@@ -74,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const todoRoutes: MetadataRoute.Sitemap =
       todos?.map((todo) => ({
-        url: `${baseUrl}/todos/${todo.id}`,
+        url: `${baseUrl}/oppgaver/${todo.id}`,
         lastModified: todo.updated_at
           ? new Date(todo.updated_at)
           : new Date(),
