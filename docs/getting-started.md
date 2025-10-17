@@ -550,18 +550,708 @@ Don't prematurely optimize for reuse - let usage patterns emerge naturally!
 
 </details>
 
+### The `docs/` Directory - Documentation for Long-Term Success
+
+The `docs/` directory contains comprehensive documentation for your project, organized into two main categories:
+
+```
+docs/
+├── business/         # Business and feature documentation
+│   └── ...           # User workflows, business logic, requirements
+└── technical/        # Technical implementation documentation
+    └── ...           # API docs, architecture decisions, database design
+```
+
+<details>
+<summary>Why document your project this way?</summary>
+
+**Documentation is an investment in your future self and your team.** Here's why this structure matters:
+
+**For Agentic Coding** - When working with AI coding assistants over extended periods:
+
+- **Drag in context files** - Pull in a doc file to give complete context about what you're working on
+- **Consistent understanding** - Agents can reference the same source of truth across sessions
+- **Reduced repetition** - No need to re-explain complex business logic or architecture decisions
+- **Better suggestions** - Well-documented context leads to more accurate code generation
+
+**Example workflow:**
+
+```
+You: "I need to modify the booking cancellation logic"
+Agent: *reads business/booking-cancellation.md*
+Agent: "I see the cancellation rules include a 24-hour policy with prorated refunds..."
+```
+
+**For Team Collaboration:**
+
+- **Onboarding** - New developers understand "why" decisions were made
+- **Context preservation** - Decisions don't get lost when team members leave
+- **Knowledge sharing** - Product managers can understand technical constraints
+- **Change management** - Understand the impact before modifying existing features
+
+**What to Document:**
+
+According to `CLAUDE.md`, create documentation for:
+
+- **Business Documentation** (`docs/business/`)
+  - Feature overview and business purpose
+  - User workflows and use cases
+  - Business rules and validation logic
+  - Integration points with other features
+  - Success metrics and KPIs
+
+- **Technical Documentation** (`docs/technical/`)
+  - API documentation and schemas
+  - Database design and relationships
+  - Architecture patterns and decisions
+  - Performance considerations
+  - Security implementations
+
+**Documentation Philosophy:**
+
+1. **Document new features** - As you build, not after
+2. **Update existing docs** - Keep them current with code changes
+3. **Be specific** - "Users can cancel within 24 hours" > "Users can cancel"
+4. **Include examples** - Show API requests/responses, user flows, code snippets
+5. **Explain "why"** - Not just "what" the code does, but why it was built that way
+
+**Pro tip for AI coding:** Well-documented projects allow AI assistants to maintain context across multiple sessions, making multi-week projects significantly more efficient!
+
+</details>
+
+### The `hooks/` Directory - Custom React Hooks
+
+The `hooks/` directory contains custom React hooks that encapsulate reusable logic for authentication, data fetching, and file uploads.
+
+```
+hooks/
+├── admin/                          # Admin-specific hooks
+├── use-auth.ts                     # Authentication state and profile
+├── use-current-user-image.ts       # Current user avatar
+├── use-current-user-name.ts        # Current user display name
+├── use-upload-avatar.ts            # Avatar upload with compression
+├── use-upload-todo-attachments.ts  # Todo file uploads
+├── use-debounce.ts                 # Debounce hook for search/filters
+├── use-media-query.ts              # Responsive breakpoint detection
+└── index.ts                        # Hook exports
+```
+
+<details>
+<summary>Why custom hooks?</summary>
+
+**Custom hooks let you:**
+
+- **Extract complex logic** - Keep components clean and focused on UI
+- **Share logic** - Reuse patterns across multiple components
+- **Test independently** - Hooks can be tested without rendering components
+- **Compose behavior** - Combine multiple hooks to create powerful abstractions
+- **Type safety** - Full TypeScript support with autocomplete
+
+</details>
+
+#### Authentication Hooks
+
+**`use-auth.ts`** - The primary authentication hook that provides:
+
+- Current user object from Supabase Auth
+- User profile data from the `profiles` table
+- Loading states during authentication
+- Sign-out functionality
+- TanStack Query integration for caching
+
+**Example usage:**
+
+```tsx
+const { user, profile, loading, signOut } = useAuth();
+
+if (loading) return <Spinner />;
+if (!user) return <SignInPrompt />;
+
+return (
+  <div>
+    <p>Welcome, {profile?.display_name || user.email}!</p>
+    <button onClick={signOut}>Sign Out</button>
+  </div>
+);
+```
+
+**`use-current-user-image.ts`** - Fetches the current user's avatar:
+
+- Queries the `media` table for avatar files
+- Returns the public URL for display
+- Cached with TanStack Query (5-minute stale time)
+- Handles missing avatars gracefully
+
+**`use-current-user-name.ts`** - Gets the current user's display name:
+
+- Fetches from `user_metadata.full_name`
+- Returns `"?"` as fallback for anonymous users
+- Useful for personalization in UI
+
+<details>
+<summary>How do these hooks work together?</summary>
+
+These hooks are designed to be composable. Here's a real-world example:
+
+```tsx
+// In components/nav/user-dropdown.tsx
+export function UserDropdown() {
+  const { user, signOut } = useAuth();
+  const { data: avatarUrl } = useCurrentUserImage();
+  const userName = useCurrentUserName();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <Avatar>
+          {avatarUrl ? (
+            <AvatarImage src={avatarUrl} alt={userName} />
+          ) : (
+            <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
+          )}
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem onClick={signOut}>
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+```
+
+Each hook manages one piece of state, making the component easy to understand and test.
+
+</details>
+
+#### File Upload Hooks - Client-Side Strategy
+
+**`use-upload-avatar.ts`** and **`use-upload-todo-attachments.ts`** implement **client-side file uploads** with **client-side image compression**.
+
+**Why client-side uploads?**
+
+```tsx
+// This project uses client-side uploads, NOT server-side
+✅ Client → Compress → Upload to Supabase Storage
+❌ Client → Server → Compress → Upload to Storage
+```
+
+**Benefits of client-side compression:**
+
+1. **Reduced bandwidth** - Compressed images are 70-90% smaller
+2. **Faster uploads** - Smaller files upload quicker
+3. **Better UX** - Progress bars, instant previews
+4. **Server efficiency** - No server resources used for compression
+5. **Direct uploads** - Files go straight to Supabase Storage
+
+**How it works:**
+
+```tsx
+export const useUploadAvatar = () => {
+  const mutation = useMutation({
+    mutationFn: async ({ userId, file }) => {
+      // 1. Validate file type
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error("Invalid file type");
+      }
+
+      // 2. Compress image on client (browser-image-compression)
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 2,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      });
+
+      // 3. Upload directly to Supabase Storage (client SDK)
+      await uploadFile(supabase, {
+        bucket: "avatars",
+        path: storagePath.path,
+        file: compressedFile,
+      });
+
+      // 4. Update user profile with new avatar URL
+      await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", userId);
+    },
+  });
+
+  return { ...mutation, isUploading: mutation.isPending };
+};
+```
+
+**Key technologies:**
+
+- **browser-image-compression** - Client-side image compression library
+- **Supabase Storage** - Direct file uploads from browser
+- **TanStack Query** - Mutation state management and cache invalidation
+- **TypeScript** - Full type safety for file operations
+
+<details>
+<summary>When to use server-side vs client-side uploads?</summary>
+
+**Use client-side uploads when:**
+
+- Uploading images that need compression
+- Users upload directly to their own storage buckets
+- You want to show upload progress
+- Files are user-generated content (avatars, attachments)
+
+**Use server-side uploads when:**
+
+- Processing requires server-only libraries (FFmpeg, ImageMagick)
+- Security scanning is required before storage
+- Files need server-side validation beyond basic type checking
+- Uploading to third-party services with secret API keys
+
+This project uses client-side uploads because:
+
+1. **Image compression** happens in the browser (no server load)
+2. **User experience** - instant previews and progress indicators
+3. **Scalability** - upload traffic doesn't hit your server
+4. **Simplicity** - fewer moving parts, easier to debug
+
+</details>
+
+#### Other Utility Hooks
+
+**`use-debounce.ts`** - Debounces rapid value changes:
+
+- Perfect for search inputs and filters
+- Reduces unnecessary API calls
+- Configurable delay (default: 300ms)
+
+**`use-media-query.ts`** - Responsive breakpoint detection:
+
+- Detects screen size in client components
+- Used for responsive Dialog/Drawer pattern
+- Example: `const isDesktop = useMediaQuery("(min-width: 768px)")`
+
+### The `lib/` Directory - External Services & Configuration
+
+The `lib/` directory is where external service configurations and utility functions live. Think of it as the bridge between your application code and external libraries/services.
+
+```
+lib/
+├── supabase/              # Supabase client configuration
+│   ├── client.ts          # Browser-side Supabase client
+│   ├── server.ts          # Server-side Supabase client
+│   └── middleware.ts      # Session refresh middleware
+├── brand.ts               # Company branding configuration
+├── resend.ts              # Resend email service config
+├── tanstack-query.ts      # TanStack Query configuration
+└── utils.ts               # Runtime-agnostic utility functions
+```
+
+<details>
+<summary>Why organize external configs this way?</summary>
+
+**Centralized configuration** - All external service setup in one place:
+
+- **Easy to find** - Need to configure Stripe? Check `lib/stripe.ts`
+- **Easy to update** - Change API versions in one location
+- **Easy to test** - Mock external services by replacing these files
+- **Clear boundaries** - Application code imports from `lib/`, never calls services directly
+
+**Runtime-agnostic utilities** - The `utils.ts` file contains functions that work in both client and server contexts. This is important for code that needs to run everywhere without importing browser or Node.js-specific APIs.
+
+</details>
+
+#### Supabase Configuration (`lib/supabase/`)
+
+The Supabase directory contains three critical files for database access:
+
+**`client.ts`** - Browser-side Supabase client:
+
+```typescript
+// Used in client components and browser contexts
+import { createBrowserClient } from "@supabase/ssr";
+
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+```
+
+**When to use:**
+- Client components (those with `"use client"`)
+- Browser-based file uploads
+- Real-time subscriptions
+- Client-side data fetching
+
+**`server.ts`** - Server-side Supabase client:
+
+```typescript
+// Used in server components, API routes, and server actions
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+export async function createClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name) => cookieStore.get(name)?.value,
+        set: (name, value, options) => cookieStore.set(name, value, options),
+        remove: (name, options) => cookieStore.set(name, "", options),
+      },
+    }
+  );
+}
+```
+
+**When to use:**
+- Server components (React Server Components)
+- API routes (`app/api/*/route.ts`)
+- Server actions (`"use server"` functions)
+- Any server-side data fetching
+
+**`middleware.ts`** - Session refresh logic:
+
+Automatically refreshes user sessions on each request to keep users logged in. This runs before every page load and API call.
+
+<details>
+<summary>Why two different Supabase clients?</summary>
+
+**Security and functionality requirements differ:**
+
+**Browser client (`client.ts`)**:
+- Uses cookies to maintain session
+- Can't access server-only environment variables
+- Subject to CORS restrictions
+- Limited by browser security model
+
+**Server client (`server.ts`)**:
+- Full access to session cookies
+- Can use service role key for admin operations
+- No CORS restrictions
+- Can perform privileged operations
+
+**Using the wrong client causes problems:**
+
+```typescript
+// ❌ WRONG - Using browser client in server action
+"use server";
+import { createClient } from "@/lib/supabase/client"; // Browser client!
+
+export async function getUsers() {
+  const supabase = createClient();
+  // This won't have access to the session cookie!
+}
+
+// ✅ CORRECT - Using server client in server action
+"use server";
+import { createClient } from "@/lib/supabase/server"; // Server client!
+
+export async function getUsers() {
+  const supabase = await createClient();
+  // Now it can read the session from cookies
+}
+```
+
+**Rule of thumb:**
+- See `"use client"`? → Use `lib/supabase/client.ts`
+- See `"use server"` or in `app/**/page.tsx`? → Use `lib/supabase/server.ts`
+
+</details>
+
+#### Company Branding (`lib/brand.ts`)
+
+The `brand.ts` file is the single source of truth for your company's branding and configuration. This makes it easy to rebrand the entire app or use the template for a new project.
+
+**Example structure:**
+
+```typescript
+export const companyConfig = {
+  name: "Your Company Name",
+  description: "Your company description",
+  url: "https://yourcompany.com",
+  githubUrl: "https://github.com/yourorg/yourrepo",
+  supportEmail: "support@yourcompany.com",
+  social: {
+    twitter: "@yourcompany",
+    linkedin: "company/yourcompany",
+  },
+  legal: {
+    companyName: "Your Company AS",
+    address: "123 Main St, City, Country",
+    orgNumber: "123456789",
+  },
+};
+```
+
+**Why this matters:**
+
+- **One place to update** - Change your company name once, updates everywhere
+- **Type safety** - TypeScript ensures all required fields are present
+- **Easy rebranding** - Clone the template, update one file, done!
+- **Consistent references** - Footer, navbar, meta tags all use the same data
+
+**Where it's used:**
+- SEO meta tags (`app/layout.tsx`)
+- Footer contact information
+- Legal pages (Terms, Privacy)
+- Email templates
+- Error pages
+
+#### External Service Configuration
+
+**Resend (`lib/resend.ts`)** - Email service configuration:
+
+```typescript
+import { Resend } from "resend";
+
+export const resend = new Resend(process.env.RESEND_API_KEY);
+```
+
+Used for sending transactional emails (welcome emails, password resets, notifications).
+
+**TanStack Query (`lib/tanstack-query.ts`)** - Global query configuration:
+
+```typescript
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+```
+
+This sets defaults for all queries in your app (cache duration, retry logic, etc.).
+
+<details>
+<summary>When to add a new service config?</summary>
+
+Add a new file in `lib/` when you integrate a new external service:
+
+**Create `lib/stripe.ts` when you add Stripe:**
+```typescript
+import Stripe from "stripe";
+
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2023-10-16",
+  typescript: true,
+});
+```
+
+**Create `lib/postmark.ts` if you switch email providers:**
+```typescript
+import { ServerClient } from "postmark";
+
+export const postmark = new ServerClient(process.env.POSTMARK_API_KEY!);
+```
+
+**Benefits of this pattern:**
+- Easy to mock in tests (`jest.mock("@/lib/stripe")`)
+- API keys centralized and validated
+- Easy to swap implementations
+- Clear dependencies
+
+</details>
+
+#### Runtime-Agnostic Utilities (`lib/utils.ts`)
+
+The `utils.ts` file contains utility functions that work in both client and server contexts. These are functions that don't depend on browser APIs (like `window` or `document`) or Node.js APIs (like `fs` or `path`).
+
+**What belongs here:**
+
+```typescript
+// ✅ String manipulation
+export function slugify(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, "-");
+}
+
+// ✅ Date formatting (using date-fns, not browser Intl)
+export function formatDate(date: Date): string {
+  return format(date, "MMM d, yyyy");
+}
+
+// ✅ Tailwind class merging (cn utility)
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// ✅ Data transformation
+export function groupBy<T>(arr: T[], key: keyof T) {
+  return arr.reduce((acc, item) => {
+    const group = String(item[key]);
+    acc[group] = acc[group] || [];
+    acc[group].push(item);
+    return acc;
+  }, {} as Record<string, T[]>);
+}
+```
+
+**What doesn't belong here:**
+
+```typescript
+// ❌ Browser-specific code (create client-only util file)
+export function getWindowWidth() {
+  return window.innerWidth; // `window` only exists in browser!
+}
+
+// ❌ Node.js-specific code (create server-only util file)
+export function readConfigFile() {
+  return fs.readFileSync("config.json"); // `fs` only exists in Node.js!
+}
+
+// ❌ Supabase queries (belongs in server actions)
+export async function getUsers() {
+  const supabase = createClient();
+  return supabase.from("users").select();
+}
+```
+
+<details>
+<summary>Guidelines for adding utilities</summary>
+
+**When to add a utility to `lib/utils.ts`:**
+
+1. **Truly runtime-agnostic** - Works in browser AND server without modification
+2. **No external dependencies** - Or dependencies that are also runtime-agnostic (lodash, date-fns)
+3. **Pure functions** - No side effects, just input → output
+4. **Reused across features** - If it's only used in one place, keep it local
+
+**When NOT to use `lib/utils.ts`:**
+
+- **Browser-only logic** → Create `lib/client-utils.ts` or keep in component
+- **Server-only logic** → Create `lib/server-utils.ts` or keep in server action
+- **Feature-specific** → Keep in the feature directory
+- **Database operations** → Belongs in `server/` actions
+- **React hooks** → Belongs in `hooks/` directory
+
+**Example decision tree:**
+
+```
+Is the function runtime-agnostic (works everywhere)?
+├─ Yes
+│  ├─ Is it reused in 2+ places?
+│  │  ├─ Yes → Add to lib/utils.ts
+│  │  └─ No → Keep it local (colocate with usage)
+│  └─ No (browser or server specific)
+│     ├─ Browser → lib/client-utils.ts or component file
+│     └─ Server → lib/server-utils.ts or server action
+└─ No
+   └─ Wrong place, reconsider
+```
+
+**Pro tip:** When unsure, start by keeping utilities close to where they're used. Only move to `lib/utils.ts` when you need them in a second place. This prevents premature abstraction and keeps the codebase easy to navigate.
+
+</details>
+
+### The `providers/` Directory - React Context Wrappers
+
+The `providers/` directory contains React context providers that wrap your entire application. These are used in `app/layout.tsx` to provide global functionality across all pages.
+
+```
+providers/
+└── tanstack-query-provider.tsx    # TanStack Query setup for the app
+```
+
+**How it works in `app/layout.tsx`:**
+
+```tsx
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <TanstackQueryProvider>
+          <ThemeProvider>
+            {/* Your entire app lives here */}
+            {children}
+          </ThemeProvider>
+        </TanstackQueryProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+<details>
+<summary>When to add a new provider</summary>
+
+**Add a new provider when you need:**
+
+- **Analytics/Monitoring** - PostHog, Sentry, or similar services
+- **Feature Flags** - LaunchDarkly, PostHog feature flags
+- **Authentication Context** - If building custom auth instead of Supabase
+- **Global State** - When Zustand stores aren't enough (rare)
+- **A/B Testing** - Experiment frameworks that need app-level context
+- **Internationalization** - i18n providers for multi-language support
+
+**Example - Adding a PostHog provider:**
+
+```tsx
+// providers/posthog-provider.tsx
+"use client";
+
+import posthog from "posthog-js";
+import { PostHogProvider } from "posthog-js/react";
+import { useEffect } from "react";
+
+export function PHProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    });
+  }, []);
+
+  return <PostHogProvider client={posthog}>{children}</PostHogProvider>;
+}
+```
+
+Then add it to `app/layout.tsx`:
+
+```tsx
+import { PHProvider } from "@/providers/posthog-provider";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <PHProvider>
+          <TanstackQueryProvider>
+            {children}
+          </TanstackQueryProvider>
+        </PHProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+**Important notes:**
+
+- Most providers need `"use client"` directive (they use hooks/effects)
+- Order matters - outer providers wrap inner ones
+- Once set up, these are rarely modified
+- Keep provider logic minimal - just setup and context wrapping
+
+</details>
+
 ### Other Important Directories
 
-Beyond `app/` and `components/`, here are other key folders:
+Beyond `app/`, `components/`, `docs/`, `hooks/`, `lib/`, and `providers/`, here are other key folders:
 
-- **`lib/`** - External service configurations (Supabase, Stripe, email)
 - **`server/`** - Server actions for data mutations
 - **`stores/`** - Zustand stores for client state management
-- **`hooks/`** - Custom React hooks
 - **`types/`** - TypeScript type definitions
 - **`schemas/`** - Zod schemas for validation (auto-generated from database)
 - **`supabase/`** - Database migrations, schemas, and edge functions
-- **`docs/`** - Project documentation (you're reading it now!)
 
 ### Take Your Time
 

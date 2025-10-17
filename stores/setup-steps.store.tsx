@@ -140,6 +140,64 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "initial",
   },
   {
+    id: "explore-docs",
+    title: "Explore the Documentation Directory",
+    description: (
+      <>
+        Check out <InlineCode>docs/</InlineCode> to see how project
+        documentation is organized. The <InlineCode>business/</InlineCode>{" "}
+        folder contains feature specs and user workflows, while{" "}
+        <InlineCode>technical/</InlineCode> holds implementation details and
+        architecture decisions. This documentation makes working with AI
+        assistants much easier—drag in a doc file to provide full context!
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "explore-hooks",
+    title: "Explore the Hooks Directory",
+    description: (
+      <>
+        Browse <InlineCode>hooks/</InlineCode> for custom React hooks like{" "}
+        <InlineCode>useAuth</InlineCode> and file upload utilities. Note that
+        this project uses client-side file uploads with browser-based image
+        compression before uploading to Supabase Storage—this reduces bandwidth
+        by 70-90% and provides instant user feedback.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "explore-lib",
+    title: "Explore the Lib Directory",
+    description: (
+      <>
+        Check out <InlineCode>lib/</InlineCode> for external service
+        configurations and utility functions. Key files include{" "}
+        <InlineCode>supabase/</InlineCode> for database config,{" "}
+        <InlineCode>brand.ts</InlineCode> for company branding, and{" "}
+        <InlineCode>utils.ts</InlineCode> for runtime-agnostic utility
+        functions.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "explore-providers",
+    title: "Understand the Providers Directory",
+    description: (
+      <>
+        Take a quick look at <InlineCode>providers/</InlineCode> to see how
+        React context providers are organized. These wrap your app in{" "}
+        <InlineCode>app/layout.tsx</InlineCode> and are rarely modified after
+        initial setup. Currently includes TanStack Query provider—future
+        additions might include PostHog analytics or feature flag providers.
+      </>
+    ),
+    category: "initial",
+  },
+  {
     id: "setup-supabase",
     title: "Set Up Supabase Project",
     description: (
