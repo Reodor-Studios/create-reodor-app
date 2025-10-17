@@ -2417,6 +2417,35 @@ export default function RootLayout({ children }) {
 
 </details>
 
+### Optional External Services - Analytics, Payments & Maps
+
+This project does not include preconfigured integrations for PostHog (analytics), Stripe (payments), or Mapbox (maps) because these services are highly context-dependent on your specific application needs. However, if you need these capabilities, these are the recommended best-in-class solutions.
+
+**PostHog - Analytics & Product Insights**
+
+If you need analytics, user behavior tracking, feature flags, or A/B testing, PostHog is the best choice. AI assistants are excellent at integrating PostHog, and MCP servers are available to help with configuration and event tracking. Simply describe what you want to track and let AI handle the integration.
+
+**Stripe - Payment Processing**
+
+If you need payment processing, subscription billing, or marketplace functionality, Stripe is the industry standard. AI can help you integrate Stripe webhooks, handle payment flows, and manage subscriptions. There are MCP servers available for Stripe that can accelerate development.
+
+**Mapbox - Maps & Geolocation**
+
+If you need map integration, custom routes, markers, address search, or geolocation features, Mapbox is the way to go. AI is very capable at implementing Mapbox integrations, including address autocomplete, geocoding, and custom map styling.
+
+**Mina Scheduler - Calendar & Booking**
+
+If you're building an event management system, booking service, or any application requiring a fully customizable scheduler, Mina Scheduler (<https://mina-scheduler.vercel.app/>) is an excellent React component. It offers day/week/month views, event management, Zod validation, Shadcn UI integration, Framer Motion animations, and mobile-responsive design. AI can help integrate and customize Mina Scheduler for your specific use case.
+
+**Why these aren't preconfigured:**
+
+- **Context-dependent** - Most apps don't need all of these services
+- **Different requirements** - Payment flows, analytics, maps, and booking systems vary widely
+- **Keep it lean** - Only add what you actually use
+- **Easy to add** - AI assistants make integration straightforward when needed
+
+**If you don't need these services:** Simply check off the corresponding setup steps in your checklist to mark them as complete. There's no need to set them up if your application doesn't require them.
+
 ### Database Architecture - From SQL to Type-Safe Code
 
 This project uses a powerful database workflow that automatically generates type-safe schemas from your PostgreSQL database. Understanding this flow is critical for productive development.

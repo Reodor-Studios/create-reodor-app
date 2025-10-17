@@ -426,23 +426,72 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "services",
   },
   {
-    id: "setup-posthog",
-    title: "Set Up PostHog Analytics",
+    id: "setup-stripe",
+    title: "Set Up Stripe (Optional)",
     description: (
       <>
-        Create a PostHog project for analytics and error tracking. Add the
-        PostHog API key to your environment variables.
+        <strong>Only if you need payments:</strong> If your application requires
+        payment processing, subscription billing, or marketplace functionality,
+        set up Stripe. AI assistants excel at integrating Stripe webhooks and
+        payment flows. MCP servers are available to accelerate development.{" "}
+        <strong>
+          If you don't need payments, check this off to mark it complete.
+        </strong>
+      </>
+    ),
+    category: "services",
+  },
+  {
+    id: "setup-posthog",
+    title: "Set Up PostHog Analytics (Optional)",
+    description: (
+      <>
+        <strong>Only if you need analytics:</strong> If you need user behavior
+        tracking, feature flags, or A/B testing, create a PostHog project. AI is
+        excellent at integrating PostHog, and MCP servers are available to help.{" "}
+        <strong>
+          If you don't need analytics, check this off to mark it complete.
+        </strong>
       </>
     ),
     category: "services",
   },
   {
     id: "setup-mapbox",
-    title: "Configure Mapbox",
+    title: "Configure Mapbox (Optional)",
     description: (
       <>
-        Get a Mapbox access token for address autocomplete and geographical
-        features. Add it to your environment variables.
+        <strong>Only if you need maps:</strong> If you need map integration,
+        address search, geocoding, or custom routes, get a Mapbox access token.
+        AI is very capable at implementing Mapbox integrations.{" "}
+        <strong>
+          If you don't need maps, check this off to mark it complete.
+        </strong>
+      </>
+    ),
+    category: "services",
+  },
+  {
+    id: "setup-mina-scheduler",
+    title: "Set Up Mina Scheduler (Optional)",
+    description: (
+      <>
+        <strong>Only if you need calendar/booking functionality:</strong> If
+        you're building an event management system or booking service, consider{" "}
+        <a
+          href="https://mina-scheduler.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+        >
+          Mina Scheduler
+        </a>
+        . It provides day/week/month views, event management, Zod validation,
+        Shadcn UI integration, and mobile-responsive design. AI can help
+        integrate and customize it for your needs.{" "}
+        <strong>
+          If you don't need a scheduler, check this off to mark it complete.
+        </strong>
       </>
     ),
     category: "services",
