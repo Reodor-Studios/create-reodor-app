@@ -1,3 +1,98 @@
+# create-reodor-app
+
+## Project Overview
+
+**create-reodor-app** is a comprehensive Next.js starter template designed to accelerate fullstack web application development. It provides a production-ready foundation with modern tooling, best practices, and essential integrations pre-configured.
+
+### Purpose
+
+This is a **scaffold project** intended to be cloned and customized for new applications. The template includes working examples (like the todo CRUD feature) that demonstrate the architecture patterns, but these are meant to be **removed and replaced** with your actual application features.
+
+### Key Features
+
+#### 1. Landing Page (`app/page.tsx`)
+
+- **Setup Steps Interface**: Interactive checklist demonstrating Zustand state management
+  - Progress tracking with visual indicators
+  - Category-based organization (Getting Started, Database, Services, Deployment)
+  - localStorage persistence (survives browser sessions)
+  - Smooth BlurFade animations throughout
+
+The landing page serves as both a welcome screen and a practical demonstration of state management patterns used throughout the application.
+
+#### 2. Authentication System
+
+- **Sign Up / Sign In**: Email/OTP and Google OAuth via Supabase Auth
+- **Protected Routes**: Middleware-based authentication checks
+- **Profile Management**: User profiles with automatic creation on signup
+- **Role-Based Access**: Support for User and Admin roles
+- **Session Management**: Secure session handling with Supabase
+
+#### 3. Todo CRUD Example (`app/oppgaver/page.tsx`)
+
+The todos feature is a **reference implementation** demonstrating:
+
+- **Authentication**: Server-side auth checks in React Server Components
+- **Data Fetching**: TanStack Query for client-side data management
+- **CRUD Operations**: Full create, read, update, delete functionality
+- **Server Actions**: Pattern for secure server-side operations
+- **Form Handling**: React Hook Form + Zod validation
+- **Real-time Updates**: Query invalidation and optimistic updates
+- **Row Level Security**: Users can only access their own todos
+
+**Important**: This todo example should be removed once you understand the patterns and are ready to build your own features.
+
+#### 4. Profile Pages (`app/profiler/[profileId]/`)
+
+- Dynamic profile routing
+- User profile viewing and editing
+- Example of Next.js dynamic routes and layouts
+
+### Getting Started with the Template
+
+1. **Explore the Examples**:
+
+   - Study the landing page (`app/page.tsx`) for Zustand state management patterns
+   - Review the todos feature (`app/oppgaver/`) for complete CRUD implementation
+   - Examine server actions (`server/todos.actions.ts`) for data mutation patterns
+   - Check database schemas (`supabase/schemas/`) for RLS and schema organization
+
+2. **Build Your Application**:
+
+   - Remove the todo example feature once understood
+   - Create your own database tables in `supabase/schemas/`
+   - Generate migrations with `bun db:diff`
+   - Build new features following the established patterns
+   - Update the landing page with your application's content
+
+3. **Customize**:
+   - Update branding in `lib/brand.ts`
+   - Modify color schemes in `globals.css`
+   - Replace placeholder content with your application's features
+   - Add your own documentation to `docs/`
+
+### What's Included Out-of-the-Box
+
+- Complete authentication flow with Supabase
+- Database schema migration system
+- Type-safe API layer with generated types
+- Form validation with Zod
+- State management with Zustand
+- Server-side rendering and client-side hydration
+- Responsive UI components (shadcn/ui, Kibo UI, Magic UI)
+- Email templates with React Email
+- Analytics integration (PostHog)
+- Deployment configuration (Railway)
+
+### Development Philosophy
+
+This template follows these principles:
+
+- **Type Safety First**: Leverage TypeScript and generated database types
+- **Server-First Data Fetching**: Use sensible data fetching patterns, both server-side and client-side
+- **Security by Default**: Row Level Security (RLS) enabled on all tables
+- **Developer Experience**: Fast refresh, type checking, and comprehensive tooling
+
 ## Tech Stack
 
 ### Frontend
@@ -12,7 +107,7 @@
 - **shadcn/ui** - Primary component library
 - **Kibo UI** - Additional specialized components
 - **Magic UI** - Enhanced UI components
-- **Mina Scheduler** - Calendar and booking system (<https://github.com/Mina-Massoud/mina-scheduler>)
+- **Mina Scheduler** - Calendar and booking system (<https://github.com/Mina-Massoud/mina-scheduler>).
 
 ### State Management & Data Fetching
 
