@@ -11,7 +11,7 @@ export interface SetupStep {
 }
 
 export interface SetupStepsStore {
-  steps: SetupStep[];
+  completedSteps: Record<string, boolean>;
 
   // Actions
   toggleStep: (stepId: string) => void;
@@ -20,9 +20,11 @@ export interface SetupStepsStore {
   getTotalCount: () => number;
   getProgressPercentage: () => number;
   getStepsByCategory: (category: SetupStep["category"]) => SetupStep[];
+  getSteps: () => SetupStep[];
 }
 
-const initialSteps: SetupStep[] = [
+// Static step definitions (not persisted, contains JSX)
+const stepDefinitions: Omit<SetupStep, "completed">[] = [
   {
     id: "clone-repo",
     title: "Clone the Repository",
@@ -33,7 +35,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "initial",
-    completed: false,
   },
   {
     id: "install-deps",
@@ -46,7 +47,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "initial",
-    completed: false,
   },
   {
     id: "setup-supabase",
@@ -58,7 +58,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "database",
-    completed: false,
   },
   {
     id: "configure-env",
@@ -71,7 +70,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "database",
-    completed: false,
   },
   {
     id: "run-migrations",
@@ -84,7 +82,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "database",
-    completed: false,
   },
   {
     id: "setup-resend",
@@ -96,7 +93,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "services",
-    completed: false,
   },
   {
     id: "setup-posthog",
@@ -108,7 +104,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "services",
-    completed: false,
   },
   {
     id: "setup-mapbox",
@@ -120,7 +115,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "services",
-    completed: false,
   },
   {
     id: "run-dev-server",
@@ -132,7 +126,6 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "deployment",
-    completed: false,
   },
   {
     id: "deploy-vercel",
@@ -144,33 +137,43 @@ const initialSteps: SetupStep[] = [
       </>
     ),
     category: "deployment",
-    completed: false,
   },
 ];
 
 export const useSetupStepsStore = create<SetupStepsStore>()(
   persist(
     (set, get) => ({
-      steps: initialSteps,
+      // Only persist completion status
+      completedSteps: {},
+
+      // Merge static definitions with persisted completion status
+      getSteps: () => {
+        const { completedSteps } = get();
+        return stepDefinitions.map((step) => ({
+          ...step,
+          completed: completedSteps[step.id] ?? false,
+        }));
+      },
 
       toggleStep: (stepId) => {
         set((state) => ({
-          steps: state.steps.map((step) =>
-            step.id === stepId ? { ...step, completed: !step.completed } : step
-          ),
+          completedSteps: {
+            ...state.completedSteps,
+            [stepId]: !state.completedSteps[stepId],
+          },
         }));
       },
 
       resetSteps: () => {
-        set({ steps: initialSteps });
+        set({ completedSteps: {} });
       },
 
       getCompletedCount: () => {
-        return get().steps.filter((step) => step.completed).length;
+        return Object.values(get().completedSteps).filter(Boolean).length;
       },
 
       getTotalCount: () => {
-        return get().steps.length;
+        return stepDefinitions.length;
       },
 
       getProgressPercentage: () => {
@@ -180,7 +183,7 @@ export const useSetupStepsStore = create<SetupStepsStore>()(
       },
 
       getStepsByCategory: (category) => {
-        return get().steps.filter((step) => step.category === category);
+        return get().getSteps().filter((step) => step.category === category);
       },
     }),
     {
