@@ -170,14 +170,14 @@ export default function Home() {
         <div className="absolute inset-0">
           <Prism
             animationType="rotate"
-            timeScale={0.5}
+            timeScale={0.15}
             height={3.5}
             baseWidth={5.5}
             scale={3.6}
             hueShift={0}
             colorFrequency={1}
             noise={0}
-            glow={1}
+            glow={0.7}
           />
         </div>
 
