@@ -66,20 +66,6 @@ export const companyConfig = {
             ogSubtitle: "COMPANY_TAGLINE",
             ogDescription: "COMPANY_SHORT_DESCRIPTION",
         },
-        tjenester: {
-            title: "Services - COMPANY_NAME",
-            description: "PAGE_SERVICES_DESCRIPTION",
-            ogTitle: "Services",
-            ogSubtitle: "PAGE_SERVICES_SUBTITLE",
-            ogDescription: "PAGE_SERVICES_OG_DESCRIPTION",
-        },
-        bliStylist: {
-            title: "Become a provider - COMPANY_NAME",
-            description: "PAGE_BECOME_PROVIDER_DESCRIPTION",
-            ogTitle: "Become a provider",
-            ogSubtitle: "PAGE_BECOME_PROVIDER_SUBTITLE",
-            ogDescription: "PAGE_BECOME_PROVIDER_OG_DESCRIPTION",
-        },
         kontakt: {
             title: "Contact us - COMPANY_NAME",
             description: "PAGE_CONTACT_DESCRIPTION",
@@ -105,10 +91,6 @@ export const companyConfig = {
         termsOfService: {
             title: "Terms of Service - COMPANY_NAME",
             description: "PAGE_TERMS_DESCRIPTION",
-        },
-        handlekurv: {
-            title: "Cart - COMPANY_NAME",
-            description: "PAGE_CART_DESCRIPTION",
         },
     },
 } as const;

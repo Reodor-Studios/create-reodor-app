@@ -147,7 +147,7 @@ function CategorySection({
 
 export default function Home() {
   const {
-    steps,
+    getSteps,
     resetSteps,
     getCompletedCount,
     getTotalCount,
