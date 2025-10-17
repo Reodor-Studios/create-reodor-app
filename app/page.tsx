@@ -15,11 +15,14 @@ import {
   Sparkles,
   RotateCcw,
   ArrowDown,
-  Github,
+  Github as GithubIcon,
+  Info,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Prism from "@/components/Prism";
 import { companyConfig } from "@/lib/brand";
+import { InlineCode } from "@/components/ui/inline-code";
 
 const categoryConfig = {
   initial: {
@@ -217,7 +220,7 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Github className="mr-2 w-4 h-4" />
+                  <GithubIcon className="mr-2 w-4 h-4" />
                   View on GitHub
                 </a>
               </Button>
@@ -238,6 +241,25 @@ export default function Home() {
                 Follow the steps below to get your project up and running.
               </p>
             </div>
+          </BlurFade>
+
+          {/* Zustand Demo Disclaimer */}
+          <BlurFade delay={0.05} duration={0.5} inView>
+            <Alert className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+              <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <p className="font-semibold mb-2">
+                  This page demonstrates Zustand state management with localStorage persistence
+                </p>
+                <p className="text-sm">
+                  Your progress is automatically saved and persists across browser sessions.
+                  Check out the implementation in{" "}
+                  <InlineCode>stores/setup-steps.store.ts</InlineCode> and{" "}
+                  <InlineCode>app/page.tsx</InlineCode> to see how it works.
+                  Try refreshing the page or closing and reopening your browser - your checked items will remain!
+                </p>
+              </AlertDescription>
+            </Alert>
           </BlurFade>
 
           {/* Progress Section */}
@@ -312,20 +334,6 @@ export default function Home() {
               baseDelay={0.5}
             />
           </div>
-
-          {/* Footer Note */}
-          <BlurFade delay={0.6} duration={0.5} inView>
-            <Card className="bg-muted/50">
-              <CardContent className="p-6">
-                <p className="text-sm text-muted-foreground text-center">
-                  This landing page demonstrates Zustand state management with
-                  localStorage persistence. Your progress is automatically saved
-                  and will persist across browser sessions. Try refreshing the
-                  page to see it in action!
-                </p>
-              </CardContent>
-            </Card>
-          </BlurFade>
         </div>
       </section>
     </main>
