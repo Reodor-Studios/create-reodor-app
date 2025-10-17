@@ -49,6 +49,97 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "initial",
   },
   {
+    id: "explore-app-structure",
+    title: "Explore the App Directory",
+    description: (
+      <>
+        Open the <InlineCode>app/</InlineCode> directory and familiarize
+        yourself with Next.js App Router structure. This is where all your
+        pages, layouts, and route handlers live. The folder structure directly
+        maps to URL routes.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "review-auth-flows",
+    title: "Review Authentication Flows",
+    description: (
+      <>
+        Check out <InlineCode>app/auth/</InlineCode> to see sign-up, sign-in,
+        email confirmation, and account deletion pages. These demonstrate how
+        Supabase Auth integrates with Next.js App Router and server actions.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "understand-api-routes",
+    title: "Understand API Routes",
+    description: (
+      <>
+        Explore <InlineCode>app/api/</InlineCode> for route handlers. These are
+        serverless functions that handle backend logic like webhooks, cron jobs,
+        and external service integrations. Each route exports HTTP method
+        handlers.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "check-demo-features",
+    title: "Explore Demo Features",
+    description: (
+      <>
+        Review <InlineCode>app/oppgaver/</InlineCode> (todos) and{" "}
+        <InlineCode>app/profiler/</InlineCode> (profiles) to see complete CRUD
+        implementations. These demonstrate TanStack Query, server actions, form
+        validation, and Row Level Security patterns.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "review-static-pages",
+    title: "Review Static Pages",
+    description: (
+      <>
+        Browse static pages like <InlineCode>app/faq/</InlineCode>,{" "}
+        <InlineCode>app/privacy/</InlineCode>, and{" "}
+        <InlineCode>app/terms/</InlineCode>. Every production app needs these
+        legal and informational pages for compliance and user trust.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "understand-seo-config",
+    title: "Understand SEO Configuration",
+    description: (
+      <>
+        Check out <InlineCode>app/robots.ts</InlineCode> and{" "}
+        <InlineCode>app/sitemap.ts</InlineCode>. These files dynamically
+        generate robots.txt and sitemap.xml to help search engines crawl your
+        site effectively and respect your privacy preferences.
+      </>
+    ),
+    category: "initial",
+  },
+  {
+    id: "explore-components",
+    title: "Explore the Components Directory",
+    description: (
+      <>
+        Browse <InlineCode>components/</InlineCode> to see how components are
+        organized by feature (auth, todos, admin, nav) and by UI library (ui/
+        for shadcn/ui, kibo-ui/ for Kibo UI). Shared components like navbar,
+        footer, and forms live at the root level. This structure makes finding
+        and reusing components intuitive.
+      </>
+    ),
+    category: "initial",
+  },
+  {
     id: "setup-supabase",
     title: "Set Up Supabase Project",
     description: (
@@ -183,7 +274,9 @@ export const useSetupStepsStore = create<SetupStepsStore>()(
       },
 
       getStepsByCategory: (category) => {
-        return get().getSteps().filter((step) => step.category === category);
+        return get()
+          .getSteps()
+          .filter((step) => step.category === category);
       },
     }),
     {
