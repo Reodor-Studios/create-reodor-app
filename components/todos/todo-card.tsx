@@ -31,9 +31,9 @@ type TodoCardProps = {
 };
 
 const priorityColors = {
-  low: "bg-blue-100 text-blue-800 border-blue-200",
-  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  high: "bg-red-100 text-red-800 border-red-200",
+  low: "bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800",
+  medium: "bg-yellow-50 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
+  high: "bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800",
 };
 
 const priorityLabels = {
@@ -138,7 +138,7 @@ export function TodoCard({ todo }: TodoCardProps) {
                       variant="outline"
                       className={`text-xs flex items-center gap-1 ${
                         isOverdue
-                          ? "bg-red-50 text-red-700 border-red-200"
+                          ? "bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800"
                           : "bg-muted"
                       }`}
                     >
@@ -256,7 +256,7 @@ export function TodoCard({ todo }: TodoCardProps) {
                         variant="outline"
                         className={`text-xs flex items-center gap-1 ${
                           isOverdue
-                            ? "bg-red-50 text-red-700 border-red-200"
+                            ? "bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800"
                             : "bg-muted"
                         }`}
                       >

@@ -52,7 +52,17 @@ create policy "Todo attachments are viewable by todo owner"
 -- Users can upload their own media
 create policy "Users can insert their own media"
   on public.media for insert
-  with check (auth.uid() = owner_id);
+  with check (
+    auth.uid() = owner_id
+    and (
+      -- For todo attachments, verify the user owns the todo
+      (media_type = 'todo_attachment' and todo_id in (
+        select id from public.todos where user_id = auth.uid()
+      ))
+      -- For other media types (avatar, etc), just check ownership
+      or media_type != 'todo_attachment'
+    )
+  );
 
 -- Users can update their own media
 create policy "Users can update their own media"
