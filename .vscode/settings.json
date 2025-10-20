@@ -16,6 +16,22 @@
     "http",
     "net"
   ],
+  // ESLint configuration
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.options": {
+    "overrideConfigFile": "eslint.config.mjs"
+  },
+  // Editor settings
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  // TypeScript files (except Supabase functions which use Deno)
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
   },

@@ -438,7 +438,7 @@ export function ProfileForm({
                       </p>
 
                       <p className="mt-3 text-sm">
-                        Skriv <strong>"{deleteMyUserText}"</strong> for å sende
+                        Skriv <strong>&ldquo;{deleteMyUserText}&rdquo;</strong> for å sende
                         bekreftelseslenke:
                       </p>
                     </AlertDialogDescription>

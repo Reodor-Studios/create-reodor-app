@@ -249,7 +249,7 @@ export function SetupProject() {
                 <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
                   <p className="text-sm font-medium text-green-700 dark:text-green-300 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" />
-                    Congratulations! You've completed all setup steps. Your
+                    Congratulations! You&apos;ve completed all setup steps. Your
                     project is ready to go!
                   </p>
                 </div>

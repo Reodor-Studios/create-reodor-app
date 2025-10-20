@@ -65,8 +65,9 @@ export default function FAQPage() {
 
           {/* Categories */}
           <div className="flex flex-wrap justify-center gap-2 mb-12">
-            {faqCategories.map((category, index) => (
+            {faqCategories.map((category) => (
               <Button
+                key={category.id}
                 variant={
                   selectedCategory === category.id ? "default" : "outline"
                 }
@@ -98,8 +99,8 @@ export default function FAQPage() {
                 </CardContent>
               </Card>
             ) : (
-              filteredFaqs.map((faq, index) => (
-                <Card>
+              filteredFaqs.map((faq) => (
+                <Card key={faq.id}>
                   <Collapsible
                     open={openItems.includes(faq.id)}
                     onOpenChange={() => toggleItem(faq.id)}
