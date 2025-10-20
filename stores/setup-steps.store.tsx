@@ -442,6 +442,25 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "services",
   },
   {
+    id: "setup-google-oauth",
+    title: "Configure Google OAuth (Optional)",
+    description: (
+      <>
+        <strong>Only if you want Google Sign-In:</strong> Enable Google OAuth
+        for seamless one-click authentication. Create OAuth credentials in
+        Google Cloud Console, configure Supabase with your credentials, and link
+        your local and remote Supabase projects. Run{" "}
+        <InlineCode>bun run auth:google</InlineCode> for automated setup. See
+        the complete guide in{" "}
+        <InlineCode>docs/technical/google-auth-setup.md</InlineCode>.{" "}
+        <strong>
+          If you don't need Google OAuth, check this off to mark it complete.
+        </strong>
+      </>
+    ),
+    category: "services",
+  },
+  {
     id: "setup-stripe",
     title: "Set Up Stripe (Optional)",
     description: (
@@ -570,6 +589,27 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
         Deploy your Next.js application to Vercel for production hosting.
         Connect your GitHub repository, configure environment variables in
         Vercel dashboard, and enable automatic deployments on push to main.
+      </>
+    ),
+    category: "deployment",
+  },
+  {
+    id: "setup-railway-custom-domain",
+    title: "Configure Railway Custom Domain (Optional)",
+    description: (
+      <>
+        <strong>If deploying to Railway:</strong> Set up a custom domain for
+        your Railway-deployed application. Navigate to your service settings,
+        find Networking → Public Networking, and click + Custom Domain. Add the
+        provided CNAME record to your DNS provider (Cloudflare, Namecheap,
+        etc.). Railway automatically issues SSL certificates. For root domains,
+        ensure your DNS provider supports CNAME flattening or ALIAS records. See{" "}
+        <InlineCode>docs/technical/railway-custom-domain.md</InlineCode> for
+        detailed setup instructions including Cloudflare-specific configuration.{" "}
+        <strong>
+          If not using Railway or custom domains, check this off to mark it
+          complete.
+        </strong>
       </>
     ),
     category: "deployment",

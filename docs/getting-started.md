@@ -3168,6 +3168,269 @@ Linking creates a connection between your local development environment and your
 
 </details>
 
+## Step 12: Configure Google OAuth (Optional)
+
+If you want to enable Google Sign-In for your application, you'll need to configure Google OAuth through both Google Cloud Platform and Supabase. This step is optional but provides a seamless authentication experience for users.
+
+### Why Add Google OAuth?
+
+- **Better user experience** - One-click sign-in without passwords
+- **Higher conversion** - Users are more likely to sign up with familiar OAuth providers
+- **Secure by default** - Google handles authentication and verification
+- **Profile data** - Automatically get user's name and avatar
+
+### Quick Setup Overview
+
+1. **Create OAuth credentials in Google Cloud Console**
+2. **Configure Supabase with your Google credentials**
+3. **Link local and remote Supabase projects** (required for OAuth to work)
+4. **Test the Google Sign-In flow**
+
+### Detailed Setup Guide
+
+For complete step-by-step instructions including:
+
+- Google Cloud Platform setup and OAuth consent screen configuration
+- Supabase configuration (both automated and manual methods)
+- Local development and production environment setup
+- Testing and troubleshooting common issues
+- Understanding the OAuth authentication flow
+
+**See the full guide:** [`docs/technical/google-auth-setup.md`](../technical/google-auth-setup.md)
+
+### Quick Command Reference
+
+```bash
+# Automated Supabase configuration (recommended)
+bun run auth:google
+
+# Link local to remote Supabase (required for OAuth)
+supabase link --project-ref your-project-ref
+
+# Restart Supabase with new OAuth config
+bun db:reset
+```
+
+<details>
+<summary>What gets configured when you set up Google OAuth?</summary>
+
+**Google Cloud Platform:**
+
+- OAuth 2.0 client credentials (Client ID and Secret)
+- OAuth consent screen with your app branding
+- Authorized redirect URIs for both local and production environments
+- Required OAuth scopes (openid, email, profile)
+
+**Supabase:**
+
+- Google OAuth provider enabled in Authentication settings
+- Client ID and Client Secret stored securely
+- OAuth callback URLs configured for your environments
+
+**Your Application:**
+
+- Environment variables for Google credentials
+- OAuth callback route (`app/auth/oauth/route.ts`) handles the flow
+- Google Sign-In button in auth forms
+- Automatic profile creation when users sign in with Google
+
+**Security Features:**
+
+- PKCE (Proof Key for Code Exchange) flow for enhanced security
+- HTTP-only session cookies (not accessible to JavaScript)
+- Automatic token refresh handled by Supabase
+- Row Level Security policies apply to OAuth users
+
+</details>
+
+<details>
+<summary>Can I skip this step?</summary>
+
+Yes! Google OAuth is completely optional. Your application works perfectly fine with:
+
+- **Email/OTP authentication** - Users sign in with email and a one-time code
+- **Email/Password authentication** - Traditional email and password sign-in
+
+You can always add Google OAuth later if you decide you need it. The authentication system is designed to work with or without OAuth providers.
+
+**When to add Google OAuth:**
+
+- You want to reduce friction in the sign-up process
+- Your target users expect social login options
+- You're building a consumer-facing application
+- You want automatic profile data (name, avatar) from Google
+
+**When to skip it:**
+
+- You're building an internal tool or admin dashboard
+- Your target users prefer traditional authentication
+- You want to minimize external dependencies
+- You're just getting started and want to keep things simple
+
+</details>
+
+## Step 13: Deploy to Railway with Custom Domain (Optional)
+
+Railway provides an easy way to deploy your Next.js application with automatic deployments, environment variables, and custom domain support. This step is optional but recommended for production hosting.
+
+### Why Deploy to Railway?
+
+- **Simple deployment** - Config-as-code with `railway.toml`
+- **Automatic deployments** - Push to main branch to deploy
+- **Environment variables** - Manage via CLI or dashboard
+- **Custom domains** - Free SSL certificates with Let's Encrypt
+- **Database integration** - Works seamlessly with remote Supabase
+
+### Quick Deployment Overview
+
+1. **Set up Railway CLI and link your project**
+2. **Push environment variables to Railway**
+3. **Deploy your application** (automatic on git push)
+4. **Configure custom domain** (optional)
+
+### Railway Deployment Guide
+
+For complete deployment instructions including:
+
+- Railway CLI setup and project linking
+- Environment variable management
+- Database migration handling
+- Health checks and monitoring
+- Troubleshooting deployment issues
+
+**See the deployment guide:** [`docs/technical/railway-deployment.md`](../technical/railway-deployment.md)
+
+### Quick Command Reference
+
+```bash
+# Set up Railway CLI and link project
+bun run railway:setup
+
+# Push environment variables from .env.production
+bun run railway:push-env
+
+# Deploy (or push to main for automatic deployment)
+railway up
+
+# View logs
+railway logs --follow
+```
+
+### Custom Domain Setup
+
+Once your app is deployed, you can add a custom domain for a professional URL.
+
+#### Generate Railway Domain First
+
+1. Navigate to your service's **Settings**
+2. Go to **Networking** → **Public Networking**
+3. Click **Generate Domain**
+4. Railway provides a domain like `your-app.up.railway.app`
+
+#### Add Custom Domain
+
+1. In Railway settings, click **+ Custom Domain**
+2. Enter your domain (e.g., `yourdomain.com` or `api.yourdomain.com`)
+3. Railway provides a CNAME value (e.g., `g05ns7.up.railway.app`)
+4. Add a CNAME record in your DNS provider:
+   - **Name:** `@` (for root) or subdomain
+   - **Type:** CNAME
+   - **Value:** Railway's CNAME value
+5. Wait for verification (DNS can take up to 72 hours, usually minutes)
+6. Railway automatically issues an SSL certificate
+
+#### Important Considerations
+
+**DNS Provider Requirements:**
+
+For root domains (e.g., `yourdomain.com`), your DNS provider must support:
+- **CNAME Flattening** (Cloudflare, Namecheap)
+- **ALIAS Records** (DNSimple)
+- **ANAME Records** (bunny.net)
+
+**Not supported:** AWS Route 53, Hostinger, GoDaddy, NameSilo
+
+**Cloudflare Users:**
+
+If using Cloudflare, you must:
+- Enable proxying (orange cloud icon)
+- Set SSL/TLS to **Full** (NOT Full (Strict))
+- Enable Universal SSL
+
+<details>
+<summary>Port Configuration for Railway</summary>
+
+Railway requires your application to listen on the correct port.
+
+**Next.js Application (this project):**
+
+The project is already configured to use Railway's `PORT` environment variable in `next.config.js`:
+
+```javascript
+const port = process.env.PORT || 3000;
+```
+
+And the start command in `package.json`:
+
+```json
+{
+  "scripts": {
+    "start": "next start -p ${PORT:-3000}"
+  }
+}
+```
+
+**No additional configuration needed!** Railway automatically provides the `PORT` variable.
+
+</details>
+
+<details>
+<summary>Complete Custom Domain Guide</summary>
+
+For detailed instructions including:
+
+- Root domain configuration with www redirect
+- Cloudflare-specific setup (proxy, SSL/TLS, bulk redirects)
+- Wildcard domain configuration
+- Target port setup for multi-port apps
+- SSL certificate troubleshooting
+- Common DNS errors and solutions
+
+**See the complete guide:** [`docs/technical/railway-custom-domain.md`](../technical/railway-custom-domain.md)
+
+</details>
+
+<details>
+<summary>Can I skip Railway deployment?</summary>
+
+Yes! Railway deployment is completely optional. You have several hosting alternatives:
+
+**Other hosting options:**
+
+- **Vercel** - Excellent Next.js support, generous free tier
+- **Netlify** - Good for static sites and serverless functions
+- **AWS Amplify** - Full AWS integration if you're already on AWS
+- **Fly.io** - Great for global deployment
+- **Self-hosted** - Docker containers on your own infrastructure
+
+**When to use Railway:**
+
+- You want simple config-as-code deployment
+- You prefer CLI-based workflows
+- You need custom domain with free SSL
+- Your app needs persistent storage or TCP connections
+
+**When to skip it:**
+
+- You're just developing locally
+- You prefer Vercel's deployment experience
+- You have specific hosting requirements
+- You want to minimize cloud dependencies initially
+
+You can always deploy later when you're ready for production!
+
+</details>
+
 ### Understanding the Database Development Workflow
 
 Now that you understand the basics, let's dive into how you'll actually work with the database day-to-day. This workflow is **critical** to understand - it's how you'll extend your schema safely and deploy changes to production.
