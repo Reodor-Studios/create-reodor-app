@@ -1105,7 +1105,6 @@ program
     "--keep-docs",
     "Keep generated documentation (BUSINESS_CONTEXT.md, SCAFFOLD.md)",
   )
-  .option("--keep-env", "Keep .env.local file")
   .action(async (options) => {
     console.log("🔄 Resetting scaffold state...\n");
 
@@ -1129,13 +1128,8 @@ program
       console.log("ℹ️  Kept documentation files (--keep-docs)");
     }
 
-    // Remove .env.local unless --keep-env
-    if (!options.keepEnv && existsSync(PATHS.envLocal)) {
-      await fs.unlink(PATHS.envLocal);
-      console.log("✅ Removed .env.local");
-    } else if (options.keepEnv) {
-      console.log("ℹ️  Kept .env.local file (--keep-env)");
-    }
+    // NEVER remove .env.local - it contains important API keys and environment variables
+    console.log("ℹ️  Preserved .env.local file (contains API keys and environment variables)");
 
     console.log(
       '\n✅ Scaffold state reset. Run "bun run scaffold" to start over.\n',
