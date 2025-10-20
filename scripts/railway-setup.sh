@@ -89,9 +89,11 @@ echo ""
 info "Linking to Railway project..."
 echo ""
 
-if [ -f ".railway/config.json" ]; then
+# Check if already linked by trying railway status
+if railway status &> /dev/null; then
     warning "Project appears to be already linked"
-    info "Existing configuration found at .railway/config.json"
+    CURRENT_PROJECT=$(railway status 2>&1 | grep "Project:" | cut -d: -f2 | xargs)
+    info "Currently linked to: $CURRENT_PROJECT"
     echo ""
     read -p "Do you want to re-link the project? (y/N): " -r
     echo ""

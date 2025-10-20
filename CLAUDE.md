@@ -652,17 +652,19 @@ The `railway.toml` file at the project root configures:
 
 #### Environment Variables
 
+Before pushing environment variables, create a `.env.production` file with your production credentials (Supabase, Google OAuth, Resend API key, CRON_SECRET, etc.).
+
 Use the provided script to manage environment variables:
 
 ```bash
-# Interactive mode - prompts for each variable
+# Copy from .env.production (default) - just press Enter when prompted
 bun run railway:push-env
 
 # Or manually set via CLI
 railway variables --set VARIABLE_NAME=value
 ```
 
-All required environment variables are documented in `.env.example`.
+The script will check for `.env.production` and prompt you to create it if it doesn't exist. All required environment variables are documented in `.env.example`.
 
 #### Deployment Options
 

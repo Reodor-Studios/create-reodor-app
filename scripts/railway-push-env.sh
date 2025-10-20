@@ -47,8 +47,8 @@ if ! railway whoami &> /dev/null; then
     exit 1
 fi
 
-# Check if project is linked
-if [ ! -f ".railway/config.json" ]; then
+# Check if project is linked by trying to get status
+if ! railway status &> /dev/null; then
     error "Project is not linked to Railway"
     info "Please run: bun run railway:setup"
     exit 1
@@ -60,22 +60,58 @@ if [ ! -f ".env.example" ]; then
     exit 1
 fi
 
+# Check if .env.production exists, if not prompt to create it
+if [ ! -f ".env.production" ]; then
+    echo ""
+    warning ".env.production file not found"
+    echo ""
+    info "Before pushing variables to Railway, you need to create a ${BLUE}.env.production${NC} file"
+    info "This file should contain your PRODUCTION external service credentials:"
+    echo ""
+    echo "  ${YELLOW}Required External Services:${NC}"
+    echo "  • Supabase (project URL, anon key, secret key, database URL)"
+    echo "  • Google OAuth (client ID and secret)"
+    echo "  • Resend (API key for transactional emails)"
+    echo "  • CRON_SECRET (generate with: openssl rand -base64 32)"
+    echo ""
+    info "You can copy .env.example as a starting point:"
+    echo "  ${BLUE}cp .env.example .env.production${NC}"
+    echo ""
+    info "Then fill in your PRODUCTION credentials in .env.production"
+    echo ""
+    read -p "Would you like to create .env.production now? (Y/n): " -r CREATE_ENV
+    echo ""
+
+    # Default to Yes if user just presses Enter
+    CREATE_ENV=${CREATE_ENV:-Y}
+
+    if [[ $CREATE_ENV =~ ^[Yy]$ ]]; then
+        cp .env.example .env.production
+        success "Created .env.production from .env.example"
+        echo ""
+        warning "Please edit .env.production and add your PRODUCTION credentials"
+        info "After updating .env.production, run this script again:"
+        echo "  ${BLUE}bun run railway:push-env${NC}"
+        exit 0
+    else
+        info "Please create .env.production manually, then run this script again"
+        exit 0
+    fi
+fi
+
 echo ""
 info "Choose how to set environment variables:"
 echo ""
-echo "  1. ${BLUE}Interactive mode${NC} - Enter each value manually"
-echo "  2. ${BLUE}Copy from .env.production${NC} - Copy values from existing .env.production file"
+echo "  ${GREEN}1.${NC} ${BLUE}Copy from .env.production${NC} - Copy values from existing .env.production file ${GREEN}(default)${NC}"
+echo "  ${GREEN}2.${NC} ${BLUE}Interactive mode${NC} - Enter each value manually"
 echo ""
-read -p "Select option (1 or 2): " -r MODE
+read -p "Select option (1 or 2) [1]: " -r MODE
 echo ""
 
-if [ "$MODE" == "2" ]; then
-    if [ ! -f ".env.production" ]; then
-        error ".env.production file not found"
-        error "Please create .env.production with your values or use interactive mode (option 1)"
-        exit 1
-    fi
+# Default to option 1 if user just presses Enter
+MODE=${MODE:-1}
 
+if [ "$MODE" == "1" ]; then
     info "Reading variables from .env.production..."
     echo ""
 
@@ -110,7 +146,7 @@ if [ "$MODE" == "2" ]; then
         fi
     done < .env.production
 
-elif [ "$MODE" == "1" ]; then
+elif [ "$MODE" == "2" ]; then
     info "Interactive mode - enter values for each variable"
     info "Press Enter to skip a variable"
     echo ""

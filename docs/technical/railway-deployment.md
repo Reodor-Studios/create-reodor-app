@@ -93,6 +93,8 @@ railway login
 railway link
 ```
 
+**Note:** Railway CLI stores configuration globally in `~/.railway/config.json` rather than in your project directory. The `railway status` command can be used to verify your project is linked correctly.
+
 ### Step 3: Configure Environment Variables
 
 Environment variables can be set in two ways:
@@ -103,10 +105,21 @@ Environment variables can be set in two ways:
 bun run railway:push-env
 ```
 
+**Important:** Before running this command, ensure you have a `.env.production` file with your production credentials. If it doesn't exist, the script will prompt you to create it.
+
+The `.env.production` file should contain credentials for:
+
+- Supabase (production project)
+- Google OAuth (production credentials)
+- Resend (production API key)
+- CRON_SECRET (generate with `openssl rand -base64 32`)
+
 This script offers two modes:
 
-1. **Interactive mode** - Enter each value manually with helpful prompts
-2. **Copy from .env.local** - Automatically copy from your local `.env.local` file
+1. **Copy from .env.production** (default) - Automatically copy from your `.env.production` file
+2. **Interactive mode** - Enter each value manually with helpful prompts
+
+Simply press Enter to use the default option (copy from .env.production).
 
 #### Option B: Manual Configuration
 
