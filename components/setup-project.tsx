@@ -118,7 +118,7 @@ function CategorySection({
 
   return (
     <div className="space-y-4" id={`section-${category}`}>
-      <BlurFade delay={baseDelay} duration={0.4} inView>
+      <BlurFade delay={baseDelay} duration={0.2} inView>
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-lg ${config.bgColor}`}>
             <Icon className={`w-6 h-6 ${config.color}`} />
@@ -135,7 +135,7 @@ function CategorySection({
           <StepCard
             key={step.id}
             step={step}
-            delay={baseDelay + 0.05 + index * 0.05}
+            delay={baseDelay + 0.001 + index * 0.001}
           />
         ))}
       </div>
@@ -181,11 +181,10 @@ export function SetupProject() {
               <p className="text-sm">
                 Press <InlineCode>⌘ + P</InlineCode> (Mac) or{" "}
                 <InlineCode>Ctrl + P</InlineCode> (Windows/Linux) to open the
-                file navigator in your IDE. You can fuzzy search for any file
-                - try typing <InlineCode>app/faq/page</InlineCode> and watch
-                it instantly find the file! This works throughout your
-                codebase, making navigation lightning fast. Give it a try
-                right now!
+                file navigator in your IDE. You can fuzzy search for any file -
+                try typing <InlineCode>app/faq/page</InlineCode> and watch it
+                instantly find the file! This works throughout your codebase,
+                making navigation lightning fast. Give it a try right now!
               </p>
             </AlertDescription>
           </Alert>
@@ -201,12 +200,12 @@ export function SetupProject() {
                 localStorage persistence
               </p>
               <p className="text-sm">
-                Your progress is automatically saved and persists across
-                browser sessions. Check out the implementation in{" "}
+                Your progress is automatically saved and persists across browser
+                sessions. Check out the implementation in{" "}
                 <InlineCode>stores/setup-steps.store.tsx</InlineCode> and{" "}
                 <InlineCode>app/page.tsx</InlineCode> to see how it works. Try
-                refreshing the page or closing and reopening your browser -
-                your checked items will remain!
+                refreshing the page or closing and reopening your browser - your
+                checked items will remain!
               </p>
             </AlertDescription>
           </Alert>
@@ -268,25 +267,25 @@ export function SetupProject() {
           <CategorySection
             category="initial"
             steps={getStepsByCategory("initial")}
-            baseDelay={0.25}
+            baseDelay={0.05}
           />
 
           <CategorySection
             category="database"
             steps={getStepsByCategory("database")}
-            baseDelay={0.35}
+            baseDelay={0.1}
           />
 
           <CategorySection
             category="services"
             steps={getStepsByCategory("services")}
-            baseDelay={0.45}
+            baseDelay={0.15}
           />
 
           <CategorySection
             category="deployment"
             steps={getStepsByCategory("deployment")}
-            baseDelay={0.55}
+            baseDelay={0.2}
           />
         </div>
       </div>
