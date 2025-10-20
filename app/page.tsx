@@ -8,6 +8,7 @@ import Prism from "@/components/Prism";
 import { companyConfig } from "@/lib/brand";
 import { SetupProject } from "@/components/setup-project";
 import { InstallCommand } from "@/components/install-command";
+import { TechStackMarquee } from "@/components/tech-stack-marquee";
 
 export default function Home() {
   const scrollToSteps = () => {
@@ -83,6 +84,9 @@ export default function Home() {
           </BlurFade>
         </div>
       </section>
+
+      {/* Tech Stack Marquee */}
+      <TechStackMarquee />
 
       {/* Setup Project Section */}
       <SetupProject />
