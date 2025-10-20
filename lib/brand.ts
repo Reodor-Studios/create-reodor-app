@@ -39,7 +39,7 @@ export const companyConfig = {
     shortDescription: "COMPANY_SHORT_DESCRIPTION",
     domain: "example.com",
     url: "https://example.com",
-    githubUrl: "https://github.com/reodor-studios/create-reodor-app",
+    githubUrl: "https://github.com/Reodor-Studios/create-reodor-app",
     supportEmail: "support@example.com",
     supportPhone: "+47 000 00 000",
     address: {

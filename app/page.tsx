@@ -7,6 +7,7 @@ import { Github } from "lucide-react";
 import Prism from "@/components/Prism";
 import { companyConfig } from "@/lib/brand";
 import { SetupProject } from "@/components/setup-project";
+import { InstallCommand } from "@/components/install-command";
 
 export default function Home() {
   const scrollToSteps = () => {
@@ -75,6 +76,10 @@ export default function Home() {
                 </a>
               </Button>
             </div>
+          </BlurFade>
+
+          <BlurFade delay={0.4} duration={0.5} inView>
+            <InstallCommand className="max-w-2xl mx-auto mt-8" />
           </BlurFade>
         </div>
       </section>
