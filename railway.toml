@@ -1,0 +1,26 @@
+# Railway deployment configuration for create-reodor-app
+# Learn more: https://docs.railway.com/reference/config-as-code
+
+[build]
+# Use Nixpacks builder for Bun support
+builder = "NIXPACKS"
+
+# Build command - runs the Next.js production build
+buildCommand = "bun run build"
+
+[deploy]
+# Start command - runs the production Next.js server
+startCommand = "bun start"
+
+# Health check configuration
+# Railway will check this path after deployment to ensure the app is healthy
+healthcheckPath = "/"
+healthcheckTimeout = 100
+
+# Restart policy - automatically restart on failure
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Note: Database migrations are handled by Supabase GitHub Preview Integration
+# and should NOT be run here. If you need to run migrations, use the Supabase CLI
+# or GitHub integration.

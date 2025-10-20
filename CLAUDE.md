@@ -619,6 +619,76 @@ All new features and significant functionality changes must be documented in the
 - Do NOT run `bun dev` or `bun build` to validate your changes. I will do that.
 - After completing large multi-file changes that affect TypeScript types or interfaces, run `bun type:check` to verify type correctness across the entire codebase before considering the task complete.
 
+### Railway Deployment
+
+The project is configured for deployment to Railway using config-as-code via `railway.toml`.
+
+#### Quick Start
+
+```bash
+# 1. Set up Railway CLI and link project
+bun run railway:setup
+
+# 2. Push environment variables to Railway
+bun run railway:push-env
+
+# 3. Deploy (or push to main branch for automatic deployment)
+railway up
+```
+
+#### Configuration
+
+The `railway.toml` file at the project root configures:
+
+- **Builder**: Nixpacks with Bun support
+- **Build Command**: `bun run build`
+- **Start Command**: `bun start`
+- **Health Checks**: Enabled at `/` with 100s timeout
+- **Restart Policy**: Automatic restart on failure (max 3 retries)
+
+#### Database Migrations
+
+**Important**: Database migrations are handled by the Supabase GitHub Preview Integration, NOT by Railway. The Railway deployment does not include pre-deploy migration commands to prevent conflicts.
+
+#### Environment Variables
+
+Use the provided script to manage environment variables:
+
+```bash
+# Interactive mode - prompts for each variable
+bun run railway:push-env
+
+# Or manually set via CLI
+railway variables --set VARIABLE_NAME=value
+```
+
+All required environment variables are documented in `.env.example`.
+
+#### Deployment Options
+
+**Automatic (Recommended):**
+
+Push to your main branch, and Railway automatically deploys via GitHub webhook.
+
+**Manual:**
+
+```bash
+railway up              # Deploy current directory
+railway logs --follow   # View deployment logs
+railway open            # Open deployment in browser
+```
+
+#### Monitoring and Logs
+
+```bash
+railway logs            # View recent logs
+railway logs --follow   # Real-time log streaming
+railway status          # Check deployment status
+railway variables       # List environment variables
+```
+
+For detailed deployment instructions, troubleshooting, and best practices, see `docs/technical/railway-deployment.md`.
+
 ## Scheduled Tasks & Automation
 
 ### Cron Jobs
