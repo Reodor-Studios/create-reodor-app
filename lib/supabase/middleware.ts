@@ -33,7 +33,15 @@ function isPublicRoute(pathname: string): boolean {
   return publicRoutePatterns.some((pattern) => pattern.test(pathname));
 }
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(
+  request: NextRequest,
+  response?: NextResponse,
+) {
+  // Early return for OAuth callback to avoid conflicts
+  if (request.nextUrl.pathname === "/auth/oauth") {
+    return response || NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
