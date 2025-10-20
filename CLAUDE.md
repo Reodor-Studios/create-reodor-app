@@ -545,6 +545,29 @@ Use the BlurFade component from `@/components/magicui/blur-fade` for consistent 
 
 - Email/OTP or Google OAuth via Supabase Auth
 - Automatic profile creation on signup
+- Google Sign-In setup guide: `docs/technical/google-auth-setup.md`
+
+#### Google OAuth Integration
+
+The application supports Google OAuth via Supabase Auth with the following implementation:
+
+**Components:**
+- `components/auth/google-sign-in-button.tsx` - Google sign-in button
+- `components/auth/auth-form.tsx` - Combined auth form with Google OAuth
+- `components/auth/use-auth-form.ts` - Auth flow logic and state management
+- `app/auth/oauth/route.ts` - OAuth callback handler for PKCE flow
+
+**Setup:**
+1. Configure OAuth credentials in Google Cloud Console
+2. Run `./scripts/configure-google-auth.sh` to configure Supabase
+3. See complete setup guide in `docs/technical/google-auth-setup.md`
+
+**Flow:**
+1. User clicks "Sign in with Google" button
+2. Redirected to Google consent screen
+3. Returns to OAuth callback with authorization code
+4. Code exchanged for Supabase session
+5. Profile automatically created in database
 
 ## State Management
 

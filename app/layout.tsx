@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import {
   Space_Grotesk,
-  Geist,
   Inter,
   JetBrains_Mono,
   PT_Serif,

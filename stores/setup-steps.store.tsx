@@ -336,6 +336,22 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "database",
   },
   {
+    id: "setup-favicon",
+    title: "Set Up Favicon and App Icons",
+    description: (
+      <>
+        Generate professional favicons for all platforms using RealFaviconGenerator
+        (<InlineCode>realfavicongenerator.net</InlineCode>). Upload your logo,
+        customize platform-specific settings, download the package, and install
+        files to <InlineCode>app/</InlineCode> and <InlineCode>public/</InlineCode>
+        directories. See detailed guide in{" "}
+        <InlineCode>docs/technical/favicon-setup.md</InlineCode> for complete
+        installation and customization instructions.
+      </>
+    ),
+    category: "services",
+  },
+  {
     id: "setup-resend-account",
     title: "Create Resend Account",
     description: (

@@ -31,7 +31,8 @@
     "email:export": "sh scripts/ensure-transactional-deps-installed.sh && cd transactional && bun run export",
     "email:sync": "bun run with-env bun scripts/sync-email-template.sh",
     "railway:setup": "sh scripts/railway-setup.sh",
-    "railway:push-env": "sh scripts/railway-push-env.sh"
+    "railway:push-env": "sh scripts/railway-push-env.sh",
+    "auth:google": "sh scripts/configure-google-auth.sh"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.21",

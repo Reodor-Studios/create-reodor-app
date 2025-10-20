@@ -3783,6 +3783,72 @@ The setup steps are organized into categories:
 - **External Services** - Email, analytics, mapping services
 - **Deployment** - GitHub integration and production deployment
 
+### Customize Your Branding
+
+Before diving into development, consider setting up your application's visual identity:
+
+#### Set Up Favicon and App Icons
+
+Generate professional favicons and app icons for all platforms (iOS, Android, desktop browsers, PWA):
+
+1. **Visit RealFaviconGenerator** - Go to [realfavicongenerator.net](https://realfavicongenerator.net/)
+2. **Upload your logo** - Use a square image (minimum 512x512 pixels recommended)
+3. **Customize platform settings** - Configure iOS, Android, and desktop-specific options
+4. **Download package** - Get your generated favicon files
+5. **Install files** - Download files to `app/` and `public/` directories
+
+**Quick installation** (replace URLs with your generated links):
+
+```bash
+# Download favicon files to app/
+curl -o app/icon1.png [YOUR_URL]/icon1.png
+curl -o app/icon0.svg [YOUR_URL]/icon0.svg
+curl -o app/favicon.ico [YOUR_URL]/favicon.ico
+curl -o app/apple-icon.png [YOUR_URL]/apple-icon.png
+curl -o app/manifest.json [YOUR_URL]/manifest.json
+
+# Download web app manifest icons to public/
+curl -o public/web-app-manifest-192x192.png [YOUR_URL]/web-app-manifest-192x192.png
+curl -o public/web-app-manifest-512x512.png [YOUR_URL]/web-app-manifest-512x512.png
+
+# Verify files were downloaded
+ls -lh app/*.{png,svg,ico,json} public/*.png
+```
+
+**Next.js automatically discovers** these files in the `app/` directory and serves them at the appropriate paths. No additional configuration needed!
+
+**Customize the web app manifest** (`app/manifest.json`) with your app's name, colors, and settings. See the comprehensive guide at `docs/technical/favicon-setup.md` for:
+
+- Detailed installation instructions
+- Manifest customization options
+- Testing procedures
+- Troubleshooting common issues
+- Advanced configuration for PWAs
+
+#### Update Brand Configuration
+
+After setting up your favicon, update your brand configuration in `lib/brand.ts`:
+
+```typescript
+export const companyConfig = {
+  name: "Your App Name",  // Should match manifest.json
+  tagline: "Your App Tagline",
+  description: "Your full app description",
+  shortDescription: "Brief app description",
+  // ... rest of config
+};
+
+export const brandColors = {
+  light: {
+    primary: "#a494c4",  // Should align with manifest theme_color
+    // ... rest of colors
+  },
+  // ...
+};
+```
+
+This ensures consistency across your application, metadata, and app icons.
+
 ### Things to Try
 
 - **Explore the codebase** - Check out `app/page.tsx` for the landing page
