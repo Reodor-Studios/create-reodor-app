@@ -3,6 +3,19 @@ import { addMinutes, subDays } from "date-fns";
 import { AuthUser, generateToken, seedPasswordToEncrypted } from "./shared";
 
 /**
+ * Type definition for the raw_user_meta_data structure
+ */
+interface UserMetadata {
+    sub?: string;
+    email?: string;
+    full_name?: string;
+    avatar_url?: string;
+    role?: string;
+    email_verified?: boolean;
+    phone_verified?: boolean;
+}
+
+/**
  * Define test users with different personas
  */
 export const testUsersData: AuthUser[] = [
@@ -105,29 +118,6 @@ export async function createTestUsersWithAuth(seed: SeedClient) {
 
     console.log(`-- Created ${allUsers.length} users`);
     return allUsers;
-}
-
-/**
- * Creates profiles for all users
- * This is needed because triggers are disabled during seed execution
- */
-export async function createUserProfiles(
-    seed: SeedClient,
-    users: usersScalars[],
-) {
-    console.log("-- Creating user profiles...");
-
-    await seed.profiles(
-        users.map((user) => ({
-            id: user.id,
-            email: user.email!,
-            full_name: user.raw_user_meta_data?.full_name || null,
-            avatar_url: user.raw_user_meta_data?.avatar_url || null,
-            role: user.raw_user_meta_data?.role || "user",
-        })),
-    );
-
-    console.log(`-- Created ${users.length} profiles`);
 }
 
 /**
