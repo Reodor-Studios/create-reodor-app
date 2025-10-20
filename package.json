@@ -1,9 +1,6 @@
 {
   "private": true,
   "scripts": {
-    "scaffold": "tsx scripts/scaffold.ts",
-    "scaffold:status": "tsx scripts/scaffold.ts status",
-    "scaffold:reset": "tsx scripts/scaffold.ts reset",
     "type:check": "tsc --noEmit",
     "with-env": "dotenv -e .env.local --",
     "dev": "next dev --turbopack",
@@ -32,7 +29,10 @@
     "email:sync": "bun run with-env bun scripts/sync-email-template.sh",
     "railway:setup": "sh scripts/railway-setup.sh",
     "railway:push-env": "sh scripts/railway-push-env.sh",
-    "auth:google": "bun run with-env sh scripts/configure-google-auth.sh"
+    "auth:google": "bun run with-env sh scripts/configure-google-auth.sh",
+    "scaffold": "bun run with-env tsx scripts/scaffold.ts",
+    "scaffold:status": "bun run with-env tsx scripts/scaffold.ts status",
+    "scaffold:reset": "bun run with-env tsx scripts/scaffold.ts reset"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.21",

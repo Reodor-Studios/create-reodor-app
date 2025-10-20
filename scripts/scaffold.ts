@@ -16,7 +16,7 @@ const PATHS = {
   brand: path.join(PROJECT_ROOT, "lib/brand.ts"),
   globals: path.join(PROJECT_ROOT, "app/globals.css"),
   envExample: path.join(PROJECT_ROOT, ".env.example"),
-  env: path.join(PROJECT_ROOT, ".env"),
+  envLocal: path.join(PROJECT_ROOT, ".env.local"),
   claudeMd: path.join(PROJECT_ROOT, "CLAUDE.md"),
 };
 
@@ -129,6 +129,65 @@ function printSuccess(message: string): void {
 
 function printInfo(message: string): void {
   console.log(`ℹ️  ${message}`);
+}
+
+// ============================================================================
+// API Key Management
+// ============================================================================
+
+async function ensureAnthropicApiKey(): Promise<void> {
+  // Check if ANTHROPIC_API_KEY is already in environment
+  if (process.env.ANTHROPIC_API_KEY) {
+    printInfo("Anthropic API key found in environment");
+    return;
+  }
+
+  // Try to load from .env.local if it exists
+  if (existsSync(PATHS.envLocal)) {
+    const envLocalContent = await fs.readFile(PATHS.envLocal, "utf-8");
+    const match = envLocalContent.match(/^ANTHROPIC_API_KEY=(.+)$/m);
+    if (match && match[1]) {
+      const apiKey = match[1].trim().replace(/["']/g, "");
+      process.env.ANTHROPIC_API_KEY = apiKey;
+      printInfo("Anthropic API key loaded from .env.local");
+      return;
+    }
+  }
+
+  // API key not found - prompt user
+  console.log("\n" + "=".repeat(70));
+  console.log("⚠️  ANTHROPIC_API_KEY not found");
+  console.log("=".repeat(70) + "\n");
+  console.log("The scaffold script requires an Anthropic API key to function.");
+  console.log(
+    "You can obtain an API key from: https://console.anthropic.com/settings/keys\n",
+  );
+
+  const apiKey = await prompt("Enter your Anthropic API key: ");
+
+  if (!apiKey || apiKey.trim().length === 0) {
+    throw new Error("Anthropic API key is required to run the scaffold script");
+  }
+
+  // Write to .env.local
+  const envLocalEntry = `\n# Anthropic API Key for scaffold script\nANTHROPIC_API_KEY=${apiKey.trim()}\n`;
+
+  if (existsSync(PATHS.envLocal)) {
+    // Append to existing file
+    const currentContent = await fs.readFile(PATHS.envLocal, "utf-8");
+    if (!currentContent.includes("ANTHROPIC_API_KEY")) {
+      await fs.appendFile(PATHS.envLocal, envLocalEntry);
+      printSuccess("Anthropic API key saved to .env.local");
+    }
+  } else {
+    // Create new .env.local file
+    await fs.writeFile(PATHS.envLocal, envLocalEntry.trim() + "\n");
+    printSuccess("Created .env.local with Anthropic API key");
+  }
+
+  // Set in current environment
+  process.env.ANTHROPIC_API_KEY = apiKey.trim();
+  printInfo("Anthropic API key loaded and ready for use");
 }
 
 // ============================================================================
@@ -734,20 +793,20 @@ ${iteration > 1 ? "Previous iterations may have missed some files. Search thorou
 async function phase4SetupEnvironment(): Promise<void> {
   printHeader("⚙️  PHASE 4: Environment Setup");
 
-  // Copy .env.example to .env
-  if (existsSync(PATHS.env)) {
+  // Copy .env.example to .env.local
+  if (existsSync(PATHS.envLocal)) {
     const overwrite = await prompt(
-      ".env file already exists. Overwrite? (y/N): ",
+      ".env.local file already exists. Overwrite? (y/N): ",
     );
     if (overwrite.toLowerCase() !== "y") {
-      console.log("Skipping .env file creation...\n");
+      console.log("Skipping .env.local file creation...\n");
     } else {
-      await copyFile(PATHS.envExample, PATHS.env);
-      printSuccess("Created .env file from .env.example");
+      await copyFile(PATHS.envExample, PATHS.envLocal);
+      printSuccess("Created .env.local file from .env.example");
     }
   } else {
-    await copyFile(PATHS.envExample, PATHS.env);
-    printSuccess("Created .env file from .env.example");
+    await copyFile(PATHS.envExample, PATHS.envLocal);
+    printSuccess("Created .env.local file from .env.example");
   }
 
   // Read .env.example to generate documentation
@@ -786,14 +845,14 @@ For each service in the .env.example file, create a section with:
   1. Sign up at [URL]
   2. Navigate to [specific page]
   3. Copy [specific key]
-  4. Paste into .env as [VARIABLE_NAME]
+  4. Paste into .env.local as [VARIABLE_NAME]
 - **Documentation**: Link to official docs
 - **Cost**: Free tier info or pricing notes
 - **Local Development**: Any special considerations for local dev
 
 ### Environment-Specific Configuration
 
-#### Local Development (.env)
+#### Local Development (.env.local)
 [What variables are needed locally]
 
 #### Production Deployment
@@ -877,9 +936,9 @@ Your project is now fully scaffolded and ready for development!
 
 #### 1. Complete Environment Setup
 \`\`\`bash
-# Fill in all required environment variables in .env
+# Fill in all required environment variables in .env.local
 # Follow the service-specific instructions above
-nano .env  # or use your preferred editor
+nano .env.local  # or use your preferred editor
 \`\`\`
 
 #### 2. Start Local Database
@@ -956,6 +1015,9 @@ async function runScaffold(options: ScaffoldOptions): Promise<void> {
   }
 
   console.log("🏗️  create-reodor-app Scaffold Setup\n");
+
+  // Ensure Anthropic API key is available before proceeding
+  await ensureAnthropicApiKey();
 
   const state = await loadState();
 
@@ -1043,7 +1105,7 @@ program
     "--keep-docs",
     "Keep generated documentation (BUSINESS_CONTEXT.md, SCAFFOLD.md)",
   )
-  .option("--keep-env", "Keep .env file")
+  .option("--keep-env", "Keep .env.local file")
   .action(async (options) => {
     console.log("🔄 Resetting scaffold state...\n");
 
@@ -1067,12 +1129,12 @@ program
       console.log("ℹ️  Kept documentation files (--keep-docs)");
     }
 
-    // Remove .env unless --keep-env
-    if (!options.keepEnv && existsSync(PATHS.env)) {
-      await fs.unlink(PATHS.env);
-      console.log("✅ Removed .env");
+    // Remove .env.local unless --keep-env
+    if (!options.keepEnv && existsSync(PATHS.envLocal)) {
+      await fs.unlink(PATHS.envLocal);
+      console.log("✅ Removed .env.local");
     } else if (options.keepEnv) {
-      console.log("ℹ️  Kept .env file (--keep-env)");
+      console.log("ℹ️  Kept .env.local file (--keep-env)");
     }
 
     console.log(
@@ -1133,7 +1195,7 @@ program
       "  SCAFFOLD.md:         " + (existsSync(PATHS.scaffold) ? "✅" : "❌"),
     );
     console.log(
-      "  .env:                " + (existsSync(PATHS.env) ? "✅" : "❌"),
+      "  .env.local:          " + (existsSync(PATHS.envLocal) ? "✅" : "❌"),
     );
     console.log("");
   });
