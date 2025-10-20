@@ -74,16 +74,19 @@ Click "Save and Continue"
 
 Add the following OAuth scopes (required for Supabase Auth):
 
-1. Click "Add or Remove Scopes"
-2. Filter and select these scopes:
+1. Go to "Data Access"
+2. Click "Add or Remove Scopes"
+3. Filter and select these scopes:
    - `openid` (add manually if not listed)
    - `.../auth/userinfo.email` (should be selected by default)
    - `.../auth/userinfo.profile` (should be selected by default)
-3. Click "Update" → "Save and Continue"
+4. Click "Update" → "Save and Continue"
 
 **Important:** Only request these basic scopes. Additional scopes may require Google verification which can take weeks.
 
-#### Test Users (for development)
+#### Test Users for development (Optional)
+
+**Important:** This is only really necessary if you're developing an app that requires a test group of users before publishing. Usually, you can skip this for public apps.
 
 1. Add test user emails (your Gmail account and team members)
 2. Click "Save and Continue"
@@ -97,46 +100,29 @@ Add the following OAuth scopes (required for Supabase Auth):
 
 #### Configure Web Client
 
-**Name:** Give it a descriptive name (e.g., "YourApp Web Client")
+**Name:** Give it a descriptive name (e.g., "your-app-oauth")
 
 **Authorized JavaScript origins:**
 
-For local development:
-
-```
+```txt
 http://localhost:3000
-```
-
-For production:
-
-```
+http://localhost:54321
 https://yourdomain.com
+https://your-generated-railway-custom-domain.up.railway.app
 ```
 
 **Authorized redirect URIs:**
 
 For local development:
 
-```
+```txt
 http://localhost:54321/auth/v1/callback
-```
-
-For production (get this from Supabase Dashboard → Authentication → Providers → Google):
-
-```
+http://127.0.0.1:54321/auth/v1/callback
 https://your-project-ref.supabase.co/auth/v1/callback
 ```
 
 4. Click "Create"
 5. **Save the Client ID and Client Secret** - you'll need these next
-
-### Step 4: Enable Google+ API (if required)
-
-Some Google Cloud projects require this:
-
-1. Navigate to **APIs & Services** → **Library**
-2. Search for "Google+ API"
-3. Click "Enable"
 
 ## Configure Supabase
 
@@ -177,9 +163,7 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET=GOCSPX-xxx...
 #### 4. Run the Configuration Script
 
 ```bash
-# Make sure you're in the project root
-chmod +x scripts/configure-google-auth.sh
-./scripts/configure-google-auth.sh
+bun run auth:google
 ```
 
 You should see:
@@ -284,6 +268,61 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET=GOCSPX-xxx...
 ### Step 3: Verify Supabase Configuration
 
 Run the configuration script with production tokens if needed, or verify in the Supabase Dashboard that Google auth is enabled.
+
+## Link Local to Remote (Important!)
+
+After configuring Google OAuth in both local and remote environments, you must link your local Supabase instance to the remote project. This ensures:
+
+- Configuration stays in sync between local and remote
+- Database migrations can be pushed to production
+- OAuth settings are properly tested locally against the remote project
+
+### Link Your Project
+
+Run the following command to link your local Supabase to the remote project:
+
+```bash
+supabase link --project-ref your-project-ref
+```
+
+**Finding Your Project Reference:**
+
+1. Go to your Supabase project in the Dashboard
+2. Navigate to **Project Settings** → **General**
+3. Copy the "Reference ID" (e.g., `lqapcmyqpkjoqkqrjqpt`)
+
+**Example Output:**
+
+```bash
+❯ supabase link --project-ref lqapcmyqpkjoqkqrjqpt
+Initialising login role...
+Connecting to remote database...
+Finished supabase link.
+```
+
+**What This Does:**
+
+- Creates a `.supabase/` directory with project configuration
+- Connects your local development to the remote database
+- Enables `supabase db push` to push migrations to production
+- Allows pulling remote database schemas with `supabase db pull`
+
+**Important Notes:**
+
+- You only need to do this once per local development setup
+- If you clone the project on a new machine, you'll need to link again
+- The `.supabase/` directory is gitignored (contains project-specific config)
+
+### Verify the Link
+
+After linking, verify the connection:
+
+```bash
+# Check project status
+supabase status
+
+# Should show your remote project ref
+```
 
 ## Testing
 

@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🔐 Configuring Google Auth for Nabostylisten..."
+echo "🔐 Configuring Google Auth..."
 
 # Check required environment variables
 if [[ -z "$SUPABASE_ACCESS_TOKEN" ]]; then

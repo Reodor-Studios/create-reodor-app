@@ -559,8 +559,9 @@ The application supports Google OAuth via Supabase Auth with the following imple
 
 **Setup:**
 1. Configure OAuth credentials in Google Cloud Console
-2. Run `./scripts/configure-google-auth.sh` to configure Supabase
-3. See complete setup guide in `docs/technical/google-auth-setup.md`
+2. Run `bun run auth:google` to configure Supabase (uses Management API)
+3. Link local to remote: `supabase link --project-ref your-project-ref`
+4. See complete setup guide in `docs/technical/google-auth-setup.md`
 
 **Flow:**
 1. User clicks "Sign in with Google" button

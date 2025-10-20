@@ -161,6 +161,8 @@ async function phase1CollectContext(): Promise<void> {
   const structurePrompt =
     `You are helping structure a business context dump for a Next.js application scaffold.
 
+IMPORTANT: Use 'ultrathink' mode - think deeply about the business context, extract all relevant details, and create a comprehensive implementation plan.
+
 The raw business context is:
 
 ---
@@ -234,22 +236,22 @@ export async function createEntity(data: ...) { ... }
 - Other services needed]
 
 ## 9. Implementation Phases
-[Suggested order of implementation, organized into sprints:
+[Suggested order of implementation, organized into phases (not caring about time estimates):
 
-Phase 1: Foundation (Week 1)
+Phase 1: Foundation
 - Database schema
 - Authentication setup
 - Basic layouts
 
-Phase 2: Core Features (Week 2-3)
+Phase 2: Core Features
 - [Main feature 1]
 - [Main feature 2]
 
-Phase 3: Advanced Features (Week 4)
+Phase 3: Advanced Features
 - [Advanced feature 1]
 - Integrations
 
-Phase 4: Polish & Launch (Week 5)
+Phase 4: Polish & Launch
 - Testing
 - Performance optimization
 - Documentation]
@@ -375,7 +377,7 @@ Current globals.css file location: ${PATHS.globals}
 
 Please follow these steps:
 
-1. **First**, use the Write tool to completely replace app/globals.css with the provided theme CSS
+1. **First**, use the Edit tool to update the CSS variables in app/globals.css with the provided theme CSS, keeping the rest of the file intact. Ensure the correct type of color definition (oklch, hsl, etc.) is preserved.
 
 2. **Then**, read the current lib/brand.ts file to understand its structure
 
@@ -462,52 +464,74 @@ IMPORTANT: Do not modify any other part of lib/brand.ts - only update the hex co
 // Phase 3: Name Replacement
 // ============================================================================
 
+async function acceptOrEdit(label: string, suggestion: string): Promise<string> {
+  console.log(`\n${label}:`);
+  console.log(`  💡 Suggested: "${suggestion}"`);
+  const accept = await prompt("  Accept? (Y/n/edit): ");
+
+  if (accept.toLowerCase() === "n" || accept.toLowerCase() === "no") {
+    return await prompt(`  Enter ${label}: `);
+  }
+
+  if (accept.toLowerCase() === "edit" || accept.toLowerCase() === "e") {
+    console.log(`  Current: "${suggestion}"`);
+    return await prompt(`  Enter new value: `);
+  }
+
+  return suggestion;
+}
+
 async function phase3ReplaceNames(): Promise<void> {
   printHeader("✏️  PHASE 3: Replace Placeholder Names");
 
-  console.log("Let's replace placeholder names throughout the codebase.\n");
-
-  const companyName = await prompt("Company/Application Name: ");
-  const tagline = await prompt("Tagline: ");
-  const description = await prompt("Description (1-2 sentences): ");
-  const shortDescription = await prompt("Short Description (for meta tags): ");
-  const domain = await prompt("Domain (e.g., example.com): ");
-
-  if (!companyName || !domain) {
-    throw new Error("Company name and domain are required");
+  // Check if business context exists
+  if (!existsSync(PATHS.context)) {
+    console.error(
+      "❌ BUSINESS_CONTEXT.md not found.\n",
+    );
+    console.error(
+      "Please complete Phase 1 (Business Context Collection) first by running:\n",
+    );
+    console.error("  bun run scaffold\n");
+    throw new Error(
+      "Business context required. Complete Phase 1 before proceeding to Phase 3.",
+    );
   }
 
-  console.log("\n🤖 Replacing placeholder names throughout the codebase...");
-  console.log("Searching for COMPANY_NAME, COMPANY_TAGLINE, etc.\n");
+  console.log(
+    "🤖 Analyzing your business context to suggest company information...\n",
+  );
 
-  const replacePrompt =
-    `Replace all placeholder names in the codebase with actual values.
+  // Read business context
+  const businessContext = await fs.readFile(PATHS.context, "utf-8");
 
-Replacements to make:
-- COMPANY_NAME → ${companyName}
-- COMPANY_TAGLINE → ${tagline || "[Leave as is if empty]"}
-- COMPANY_DESCRIPTION → ${description || "[Leave as is if empty]"}
-- COMPANY_SHORT_DESCRIPTION → ${shortDescription || "[Leave as is if empty]"}
-- example.com → ${domain}
+  // Use AI to suggest values based on business context
+  const suggestionPrompt =
+    `You are helping extract company/application information from a business context document.
 
-Steps:
-1. Use Grep to find all files containing these placeholders
-2. For each file found, use Edit to replace the placeholders with actual values
-3. Be thorough - check all occurrences
+Based on the business context below, suggest appropriate values for:
+1. Company/Application Name
+2. Tagline (one compelling sentence)
+3. Description (1-2 sentences for the main landing page)
+4. Short Description (concise version for meta tags, max 160 characters)
+5. Domain (suggest a domain based on the company name, format: example.com)
 
-Priority files to update:
-- lib/brand.ts (main brand configuration)
-- package.json (if it contains company info)
-- Any README or documentation files
+Business Context:
+---
+${businessContext}
+---
 
-IMPORTANT:
-- Use exact string matching for replacements
-- Replace ALL occurrences in each file
-- Preserve the file structure and formatting
-- Only replace the placeholder text, nothing else`;
+Respond in this EXACT format (one per line, no extra formatting):
+COMPANY_NAME: [name]
+TAGLINE: [tagline]
+DESCRIPTION: [description]
+SHORT_DESCRIPTION: [short description]
+DOMAIN: [domain]
 
-  const replaceQuery = query({
-    prompt: replacePrompt,
+Be creative and align with the business context. Make the suggestions compelling and professional.`;
+
+  const suggestionQuery = query({
+    prompt: suggestionPrompt,
     options: {
       cwd: PROJECT_ROOT,
       settingSources: ["project"],
@@ -515,34 +539,164 @@ IMPORTANT:
         type: "preset",
         preset: "claude_code",
       },
-      permissionMode: globalOptions.dryRun ? "default" : "bypassPermissions",
-      allowedTools: ["Grep", "Read", "Edit"],
-      maxTurns: 15,
+      permissionMode: "bypassPermissions",
+      maxTurns: 3,
     },
   });
 
-  for await (const message of replaceQuery) {
+  let suggestionsText = "";
+  for await (const message of suggestionQuery) {
     if (message.type === "assistant") {
       const textContent = message.message.content
         .filter((block: { type: string }) => block.type === "text")
         .map((block: { text: string }) => block.text)
         .join("\n");
-
-      if (textContent) {
-        process.stdout.write(".");
-      }
+      suggestionsText += textContent;
     }
     if (message.type === "result") {
       if (message.subtype !== "success") {
-        throw new Error(`Failed to replace names: ${message.subtype}`);
+        throw new Error(`Failed to generate suggestions: ${message.subtype}`);
       }
     }
   }
 
-  console.log("\n");
+  // Parse suggestions
+  const parseValue = (text: string, key: string): string => {
+    const regex = new RegExp(`${key}:\\s*(.+)`, "i");
+    const match = text.match(regex);
+    return match ? match[1].trim() : "";
+  };
+
+  const suggestedName = parseValue(suggestionsText, "COMPANY_NAME");
+  const suggestedTagline = parseValue(suggestionsText, "TAGLINE");
+  const suggestedDescription = parseValue(suggestionsText, "DESCRIPTION");
+  const suggestedShortDescription = parseValue(
+    suggestionsText,
+    "SHORT_DESCRIPTION",
+  );
+  const suggestedDomain = parseValue(suggestionsText, "DOMAIN");
+
+  // Interactive acceptance/editing
+  console.log("\n📝 Review and confirm the suggested values:\n");
+  console.log("=" .repeat(70));
+
+  const companyName = await acceptOrEdit(
+    "Company/Application Name",
+    suggestedName,
+  );
+  const tagline = await acceptOrEdit("Tagline", suggestedTagline);
+  const description = await acceptOrEdit("Description", suggestedDescription);
+  const shortDescription = await acceptOrEdit(
+    "Short Description",
+    suggestedShortDescription,
+  );
+  const domain = await acceptOrEdit("Domain", suggestedDomain);
+
+  if (!companyName || !domain) {
+    throw new Error("Company name and domain are required");
+  }
+
+  console.log("\n" + "=".repeat(70));
+  console.log("\n✅ All values confirmed!\n");
+
+  // Iterative replacement - keep searching until no placeholders remain
+  console.log("🤖 Finding and replacing ALL placeholders in the codebase...");
+  console.log("This will run iteratively until all placeholders are replaced.\n");
+
+  let iteration = 1;
+  const maxIterations = 5;
+
+  while (iteration <= maxIterations) {
+    console.log(`\n🔄 Iteration ${iteration}/${maxIterations}`);
+    console.log("Searching for remaining placeholders...\n");
+
+    const replacePrompt =
+      `You are on iteration ${iteration} of replacing placeholder names in the codebase.
+
+Replacements to make:
+- COMPANY_NAME → ${companyName}
+- COMPANY_TAGLINE → ${tagline}
+- COMPANY_DESCRIPTION → ${description}
+- COMPANY_SHORT_DESCRIPTION → ${shortDescription}
+- example.com → ${domain}
+
+Steps for THIS iteration:
+1. Use Grep to search for ANY of these placeholders: "COMPANY_NAME", "COMPANY_TAGLINE", "COMPANY_DESCRIPTION", "COMPANY_SHORT_DESCRIPTION", "example.com"
+2. For EACH file found:
+   - Use Read to see the full file content
+   - Use Edit to replace ALL placeholder occurrences with actual values
+3. After replacing, explicitly state: "All placeholders have been replaced" or "Found N files with placeholders"
+
+IMPORTANT:
+- Use exact string matching for replacements
+- Replace ALL occurrences in each file (use replace_all parameter in Edit tool when appropriate)
+- Preserve file structure and formatting
+- Be thorough - check lib/brand.ts, package.json, README files, etc.
+- If NO files contain placeholders, state "No placeholders found"
+
+${iteration > 1 ? "Previous iterations may have missed some files. Search thoroughly!" : ""}`;
+
+    const replaceQuery = query({
+      prompt: replacePrompt,
+      options: {
+        cwd: PROJECT_ROOT,
+        settingSources: ["project"],
+        systemPrompt: {
+          type: "preset",
+          preset: "claude_code",
+        },
+        permissionMode: globalOptions.dryRun ? "default" : "bypassPermissions",
+        allowedTools: ["Grep", "Read", "Edit"],
+        maxTurns: 20,
+      },
+    });
+
+    let iterationOutput = "";
+    for await (const message of replaceQuery) {
+      if (message.type === "assistant") {
+        const textContent = message.message.content
+          .filter((block: { type: string }) => block.type === "text")
+          .map((block: { text: string }) => block.text)
+          .join("\n");
+        iterationOutput += textContent;
+        process.stdout.write(".");
+      }
+      if (message.type === "result") {
+        if (message.subtype !== "success") {
+          throw new Error(
+            `Failed to replace names in iteration ${iteration}: ${message.subtype}`,
+          );
+        }
+      }
+    }
+
+    console.log("\n");
+
+    // Check if this iteration found any placeholders
+    const noPlaceholdersFound =
+      iterationOutput.toLowerCase().includes("no placeholders found") ||
+      iterationOutput.toLowerCase().includes("no files") ||
+      iterationOutput.toLowerCase().includes("all placeholders have been replaced");
+
+    if (noPlaceholdersFound && iteration > 1) {
+      console.log(
+        "✅ No more placeholders found. All replacements complete!\n",
+      );
+      break;
+    }
+
+    if (iteration === maxIterations) {
+      console.log(
+        "⚠️  Reached maximum iterations. Manual verification recommended.\n",
+      );
+    }
+
+    iteration++;
+  }
 
   printSuccess("Placeholder names replaced throughout the codebase");
   printInfo(`Company name: ${companyName}`);
+  printInfo(`Tagline: ${tagline}`);
   printInfo(`Domain: ${domain}`);
 
   // Update SCAFFOLD.md
@@ -552,22 +706,25 @@ IMPORTANT:
     `## ✅ Phase 3: Name Replacement - COMPLETED
 
 - Replaced COMPANY_NAME with "${companyName}"
-- Replaced COMPANY_TAGLINE with "${tagline || "N/A"}"
-- Replaced COMPANY_DESCRIPTION with "${description || "N/A"}"
-- Replaced COMPANY_SHORT_DESCRIPTION with "${shortDescription || "N/A"}"
+- Replaced COMPANY_TAGLINE with "${tagline}"
+- Replaced COMPANY_DESCRIPTION with "${description}"
+- Replaced COMPANY_SHORT_DESCRIPTION with "${shortDescription}"
 - Replaced domain placeholders with "${domain}"
+
+**Process:**
+- AI analyzed BUSINESS_CONTEXT.md and suggested values
+- User reviewed and confirmed/edited each value
+- Iterative search-and-replace until all placeholders removed
 
 **Files Modified:**
 - lib/brand.ts and other configuration files
-- Search results showed all placeholder occurrences
+- All files containing placeholder text
 
 ---
 
 ## 📋 Next Steps`,
   );
   await writeFile(PATHS.scaffold, updatedScaffold);
-
-  return; // Store company name in state if needed
 }
 
 // ============================================================================
