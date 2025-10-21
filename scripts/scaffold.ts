@@ -11,6 +11,7 @@ import * as readline from "readline";
 const PROJECT_ROOT = process.cwd();
 const PATHS = {
   context: path.join(PROJECT_ROOT, "BUSINESS_CONTEXT.md"),
+  contextInput: path.join(PROJECT_ROOT, "BUSINESS_CONTEXT_INPUT.md"),
   scaffold: path.join(PROJECT_ROOT, "SCAFFOLD.md"),
   state: path.join(PROJECT_ROOT, ".scaffold-state.json"),
   brand: path.join(PROJECT_ROOT, "lib/brand.ts"),
@@ -198,23 +199,80 @@ async function phase1CollectContext(): Promise<void> {
   printHeader("📝 PHASE 1: Business Context Collection");
 
   console.log(
-    "Please provide detailed business context for your application.\n",
+    "We'll collect your business context through a file-based approach for maximum flexibility.\n",
   );
-  console.log("Include information about:");
-  console.log("  • Problem statement and solution");
-  console.log("  • Target users and personas");
-  console.log("  • Core features and functionality");
-  console.log("  • Technical requirements");
-  console.log("  • Integration needs (payments, email, etc.)");
-  console.log("  • Any specific design preferences\n");
 
-  const rawContext = await getMultilineInput("Enter your business context:");
+  // Create the input file if it doesn't exist
+  if (!existsSync(PATHS.contextInput)) {
+    const templateContent = `# Business Context Input
 
-  if (!rawContext) {
-    throw new Error("Business context cannot be empty");
+<!-- Delete this template text and replace with your business context -->
+
+## Instructions
+
+Please provide detailed business context for your application. Write freely - this is a brain dump!
+
+**💡 Pro Tip:** If you have Super Whisper (or similar transcription app) installed, use it to voice-dump your thoughts. This is often faster and more comprehensive than typing!
+
+### What to Include
+
+- **Problem Statement**: What problem does your app solve? Who has this problem?
+- **Target Users**: Who will use this? User personas, characteristics, needs
+- **Core Features**: What functionality will the app provide? List everything you envision
+- **Technical Requirements**: Any specific technical needs or constraints?
+- **Integrations**: External services needed (payments, email, maps, etc.)
+- **Design Preferences**: UI/UX style, branding ideas, color preferences
+- **Business Model**: How will this generate value? Pricing, monetization
+- **Success Metrics**: How will you measure success?
+- **Timeline**: Any deadlines or phased rollout plans?
+- **Anything Else**: Any other context, constraints, or ideas
+
+---
+
+<!-- Start your business context below this line -->
+
+`;
+
+    await writeFile(PATHS.contextInput, templateContent);
+    printSuccess("Created BUSINESS_CONTEXT_INPUT.md");
   }
 
-  console.log("\n🤖 Structuring your context with Claude AI...");
+  console.log("\n📄 BUSINESS_CONTEXT_INPUT.md is ready for your input.\n");
+  console.log("=" .repeat(70));
+  console.log("NEXT STEPS:");
+  console.log("=" .repeat(70));
+  console.log("\n1. Open BUSINESS_CONTEXT_INPUT.md in your editor");
+  console.log("2. Replace the template with your business context");
+  console.log("3. Write as much detail as possible - be thorough!");
+  console.log("\n💡 RECOMMENDED: Use Super Whisper (or similar transcription tool)");
+  console.log("   to voice-dump all your context. It's faster and more comprehensive!");
+  console.log("\n4. Save the file when you're done");
+  console.log("5. Come back here and press Enter to continue");
+  console.log("\n" + "=" .repeat(70) + "\n");
+
+  await prompt("Press Enter when you've completed BUSINESS_CONTEXT_INPUT.md...");
+
+  // Read the input file
+  if (!existsSync(PATHS.contextInput)) {
+    throw new Error("BUSINESS_CONTEXT_INPUT.md file not found");
+  }
+
+  const rawContext = await fs.readFile(PATHS.contextInput, "utf-8");
+
+  // Check if user actually filled it in (not just the template)
+  if (
+    !rawContext ||
+    rawContext.trim().length < 100 ||
+    rawContext.includes("<!-- Delete this template text")
+  ) {
+    throw new Error(
+      "BUSINESS_CONTEXT_INPUT.md appears to be empty or still contains template text. Please fill it with your business context.",
+    );
+  }
+
+  console.log("\n✅ Business context loaded from file");
+  console.log(`📊 Context length: ${rawContext.length} characters\n`);
+  console.log("🤖 Structuring your context with Claude AI...");
   console.log("This may take a minute...\n");
 
   const structurePrompt =
@@ -1120,6 +1178,10 @@ program
         await fs.unlink(PATHS.context);
         console.log("✅ Removed BUSINESS_CONTEXT.md");
       }
+      if (existsSync(PATHS.contextInput)) {
+        await fs.unlink(PATHS.contextInput);
+        console.log("✅ Removed BUSINESS_CONTEXT_INPUT.md");
+      }
       if (existsSync(PATHS.scaffold)) {
         await fs.unlink(PATHS.scaffold);
         console.log("✅ Removed SCAFFOLD.md");
@@ -1183,13 +1245,16 @@ program
     // Show which files exist
     console.log("Generated files:");
     console.log(
-      "  BUSINESS_CONTEXT.md: " + (existsSync(PATHS.context) ? "✅" : "❌"),
+      "  BUSINESS_CONTEXT_INPUT.md: " + (existsSync(PATHS.contextInput) ? "✅" : "❌"),
     );
     console.log(
-      "  SCAFFOLD.md:         " + (existsSync(PATHS.scaffold) ? "✅" : "❌"),
+      "  BUSINESS_CONTEXT.md:       " + (existsSync(PATHS.context) ? "✅" : "❌"),
     );
     console.log(
-      "  .env.local:          " + (existsSync(PATHS.envLocal) ? "✅" : "❌"),
+      "  SCAFFOLD.md:               " + (existsSync(PATHS.scaffold) ? "✅" : "❌"),
+    );
+    console.log(
+      "  .env.local:                " + (existsSync(PATHS.envLocal) ? "✅" : "❌"),
     );
     console.log("");
   });

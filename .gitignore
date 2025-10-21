@@ -48,5 +48,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# scaffold state
+# scaffold state and input files
 .scaffold-state.json
+BUSINESS_CONTEXT_INPUT.md
