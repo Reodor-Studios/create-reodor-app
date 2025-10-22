@@ -1,7 +1,6 @@
 {
   "private": true,
   "scripts": {
-    "postinstall": "bun run onboarding",
     "onboarding": "tsx scripts/onboarding.ts",
     "type:check": "tsc --noEmit",
     "with-env": "dotenv -e .env.local --",

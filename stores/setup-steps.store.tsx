@@ -49,6 +49,21 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "initial",
   },
   {
+    id: "run-onboarding",
+    title: "Run Onboarding Script",
+    description: (
+      <>
+        Start here! Run <InlineCode>bun run onboarding</InlineCode> right after
+        installing dependencies to get an instant overview of your environment,
+        see what&apos;s working, and discover what needs setup. This smart
+        script checks your Docker status, database connection, development
+        server, and points you to the right docs. It&apos;s like having a
+        personal guide for your first steps—highly recommended!
+      </>
+    ),
+    category: "initial",
+  },
+  {
     id: "explore-app-structure",
     title: "Explore the App Directory",
     description: (

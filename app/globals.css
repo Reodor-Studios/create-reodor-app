@@ -73,19 +73,19 @@
   --animate-marquee: marquee var(--duration) infinite linear;
   --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
   @keyframes marquee {
-    from {
-      transform: translateX(0);
+    0% {
+      transform: translateX(0) translateZ(0);
     }
-    to {
-      transform: translateX(calc(-100% - var(--gap)));
+    100% {
+      transform: translateX(calc(-100% - var(--gap))) translateZ(0);
     }
   }
   @keyframes marquee-vertical {
-    from {
-      transform: translateY(0);
+    0% {
+      transform: translateY(0) translateZ(0);
     }
-    to {
-      transform: translateY(calc(-100% - var(--gap)));
+    100% {
+      transform: translateY(calc(-100% - var(--gap))) translateZ(0);
     }
   }
   --animate-shine: shine var(--duration) infinite linear

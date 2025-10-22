@@ -74,14 +74,14 @@ export function TechStackMarquee() {
       <div className="relative mt-12 max-w-6xl mx-auto overflow-hidden">
         <div className="flex flex-col items-center justify-center gap-4">
           {/* First row - scrolling right */}
-          <Marquee pauseOnHover className="[--duration:60s]">
+          <Marquee pauseOnHover className="[--duration:60s] [--gap:1rem]" repeat={6}>
             {firstRow.map((item) => (
               <TechStackCard key={item.name} item={item} />
             ))}
           </Marquee>
 
           {/* Second row - scrolling left */}
-          <Marquee reverse pauseOnHover className="[--duration:60s]">
+          <Marquee reverse pauseOnHover className="[--duration:60s] [--gap:1rem]" repeat={6}>
             {secondRow.map((item) => (
               <TechStackCard key={item.name} item={item} />
             ))}

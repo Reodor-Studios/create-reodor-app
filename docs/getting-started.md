@@ -43,6 +43,14 @@ bun install
 
 This will read `package.json` and download all the libraries and tools we use - React, Next.js, Supabase SDK, and many others.
 
+After installation completes, run the onboarding script to see a quick overview of next steps:
+
+```bash
+bun run onboarding
+```
+
+This will display an interactive checklist with setup guides and links to important documentation.
+
 <details>
 <summary>What's actually being installed?</summary>
 
