@@ -14,7 +14,8 @@ export const getPublicUrl = () => {
     return "http://localhost:3000";
   }
 
-  return process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+  // In production, try to get VERCEL_URL from process.env (not validated in schema)
+  return process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : "http://localhost:3000";
 };

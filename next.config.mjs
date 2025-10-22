@@ -1,6 +1,8 @@
-import type { NextConfig } from "next";
+// Validate environment variables at build time
+import "./env.mjs";
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     remotePatterns: [
       // Local Supabase storage (development)

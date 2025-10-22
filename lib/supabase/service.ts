@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import { env } from "@/env";
 
 /**
  * Service role client for server-side operations that need to bypass RLS
@@ -8,16 +9,10 @@ import type { Database } from "@/types/database.types";
  * WARNING: This client bypasses all RLS policies. Only use for trusted operations.
  */
 export function createServiceClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error(
-      "Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY",
-    );
-  }
-
-  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+  return createClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.SUPABASE_SECRET_KEY,
+    {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

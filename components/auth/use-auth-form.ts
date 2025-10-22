@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { checkUserExists, sendWelcomeEmail } from "@/server/auth.actions";
 import { normalizeNorwegianPhoneNumber } from "@/lib/utils";
-
 export type AuthMode = "login" | "signup";
 export type AuthStep = "email" | "code";
 

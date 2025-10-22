@@ -8,6 +8,7 @@ import { AccountDeletionConfirmationEmail } from "@/transactional/emails/account
 import { AccountDeletedNotificationEmail } from "@/transactional/emails/account-deleted-notification";
 import { jwtVerify, SignJWT } from "jose";
 import { companyConfig } from "@/lib/brand";
+import { env } from "@/env";
 
 export async function checkUserExists(email: string) {
   try {
@@ -42,12 +43,7 @@ export async function sendWelcomeEmail({
   userId: string;
 }) {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.error("[WELCOME_EMAIL] RESEND_API_KEY is not configured");
-      return { error: "Email service not configured", success: false };
-    }
-
-    const { error } = await sendEmail({
+    const { error} = await sendEmail({
       to: [email],
       subject: `Velkommen til ${companyConfig.name}`,
       react: WelcomeEmail({
@@ -72,9 +68,7 @@ export async function sendWelcomeEmail({
 }
 
 async function generateAccountDeletionToken(userId: string): Promise<string> {
-  const secret = new TextEncoder().encode(
-    process.env.JWT_SECRET || "fallback-secret-key",
-  );
+  const secret = new TextEncoder().encode(env.JWT_SECRET);
 
   const token = await new SignJWT({
     userId,
@@ -96,9 +90,7 @@ export async function verifyAccountDeletionToken({
   userId: string;
 }) {
   try {
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "fallback-secret-key",
-    );
+    const secret = new TextEncoder().encode(env.JWT_SECRET);
 
     const { payload } = await jwtVerify(token, secret);
 
@@ -175,11 +167,6 @@ export async function sendAccountDeletionConfirmationEmail({
 
     // Generate deletion confirmation token
     const confirmationToken = await generateAccountDeletionToken(userId);
-
-    if (!process.env.RESEND_API_KEY) {
-      console.error("[DELETE_ACCOUNT] RESEND_API_KEY is not configured");
-      return { error: "Email service not configured", success: false };
-    }
 
     const { error } = await sendEmail({
       to: [profile.email],
@@ -342,11 +329,6 @@ async function sendAccountDeletedNotificationEmail({
       userName,
     },
   );
-
-  if (!process.env.RESEND_API_KEY) {
-    console.error("[DELETE_NOTIFICATION] RESEND_API_KEY is not configured");
-    throw new Error("Email service not configured");
-  }
 
   const { error } = await sendEmail({
     to: [userEmail],

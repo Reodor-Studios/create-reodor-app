@@ -106,6 +106,7 @@ export function createPageMetadata(
     }>,
 ): Metadata {
     const pageConfig = companyConfig.pages[pageKey];
+    // Try to get NEXT_PUBLIC_SITE_URL from process.env (not in validated schema)
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || companyConfig.url;
 
     return {

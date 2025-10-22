@@ -1,8 +1,9 @@
 // Ensure this file is server-only
-import 'server-only'
+import "server-only";
 
 import { resend } from "@/lib/resend";
 import type { ReactElement } from "react";
+import { env } from "@/env";
 
 interface SendEmailOptions {
   to: string[];
@@ -28,19 +29,19 @@ interface SendEmailOptions {
 export async function sendEmail({ to, subject, react, sendAdminCopy = false }: SendEmailOptions): Promise<{error: string | null}> {
   const isDevelopment = process.env.NODE_ENV === "development";
 
-  const fromAddress = isDevelopment 
-    ? process.env.DEV_EMAIL_FROM 
-    : process.env.PROD_EMAIL_FROM;
+  const fromAddress = isDevelopment
+    ? env.DEV_EMAIL_FROM
+    : env.PROD_EMAIL_FROM;
 
   const toAddresses = isDevelopment
-    ? [process.env.DEV_EMAIL_TO as string]
+    ? [env.DEV_EMAIL_TO]
     : to;
 
   // Add admin email if requested and available
   const finalToAddresses = [...toAddresses];
-  if (sendAdminCopy && process.env.ADMIN_EMAIL && !isDevelopment) {
+  if (sendAdminCopy && env.ADMIN_EMAIL && !isDevelopment) {
     // Only add admin email in production and if it's defined
-    finalToAddresses.push(process.env.ADMIN_EMAIL);
+    finalToAddresses.push(env.ADMIN_EMAIL);
   }
 
   if (!fromAddress) {
@@ -65,8 +66,8 @@ export async function sendEmail({ to, subject, react, sendAdminCopy = false }: S
     }
 
     console.log(`[RESEND_UTILS] Email sent successfully to:\n${finalToAddresses.map(address => `- ${address}`).join("\n")}\n(from: ${fromAddress})`);
-    if (sendAdminCopy && process.env.ADMIN_EMAIL && !isDevelopment) {
-      console.log(`[RESEND_UTILS] Admin copy sent to: ${process.env.ADMIN_EMAIL}`);
+    if (sendAdminCopy && env.ADMIN_EMAIL && !isDevelopment) {
+      console.log(`[RESEND_UTILS] Admin copy sent to: ${env.ADMIN_EMAIL}`);
     }
     return { error: null };
 

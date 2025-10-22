@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { env } from "@/env"; // CRON_SECRET is server-only
 
 /**
  * Demo cron job endpoint
@@ -21,15 +22,7 @@ export async function GET(request: NextRequest) {
   try {
     // Verify the request is from a valid cron source
     const authHeader = request.headers.get("authorization");
-    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
-
-    if (!process.env.CRON_SECRET) {
-      console.error("[DEMO_CRON] CRON_SECRET is not configured");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
+    const expectedAuth = `Bearer ${env.CRON_SECRET}`;
 
     if (authHeader !== expectedAuth) {
       console.error("[DEMO_CRON] Unauthorized cron request attempt");
