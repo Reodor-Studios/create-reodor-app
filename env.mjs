@@ -27,8 +27,8 @@ export const env = createEnv({
     // Cron secret for scheduled tasks
     CRON_SECRET: z.string().min(1),
 
-    // Anthropic API for scaffold script
-    ANTHROPIC_API_KEY: z.string().min(1),
+    // Anthropic API for scaffold script (optional - only needed if using bun run scaffold)
+    ANTHROPIC_API_KEY: z.string().optional(),
 
     // JWT secret for account deletion tokens
     JWT_SECRET: z.string().min(32).default("fallback-secret-key-change-in-production"),
