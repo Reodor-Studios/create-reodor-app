@@ -1,5 +1,9 @@
 {
   "private": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "bun": ">=1.0.0"
+  },
   "scripts": {
     "onboarding": "tsx scripts/onboarding.ts",
     "type:check": "tsc --noEmit",

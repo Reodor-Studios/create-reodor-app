@@ -65,17 +65,44 @@ async function isDockerRunning(): Promise<boolean> {
   });
 }
 
+async function getNodeVersion(): Promise<{ version: string; major: number; isValid: boolean }> {
+  return new Promise((resolve) => {
+    const child = spawn("node", ["--version"], { stdio: "pipe" });
+
+    let output = "";
+    child.stdout?.on("data", (data) => {
+      output += data.toString();
+    });
+
+    child.on("close", (code) => {
+      if (code === 0 && output.trim()) {
+        const version = output.trim().replace("v", "");
+        const major = parseInt(version.split(".")[0], 10);
+        resolve({ version, major, isValid: major >= 20 });
+      } else {
+        resolve({ version: "unknown", major: 0, isValid: false });
+      }
+    });
+
+    child.on("error", () => {
+      resolve({ version: "unknown", major: 0, isValid: false });
+    });
+  });
+}
+
 async function checkOnboardingStatus() {
   const hasEnvFile = existsSync(PATHS.envLocal);
   const hasScaffoldState = existsSync(PATHS.scaffoldState);
   const isPort3000InUse = await isPortInUse(3000);
   const dockerRunning = await isDockerRunning();
+  const nodeVersion = await getNodeVersion();
 
   return {
     hasEnvFile,
     hasScaffoldState,
     isPort3000InUse,
     dockerRunning,
+    nodeVersion,
     isFullyOnboarded: hasEnvFile && hasScaffoldState,
   };
 }
@@ -102,6 +129,16 @@ async function main() {
   console.log("\n" + "=".repeat(70));
   console.log(`${c.cyan}${c.bright}Welcome to create-reodor-app!${c.reset}`);
   console.log("=".repeat(70) + "\n");
+
+  // Environment check
+  const nodeColor = status.nodeVersion.isValid ? c.green : c.yellow;
+  console.log(`${c.bright}Environment Check:${c.reset}`);
+  console.log(`   ${nodeColor}Node.js:${c.reset} v${status.nodeVersion.version}`);
+  if (!status.nodeVersion.isValid) {
+    console.log(`   ${c.yellow}⚠️  Node.js 20+ required (Supabase requirement)${c.reset}`);
+    console.log(`   ${c.dim}Install from: https://nodejs.org/${c.reset}`);
+  }
+  console.log();
 
   console.log(`${c.bright}Get started with these steps:${c.reset}\n`);
 

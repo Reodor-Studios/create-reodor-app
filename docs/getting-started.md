@@ -6,9 +6,17 @@ Welcome! This guide will walk you through setting up create-reodor-app on your l
 
 Before we begin, make sure you have these tools installed:
 
+- **Node.js 20+** - Required by Supabase libraries ([install here](https://nodejs.org/))
 - **Bun** - A fast JavaScript runtime and package manager ([install here](https://bun.sh/))
 - **Docker Desktop** - For running Supabase locally ([install here](https://www.docker.com/products/docker-desktop/))
 - **Git** - For cloning the repository
+
+<details>
+<summary>Why Node.js 20 or higher?</summary>
+
+Supabase libraries require Node.js 20+ as of October 2025. Node.js 18 reached end-of-life on April 30, 2025 and no longer receives security updates. The project includes an `.nvmrc` file that specifies Node 20, which tools like `nvm` will automatically use. You can check your version with `node --version`.
+
+</details>
 
 <details>
 <summary>Why Bun instead of npm or yarn?</summary>
