@@ -1,8 +1,16 @@
+"use client";
+
+import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Autoplay from "embla-carousel-autoplay";
 
 import { cn } from "@/lib/utils";
-import { Marquee } from "@/components/ui/marquee";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import { TECH_STACK } from "@/lib/tech-stack";
 import type { TechStackItem } from "@/lib/tech-stack";
 
@@ -17,7 +25,7 @@ function TechStackCard({ item }: TechStackCardProps) {
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "group relative w-64 cursor-pointer overflow-hidden rounded-xl border p-4",
+        "group relative flex w-64 h-[88px] cursor-pointer overflow-hidden rounded-xl border p-4",
         "transition-all duration-300 ease-out",
         "hover:scale-105 hover:shadow-lg hover:z-10",
         // Light mode
@@ -28,7 +36,7 @@ function TechStackCard({ item }: TechStackCardProps) {
         "dark:hover:bg-primary/10 dark:hover:border-primary/30"
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 w-full">
         <div className="relative h-10 w-10 flex-shrink-0">
           <Image
             src={item.logo}
@@ -37,11 +45,11 @@ function TechStackCard({ item }: TechStackCardProps) {
             className="object-contain"
           />
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0 flex-1">
           <span className="font-semibold text-sm group-hover:text-primary transition-colors">
             {item.name}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground line-clamp-2">
             {item.description}
           </span>
         </div>
@@ -50,10 +58,11 @@ function TechStackCard({ item }: TechStackCardProps) {
   );
 }
 
-export function TechStackMarquee() {
-  // Split tech stack into two rows for better visual balance
-  const firstRow = TECH_STACK.slice(0, Math.ceil(TECH_STACK.length / 2));
-  const secondRow = TECH_STACK.slice(Math.ceil(TECH_STACK.length / 2));
+export function TechStackCarousel() {
+  // Use autoplay plugin with ref
+  const plugin = React.useRef(
+    Autoplay({ delay: 3000, playOnInit: true, stopOnInteraction: false })
+  );
 
   return (
     <section className="pt-20 px-6 lg:px-12 pb-20">
@@ -70,27 +79,35 @@ export function TechStackMarquee() {
         </div>
       </div>
 
-      {/* Marquee section with constrained width */}
-      <div className="relative mt-12 max-w-6xl mx-auto overflow-hidden">
-        <div className="flex flex-col items-center justify-center gap-4">
-          {/* First row - scrolling right */}
-          <Marquee pauseOnHover className="[--duration:60s] [--gap:1rem]" repeat={6}>
-            {firstRow.map((item) => (
-              <TechStackCard key={item.name} item={item} />
-            ))}
-          </Marquee>
-
-          {/* Second row - scrolling left */}
-          <Marquee reverse pauseOnHover className="[--duration:60s] [--gap:1rem]" repeat={6}>
-            {secondRow.map((item) => (
-              <TechStackCard key={item.name} item={item} />
-            ))}
-          </Marquee>
+      {/* Carousel section */}
+      <div className="relative mt-12 max-w-6xl mx-auto">
+        <div className="py-4">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+              dragFree: true,
+              watchDrag: true,
+            }}
+            plugins={[plugin.current]}
+            className="w-full cursor-grab active:cursor-grabbing"
+          >
+            <CarouselContent className="-ml-4">
+              {TECH_STACK.map((item, index) => (
+                <CarouselItem
+                  key={`${item.name}-${index}`}
+                  className="pl-4 basis-auto py-1"
+                >
+                  <TechStackCard item={item} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
         </div>
 
         {/* Gradient overlays for smooth edges */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background" />
       </div>
     </section>
   );

@@ -7,7 +7,7 @@ import Prism from "@/components/Prism";
 import { companyConfig } from "@/lib/brand";
 import { SetupProject } from "@/components/setup-project";
 import { InstallCommand } from "@/components/install-command";
-import { TechStackMarquee } from "@/components/tech-stack-marquee";
+import { TechStackCarousel } from "@/components/tech-stack-carousel";
 import {
   Announcement,
   AnnouncementTag,
@@ -97,8 +97,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Tech Stack Marquee */}
-      <TechStackMarquee />
+      {/* Tech Stack Carousel */}
+      <TechStackCarousel />
 
       {/* Setup Project Section */}
       <SetupProject />
