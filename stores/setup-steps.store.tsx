@@ -155,6 +155,34 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "initial",
   },
   {
+    id: "understand-claude-skills",
+    title: "Understand Claude Skills",
+    description: (
+      <>
+        Explore <InlineCode>.claude/skills/</InlineCode> to understand how
+        Claude skills work. Think of skills like instant knowledge downloads—
+        Claude loads these specialized instruction files to follow your
+        codebase patterns perfectly. Each skill contains battle-tested patterns
+        for specific tasks: <InlineCode>client-server-data-flow</InlineCode>{" "}
+        for CRUD operations, <InlineCode>database-schema-extension</InlineCode>{" "}
+        for adding tables, <InlineCode>ui-patterns</InlineCode> for components,
+        and more. When working with AI, these skills ensure consistent,
+        production-ready code that follows your established conventions. Learn
+        more at{" "}
+        <a
+          href="https://www.anthropic.com/news/skills"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+        >
+          anthropic.com/news/skills
+        </a>
+        .
+      </>
+    ),
+    category: "initial",
+  },
+  {
     id: "explore-hooks",
     title: "Explore the Hooks Directory",
     description: (

@@ -2,13 +2,17 @@
 
 import { BlurFade } from "@/components/ui/blur-fade";
 import { Button } from "@/components/ui/button";
-import { ArrowDown } from "lucide-react";
-import { Github } from "lucide-react";
+import { ArrowDown, Github } from "lucide-react";
 import Prism from "@/components/Prism";
 import { companyConfig } from "@/lib/brand";
 import { SetupProject } from "@/components/setup-project";
 import { InstallCommand } from "@/components/install-command";
 import { TechStackMarquee } from "@/components/tech-stack-marquee";
+import {
+  Announcement,
+  AnnouncementTag,
+  AnnouncementTitle,
+} from "@/components/kibo-ui/announcement";
 
 export default function Home() {
   const scrollToSteps = () => {
@@ -38,15 +42,23 @@ export default function Home() {
 
         <div className="absolute inset-0 backdrop-blur-sm bg-black/10" />
 
-        <div className="relative z-10 text-center space-y-8 px-6 max-w-4xl mx-auto">
+        <div className="relative z-10 text-center space-y-8 px-6 max-w-7xl mx-auto">
           <BlurFade delay={0} duration={0.5} inView>
-            <div className="space-y-4">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground font-mono">
-                create-reodor-app
+            <div className="space-y-6">
+              <div className="flex justify-center">
+                <Announcement className="text-xs sm:text-sm">
+                  <AnnouncementTag>Introducing</AnnouncementTag>
+                  <AnnouncementTitle className="font-mono">
+                    create-reodor-app
+                  </AnnouncementTitle>
+                </Announcement>
+              </div>
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-foreground leading-tight max-w-5xl mx-auto hyphens-auto px-4">
+                A starter template specialized for agentic coding
               </h1>
-              <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto">
-                A comprehensive Next.js starter template with Supabase and
-                modern tooling
+              <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
+                Maximize developer velocity with AI-powered workflows and safe
+                guardrails
               </p>
             </div>
           </BlurFade>
@@ -80,7 +92,7 @@ export default function Home() {
           </BlurFade>
 
           <BlurFade delay={0.4} duration={0.5} inView>
-            <InstallCommand className="max-w-2xl mx-auto mt-8" />
+            <InstallCommand className="max-w-2xl mx-auto mt-8 text-xs sm:text-sm" />
           </BlurFade>
         </div>
       </section>

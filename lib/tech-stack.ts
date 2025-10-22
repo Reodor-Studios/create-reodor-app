@@ -14,7 +14,8 @@ export interface TechStackItem {
     | "email"
     | "analytics"
     | "payment"
-    | "runtime";
+    | "runtime"
+    | "ai";
 }
 
 export const TECH_STACK: TechStackItem[] = [
@@ -151,6 +152,15 @@ export const TECH_STACK: TechStackItem[] = [
     website: "https://bun.sh",
     logo: "/logos/bun.svg",
     category: "runtime",
+  },
+
+  // AI Development
+  {
+    name: "Claude",
+    description: "AI assistant with custom skills for codebase patterns",
+    website: "https://www.anthropic.com/claude",
+    logo: "/logos/claude.svg",
+    category: "ai",
   },
 ];
 
