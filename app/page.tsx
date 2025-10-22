@@ -46,7 +46,7 @@ export default function Home() {
           <BlurFade delay={0} duration={0.5} inView>
             <div className="space-y-6">
               <div className="flex justify-center">
-                <Announcement className="text-xs sm:text-sm">
+                <Announcement className="text-xs sm:text-sm backdrop-blur-md bg-background/60 border-border/50 shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300">
                   <AnnouncementTag>Introducing</AnnouncementTag>
                   <AnnouncementTitle className="font-mono">
                     create-reodor-app
