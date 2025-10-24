@@ -176,12 +176,12 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
       <>
         Explore <InlineCode>.claude/skills/</InlineCode> to understand how
         Claude skills work. Think of skills like instant knowledge downloads—
-        Claude loads these specialized instruction files to follow your
-        codebase patterns perfectly. Each skill contains battle-tested patterns
-        for specific tasks: <InlineCode>client-server-data-flow</InlineCode>{" "}
-        for CRUD operations, <InlineCode>database-schema-extension</InlineCode>{" "}
-        for adding tables, <InlineCode>ui-patterns</InlineCode> for components,
-        and more. When working with AI, these skills ensure consistent,
+        Claude loads these specialized instruction files to follow your codebase
+        patterns perfectly. Each skill contains battle-tested patterns for
+        specific tasks: <InlineCode>client-server-data-flow</InlineCode> for
+        CRUD operations, <InlineCode>database-schema-extension</InlineCode> for
+        adding tables, <InlineCode>ui-patterns</InlineCode> for components, and
+        more. When working with AI, these skills ensure consistent,
         production-ready code that follows your established conventions. Learn
         more at{" "}
         <a
@@ -574,6 +574,146 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
         <strong>
           If you don't need a scheduler, check this off to mark it complete.
         </strong>
+      </>
+    ),
+    category: "services",
+  },
+  {
+    id: "consider-dedicated-backend",
+    title: "Consider a Dedicated Backend Framework (Optional)",
+    description: (
+      <>
+        <strong>
+          Only if Next.js Server Actions don&apos;t meet your requirements:
+        </strong>{" "}
+        While Server Actions are excellent for most use cases, you might need a
+        dedicated backend framework if you&apos;re:
+        <ul className="list-disc list-inside mt-2 space-y-1">
+          <li>
+            <strong>Building a Public API</strong> - Server Actions are designed
+            for internal use. Dedicated frameworks like{" "}
+            <a
+              href="https://hono.dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Hono
+            </a>{" "}
+            or{" "}
+            <a
+              href="https://fastapi.tiangolo.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              FastAPI
+            </a>{" "}
+            offer robust routing, versioning, and auto-generated documentation
+            for third-party consumers.
+          </li>
+          <li>
+            <strong>Complex Backend Architecture</strong> - Frameworks like{" "}
+            <a
+              href="https://flask.palletsprojects.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Flask
+            </a>{" "}
+            or FastAPI enforce clean separation of concerns, making
+            microservices and domain-driven design easier to implement.
+          </li>
+          <li>
+            <strong>Background Processing & Queues</strong> - Server Actions run
+            as short-lived serverless functions. For long-running jobs (video
+            encoding, mass emails), use a dedicated backend with worker
+            processes (Celery, BullMQ).
+          </li>
+          <li>
+            <strong>Language-Specific Libraries & Tools</strong> - Access
+            specialized libraries not available in JavaScript, such as{" "}
+            <a
+              href="https://pandas.pydata.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Pandas
+            </a>
+            /
+            <a
+              href="https://numpy.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              NumPy
+            </a>{" "}
+            (data science),{" "}
+            <a
+              href="https://scikit-learn.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              scikit-learn
+            </a>
+            /
+            <a
+              href="https://pytorch.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              PyTorch
+            </a>{" "}
+            (ML/AI),{" "}
+            <a
+              href="https://opencv.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              OpenCV
+            </a>{" "}
+            (computer vision), or Go/Rust libraries for high-performance
+            computing.
+          </li>
+        </ul>
+        <p className="mt-3">
+          <strong>Critical:</strong> Maintain type-safe client-server
+          communication using{" "}
+          <a
+            href="https://hono.dev/docs/guides/rpc"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            Hono RPC
+          </a>{" "}
+          (TypeScript end-to-end type inference) or{" "}
+          <a
+            href="https://openapi-react-query-codegen.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            openapi-react-query-codegen
+          </a>{" "}
+          (auto-generate TanStack Query hooks from OpenAPI specs). See{" "}
+          <InlineCode>
+            docs/technical/dedicated-backend-frameworks.md
+          </InlineCode>{" "}
+          for complete implementation guides, framework comparisons, and
+          type-safety patterns.{" "}
+          <strong>
+            If you don&apos;t need a dedicated backend for any of the reasons
+            above, then chances are server actions will be fine for you, so
+            check this off to mark it complete.
+          </strong>
+        </p>
       </>
     ),
     category: "services",
