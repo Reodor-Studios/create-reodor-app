@@ -3,7 +3,7 @@
 import { BlurFade } from "@/components/ui/blur-fade";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Github } from "lucide-react";
-import Prism from "@/components/Prism";
+import ColorBends from "@/components/ColorBends";
 import { companyConfig } from "@/lib/brand";
 import { SetupProject } from "@/components/setup-project";
 import { InstallCommand } from "@/components/install-command";
@@ -13,6 +13,7 @@ import {
   AnnouncementTag,
   AnnouncementTitle,
 } from "@/components/kibo-ui/announcement";
+import { violet, purple, pink, blue, cyan } from "tailwindcss/colors";
 
 export default function Home() {
   const scrollToSteps = () => {
@@ -24,19 +25,21 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
-      {/* Hero Section with Prism */}
+      {/* Hero Section with ColorBends */}
       <section className="relative w-full h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <Prism
-            animationType="rotate"
-            timeScale={0.15}
-            height={3.5}
-            baseWidth={5.5}
-            scale={3.6}
-            hueShift={0}
-            colorFrequency={1}
-            noise={0}
-            glow={0.7}
+          <ColorBends
+            rotation={0}
+            autoRotate={0}
+            speed={0.2}
+            scale={1}
+            frequency={1}
+            warpStrength={1}
+            mouseInfluence={1}
+            parallax={0.5}
+            noise={0.1}
+            transparent={true}
+            colors={[violet[900], blue[900], cyan[900]]}
           />
         </div>
 
