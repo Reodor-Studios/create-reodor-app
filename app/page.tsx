@@ -13,7 +13,7 @@ import {
   AnnouncementTag,
   AnnouncementTitle,
 } from "@/components/kibo-ui/announcement";
-import { violet, purple, pink, blue, cyan } from "tailwindcss/colors";
+import { violet, blue, cyan } from "tailwindcss/colors";
 
 export default function Home() {
   const scrollToSteps = () => {
@@ -59,10 +59,12 @@ export default function Home() {
               <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-foreground leading-tight max-w-5xl mx-auto hyphens-auto px-4">
                 A starter template specialized for agentic coding
               </h1>
-              <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-                Maximize developer velocity with AI-powered workflows and safe
-                guardrails
-              </p>
+              <div className="max-w-2xl mx-auto px-4">
+                <p className="text-xs sm:text-lg text-foreground backdrop-blur-md bg-background/40 dark:bg-background/50 rounded-lg px-6 py-3 shadow-lg border border-border/30">
+                  Maximize developer velocity with AI-powered workflows and safe
+                  guardrails
+                </p>
+              </div>
             </div>
           </BlurFade>
 
