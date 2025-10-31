@@ -18,7 +18,7 @@ The organization maintains an n8n instance at `https://n8n.reodorstudios.com` wi
 
 ## Decision Framework
 
-### Use Next.js Server Actions When:
+### Use Next.js Server Actions When
 
 ✅ **CRUD Operations** - Standard database create, read, update, delete
 ✅ **Simple Business Logic** - Authentication, authorization, data validation
@@ -30,7 +30,7 @@ The organization maintains an n8n instance at `https://n8n.reodorstudios.com` wi
 
 **Rationale**: Server actions provide excellent DX, full type safety from database → frontend, and tight integration with React components.
 
-### Use n8n Workflows When:
+### Use n8n Workflows When
 
 ✅ **Complex Multi-Step Workflows** - 5+ steps with branching logic and error handling
 ✅ **AI Agent Pipelines** - Multiple AI interactions with tool usage and decision trees
@@ -55,12 +55,11 @@ The organization maintains an n8n instance at `https://n8n.reodorstudios.com` wi
 
 export async function updateProfile(data: ProfileUpdate) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return await supabase
-    .from("profiles")
-    .update(data)
-    .eq("id", user.id);
+  return await supabase.from("profiles").update(data).eq("id", user.id);
 }
 ```
 
@@ -148,22 +147,19 @@ export async function triggerN8nWorkflow<T = any>(
   data: any
 ): Promise<N8nWebhookResponse> {
   try {
-    const response = await fetch(
-      `${env.N8N_WEBHOOK_URL}/${workflowPath}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${env.N8N_WEBHOOK_SECRET}`,
-        },
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${env.N8N_WEBHOOK_URL}/${workflowPath}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.N8N_WEBHOOK_SECRET}`,
+      },
+      body: JSON.stringify(data),
+    });
 
     if (!response.ok) {
       return {
         status: "error",
-        error: `Workflow failed: ${response.statusText}`
+        error: `Workflow failed: ${response.statusText}`,
       };
     }
 
@@ -173,7 +169,7 @@ export async function triggerN8nWorkflow<T = any>(
     console.error("n8n workflow error:", error);
     return {
       status: "error",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -253,8 +249,9 @@ export async function generateBlogPost(topic: string) {
 The organization maintains a separate n8n repository with comprehensive tooling:
 
 ### Repository Location
+
 ```
-/Users/magnusrodseth/dev/capra/reodor-studios/n8n/
+/path/to/your/repo/reodor-studios/n8n/
 ```
 
 ### Development Workflow
@@ -395,7 +392,7 @@ Consider migration when:
 
 ## Best Practices
 
-### DO:
+### DO
 
 ✅ Default to server actions for standard features
 ✅ Use n8n for complex, multi-step orchestration
@@ -405,7 +402,7 @@ Consider migration when:
 ✅ Test workflows thoroughly before production
 ✅ Monitor n8n execution logs for errors
 
-### DON'T:
+### DON'T
 
 ❌ Use n8n for simple CRUD operations
 ❌ Skip type validation when calling n8n webhooks
@@ -419,6 +416,7 @@ Consider migration when:
 **Default Choice**: Next.js Server Actions for standard features
 
 **Consider n8n When**:
+
 - Complex multi-step workflows (5+ steps)
 - AI agent pipelines with tool usage
 - External service orchestration (3+ APIs)
@@ -430,6 +428,7 @@ Consider migration when:
 **Development**: Use n8n repo with MCP tools and specialized skills
 
 For detailed n8n workflow development, see:
+
 - n8n repository: `/Users/magnusrodseth/dev/capra/reodor-studios/n8n/`
 - Technical documentation: `docs/technical/n8n-integration.md` (to be created)
 - n8n instance: `https://n8n.reodorstudios.com`
