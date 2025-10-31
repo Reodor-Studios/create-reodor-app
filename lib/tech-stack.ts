@@ -15,7 +15,8 @@ export interface TechStackItem {
     | "analytics"
     | "payment"
     | "runtime"
-    | "ai";
+    | "ai"
+    | "automation";
 }
 
 export const TECH_STACK: TechStackItem[] = [
@@ -161,6 +162,15 @@ export const TECH_STACK: TechStackItem[] = [
     website: "https://www.anthropic.com/claude",
     logo: "/logos/claude.svg",
     category: "ai",
+  },
+
+  // Workflow Automation
+  {
+    name: "n8n",
+    description: "Workflow automation for complex integrations and AI pipelines",
+    website: "https://n8n.io",
+    logo: "/logos/n8n.svg",
+    category: "automation",
   },
 ];
 

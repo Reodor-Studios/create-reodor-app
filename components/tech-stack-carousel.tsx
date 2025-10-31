@@ -25,7 +25,7 @@ function TechStackCard({ item }: TechStackCardProps) {
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "group relative flex w-64 h-[88px] cursor-pointer overflow-hidden rounded-xl border p-4",
+        "group relative flex w-64 md:w-full h-[88px] cursor-pointer overflow-hidden rounded-xl border p-4",
         "transition-all duration-300 ease-out",
         "hover:scale-105 hover:shadow-lg hover:z-10",
         // Light mode
@@ -79,8 +79,8 @@ export function TechStackCarousel() {
         </div>
       </div>
 
-      {/* Carousel section */}
-      <div className="relative mt-12 max-w-6xl mx-auto">
+      {/* Mobile: Carousel */}
+      <div className="relative mt-12 max-w-6xl mx-auto md:hidden">
         <div className="py-4">
           <Carousel
             opts={{
@@ -108,6 +108,13 @@ export function TechStackCarousel() {
         {/* Gradient overlays for smooth edges */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background" />
+      </div>
+
+      {/* Desktop: Grid */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-12 max-w-6xl mx-auto">
+        {TECH_STACK.map((item, index) => (
+          <TechStackCard key={`${item.name}-${index}`} item={item} />
+        ))}
       </div>
     </section>
   );

@@ -719,6 +719,60 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "services",
   },
   {
+    id: "consider-n8n-automation",
+    title: "Consider n8n Workflow Automation (Optional)",
+    description: (
+      <>
+        <strong>
+          Only if you need complex workflow automation or AI pipelines:
+        </strong>{" "}
+        While Next.js Server Actions are perfect for most backend logic, n8n
+        excels at specific use cases:
+        <ul className="list-disc list-inside mt-2 space-y-1">
+          <li>
+            <strong>Complex Multi-Step Workflows</strong> - Orchestrating 5+
+            steps with branching logic, error handling, and retries. Visual
+            workflow designer makes debugging easier than nested server action
+            code.
+          </li>
+          <li>
+            <strong>AI Agent Pipelines</strong> - Building AI workflows with
+            multiple tool uses and decision trees. Pre-built AI nodes (OpenAI,
+            Anthropic) with visual prompt iteration.
+          </li>
+          <li>
+            <strong>External Service Orchestration</strong> - Coordinating 3+
+            external APIs (Notion → AI → Slack → Database). 400+ pre-built
+            integrations with authentication handling.
+          </li>
+          <li>
+            <strong>Long-Running Tasks</strong> - Batch processing, video
+            encoding, or data transformations that exceed serverless timeouts.
+            No timeout restrictions in n8n.
+          </li>
+          <li>
+            <strong>Scheduled Automation</strong> - Complex cron schedules,
+            periodic syncs, or automated reports with built-in monitoring and
+            failure notifications.
+          </li>
+        </ul>
+        <p className="mt-3">
+          The organization maintains an n8n instance with MCP integration for
+          AI-assisted workflow development. You can call n8n workflows from
+          server actions via webhooks for hybrid approaches. See{" "}
+          <InlineCode>docs/technical/n8n-integration.md</InlineCode> for
+          complete decision framework, integration patterns, and examples.{" "}
+          <strong>
+            If your app doesn&apos;t need complex automation, AI pipelines, or
+            multi-service orchestration, server actions will handle everything
+            you need—check this off to mark it complete.
+          </strong>
+        </p>
+      </>
+    ),
+    category: "services",
+  },
+  {
     id: "run-dev-server",
     title: "Run Development Server",
     description: (
