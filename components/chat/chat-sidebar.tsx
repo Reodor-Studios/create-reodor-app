@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface ChatSidebarProps {
   currentConversationId?: string;
@@ -53,8 +54,8 @@ export function ChatSidebar({
   onSelectConversation,
 }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { open, toggleSidebar } = useSidebar();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Filter conversations based on search
   const filteredConversations = searchConversations(
@@ -69,7 +70,6 @@ export function ChatSidebar({
     if (!open) {
       toggleSidebar();
     }
-    setIsSearchOpen(true);
     // Focus search input after sidebar opens
     setTimeout(() => {
       const searchInput = document.querySelector<HTMLInputElement>(
@@ -86,10 +86,14 @@ export function ChatSidebar({
     onNewChat();
   };
 
+  // Show floating trigger when sidebar is collapsed on any viewport,
+  // or when on mobile and sidebar is not expanded
+  const shouldShowFloatingTrigger = !open || (isMobile && !open);
+
   return (
     <>
       {/* Floating trigger visible when sidebar is collapsed */}
-      {!open && (
+      {shouldShowFloatingTrigger && (
         <div className="fixed top-20 left-4 z-50 flex items-center gap-1 bg-secondary border rounded-lg p-1 shadow-lg">
           <Button
             variant="ghost"
@@ -170,19 +174,19 @@ export function ChatSidebar({
                           : conversation.title;
 
                       return (
-                        <SidebarMenuItem key={conversation.id} className="my-1">
+                        <SidebarMenuItem key={conversation.id} className="my-1 group relative">
                           <SidebarMenuButton
                             isActive={currentConversationId === conversation.id}
                             onClick={() =>
                               onSelectConversation(conversation.id)
                             }
-                            className="w-full justify-start py-2"
+                            className="w-full justify-start py-2 pr-10"
                           >
                             <div className="flex items-center gap-2 w-full min-w-0">
                               {conversation.pinned && (
                                 <PinIcon className="size-3 shrink-0 text-primary" />
                               )}
-                              <div className="flex-1 min-w-0 font-medium text-sm">
+                              <div className="flex-1 min-w-0 font-medium text-sm truncate">
                                 {displayTitle}
                               </div>
                             </div>
@@ -192,7 +196,7 @@ export function ChatSidebar({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="size-6 absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100"
+                                className="size-6 absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <MoreVerticalIcon className="size-3" />
                                 <span className="sr-only">Actions</span>
