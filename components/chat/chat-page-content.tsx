@@ -70,7 +70,7 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
           model,
           webSearch,
         },
-      },
+      }
     );
   };
 
@@ -79,7 +79,7 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
   return (
     <SidebarProvider defaultOpen>
       {/* Account for navbar height (min-h-16 = 64px) */}
-      <div className="flex w-full h-screen pt-16">
+      <div className="flex w-full h-screen pt-18">
         <ChatSidebar
           currentConversationId={currentConversationId}
           onNewChat={handleNewChat}
@@ -107,9 +107,7 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
 
                   {(status === "submitted" || status === "streaming") &&
                     messages.length > 0 &&
-                    messages[messages.length - 1].role === "user" && (
-                      <Loader />
-                    )}
+                    messages[messages.length - 1].role === "user" && <Loader />}
                 </ConversationContent>
                 <ConversationScrollButton />
               </Conversation>
