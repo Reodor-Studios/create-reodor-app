@@ -823,13 +823,17 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "deployment",
   },
   {
-    id: "deploy-vercel",
-    title: "Deploy to Vercel (Optional)",
+    id: "deploy-railway",
+    title: "Deploy to Railway",
     description: (
       <>
-        Deploy your Next.js application to Vercel for production hosting.
-        Connect your GitHub repository, configure environment variables in
-        Vercel dashboard, and enable automatic deployments on push to main.
+        Deploy your Next.js application to Railway for production hosting. Run{" "}
+        <InlineCode>bun run railway:setup</InlineCode> to configure the Railway
+        CLI, then <InlineCode>bun run railway:push-env</InlineCode> to push
+        environment variables. Push to main branch for automatic deployments or
+        use <InlineCode>railway up</InlineCode> for manual deployment. See{" "}
+        <InlineCode>docs/technical/railway-deployment.md</InlineCode> for
+        complete setup instructions.
       </>
     ),
     category: "deployment",

@@ -141,10 +141,10 @@ export const TECH_STACK: TechStackItem[] = [
 
   // Deployment & Runtime
   {
-    name: "Vercel",
-    description: "Frontend cloud platform",
-    website: "https://vercel.com",
-    logo: "/logos/vercel.svg",
+    name: "Railway",
+    description: "Infrastructure platform for deployment",
+    website: "https://railway.app",
+    logo: "/logos/railway.svg",
     category: "deployment",
   },
   {
