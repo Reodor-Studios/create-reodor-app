@@ -76,7 +76,6 @@ export default function RootLayout({
             <div className="min-h-screen flex flex-col">
               <Navbar />
               <main className="flex-1 py-8 sm:py-12 md:py-16">{children}</main>
-              <Footer />
             </div>
             <Toaster richColors />
           </ThemeProvider>

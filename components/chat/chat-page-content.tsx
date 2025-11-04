@@ -1,6 +1,6 @@
 "use client";
 
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import {
   Conversation,
   ConversationContent,
@@ -16,18 +16,20 @@ import { DefaultChatTransport } from "ai";
 import { type PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { useState } from "react";
 import { MODELS } from "@/types/chat";
+import { cn } from "@/lib/utils";
 
 interface ChatPageContentProps {
   userId: string;
 }
 
-export function ChatPageContent({ userId }: ChatPageContentProps) {
+function ChatContent({ userId }: ChatPageContentProps) {
   const [input, setInput] = useState("");
   const [model, setModel] = useState(MODELS[0].id);
   const [webSearch, setWebSearch] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | undefined
   >(undefined);
+  const { open } = useSidebar();
 
   const { messages, sendMessage, status, regenerate } = useChat({
     transport: new DefaultChatTransport({
@@ -77,23 +79,28 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
   const showEmptyState = messages.length === 0;
 
   return (
-    <SidebarProvider defaultOpen>
-      {/* Account for navbar height (min-h-16 = 64px) */}
-      <div className="flex w-full h-screen pt-18">
-        <ChatSidebar
-          currentConversationId={currentConversationId}
-          onNewChat={handleNewChat}
-          onSelectConversation={handleSelectConversation}
-        />
+    <>
+      <ChatSidebar
+        currentConversationId={currentConversationId}
+        onNewChat={handleNewChat}
+        onSelectConversation={handleSelectConversation}
+      />
 
-        <SidebarInset className="flex flex-col h-full w-full">
-          {showEmptyState ? (
-            <div className="flex-1 overflow-y-auto">
-              <ChatEmptyState onQuestionSelect={handleQuestionSelect} />
-            </div>
-          ) : (
-            <div className="flex-1 overflow-hidden">
-              <Conversation className="h-full">
+      <SidebarInset className="flex flex-col h-full w-full relative">
+        {/* Scrollable content area with padding for fixed input and bottom spacing */}
+        <div className="flex-1 overflow-y-auto pb-[250px]">
+          <div
+            className={cn(
+              "mx-auto transition-all duration-300 px-4 md:px-6",
+              open ? "max-w-4xl" : "max-w-7xl"
+            )}
+          >
+            {showEmptyState ? (
+              <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
+                <ChatEmptyState onQuestionSelect={handleQuestionSelect} />
+              </div>
+            ) : (
+              <Conversation className="min-h-[calc(100vh-200px)]">
                 <ConversationContent>
                   {messages.map((message, index) => (
                     <ChatMessage
@@ -111,23 +118,44 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
                 </ConversationContent>
                 <ConversationScrollButton />
               </Conversation>
-            </div>
-          )}
-
-          <div className="border-t flex-shrink-0">
-            <ChatInput
-              input={input}
-              onInputChange={setInput}
-              onSubmit={handleSubmit}
-              model={model}
-              onModelChange={setModel}
-              webSearch={webSearch}
-              onWebSearchChange={setWebSearch}
-              status={status}
-              disabled={status === "submitted" || status === "streaming"}
-            />
+            )}
           </div>
-        </SidebarInset>
+        </div>
+
+        {/* Fixed input at bottom of viewport - respects sidebar on desktop */}
+        <div className="fixed bottom-6 left-0 right-0 z-40 md:left-auto md:right-auto md:w-full">
+          <div className="w-full px-4 md:px-6">
+            <div
+              className={cn(
+                "mx-auto transition-all duration-300 bg-background border rounded-lg shadow-lg",
+                open ? "max-w-4xl" : "max-w-7xl"
+              )}
+            >
+              <ChatInput
+                input={input}
+                onInputChange={setInput}
+                onSubmit={handleSubmit}
+                model={model}
+                onModelChange={setModel}
+                webSearch={webSearch}
+                onWebSearchChange={setWebSearch}
+                status={status}
+                disabled={status === "submitted" || status === "streaming"}
+              />
+            </div>
+          </div>
+        </div>
+      </SidebarInset>
+    </>
+  );
+}
+
+export function ChatPageContent({ userId }: ChatPageContentProps) {
+  return (
+    <SidebarProvider defaultOpen>
+      {/* Account for navbar height (min-h-16 = 64px) */}
+      <div className="flex w-full h-screen pt-18">
+        <ChatContent userId={userId} />
       </div>
     </SidebarProvider>
   );

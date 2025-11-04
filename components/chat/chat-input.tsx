@@ -78,7 +78,6 @@ export function ChatInput({
       onSubmit={handleSubmit}
       globalDrop
       multiple
-      className="border-t"
     >
       <PromptInputHeader>
         <PromptInputAttachments>

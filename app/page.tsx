@@ -14,6 +14,7 @@ import {
   AnnouncementTitle,
 } from "@/components/kibo-ui/announcement";
 import { violet, blue, cyan } from "tailwindcss/colors";
+import { Footer } from "@/components/footer";
 
 export default function Home() {
   const scrollToSteps = () => {
@@ -107,6 +108,8 @@ export default function Home() {
 
       {/* Setup Project Section */}
       <SetupProject />
+
+      <Footer />
     </main>
   );
 }

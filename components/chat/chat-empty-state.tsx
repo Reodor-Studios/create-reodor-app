@@ -20,7 +20,7 @@ export function ChatEmptyState({ onQuestionSelect }: ChatEmptyStateProps) {
   );
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-6 max-w-4xl mx-auto">
+    <div className="flex flex-col items-center justify-center h-full p-6 w-full">
       <BlurFade delay={0.1} duration={0.5} inView>
         <h1 className="text-4xl font-bold text-center mb-2">
           How can I help you?
