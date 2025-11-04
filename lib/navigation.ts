@@ -15,4 +15,9 @@ export const navigationItems: NavigationItem[] = [
         href: "/oppgaver",
         description: "Se og administrer dine oppgaver",
     },
+    {
+        title: "Chat",
+        href: "/chat",
+        description: "Snakk med AI-assistenten",
+    },
 ];
