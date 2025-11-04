@@ -127,7 +127,7 @@ export function ChatSidebar({
         </div>
       )}
 
-      <Sidebar>
+      <Sidebar collapsible="offcanvas">
         <SidebarHeader className="border-b p-4 pt-20">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />

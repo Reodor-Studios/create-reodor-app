@@ -55,9 +55,9 @@ export function ChatEmptyState({ onQuestionSelect }: ChatEmptyStateProps) {
         </div>
       </BlurFade>
 
-      {/* Questions Grid */}
+      {/* Questions List */}
       {selectedCategoryData && (
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="w-full flex flex-col gap-3">
           {selectedCategoryData.questions.map((question, index) => (
             <BlurFade
               key={index}
