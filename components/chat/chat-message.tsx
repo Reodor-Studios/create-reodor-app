@@ -18,6 +18,7 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import { Fragment } from "react";
 import type { UIMessage } from "ai";
+import { toast } from "sonner";
 
 interface ChatMessageProps {
   message: UIMessage;
@@ -38,6 +39,14 @@ export function ChatMessage({
     status === "streaming" &&
     isLast &&
     message.parts.some((part) => part.type === "reasoning");
+
+  const handleCopy = async (text: string) => {
+    await toast.promise(navigator.clipboard.writeText(text), {
+      loading: "Copying...",
+      success: "Copied to clipboard",
+      error: "Failed to copy",
+    });
+  };
 
   return (
     <BlurFade delay={0.1} duration={0.5} inView>
@@ -77,7 +86,7 @@ export function ChatMessage({
                           <RefreshCcwIcon className="size-3" />
                         </Action>
                         <Action
-                          onClick={() => navigator.clipboard.writeText(part.text)}
+                          onClick={() => handleCopy(part.text)}
                           label="Copy"
                         >
                           <CopyIcon className="size-3" />

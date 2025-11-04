@@ -14,7 +14,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -39,8 +38,9 @@ import {
   PanelLeftIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { ConversationSearchDialog } from "@/components/chat/conversation-search-dialog";
 
 interface ChatSidebarProps {
   currentConversationId?: string;
@@ -53,30 +53,27 @@ export function ChatSidebar({
   onNewChat,
   onSelectConversation,
 }: ChatSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const { open, toggleSidebar } = useSidebar();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  // Filter conversations based on search
-  const filteredConversations = searchConversations(
-    MOCK_CONVERSATIONS,
-    searchQuery
-  );
+  // Group all conversations by recency for sidebar display
+  const conversationGroups = groupConversationsByRecency(MOCK_CONVERSATIONS);
 
-  // Group by recency
-  const conversationGroups = groupConversationsByRecency(filteredConversations);
+  // Add cmd+k keyboard shortcut
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchDialogOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   const handleSearchClick = () => {
-    if (!open) {
-      toggleSidebar();
-    }
-    // Focus search input after sidebar opens
-    setTimeout(() => {
-      const searchInput = document.querySelector<HTMLInputElement>(
-        'input[placeholder="Search conversations..."]'
-      );
-      searchInput?.focus();
-    }, 100);
+    setSearchDialogOpen(true);
   };
 
   const handleNewChatClick = () => {
@@ -94,7 +91,7 @@ export function ChatSidebar({
     <>
       {/* Floating trigger visible when sidebar is collapsed */}
       {shouldShowFloatingTrigger && (
-        <div className="fixed top-20 left-4 z-50 flex items-center gap-1 bg-secondary border rounded-lg p-1 shadow-lg">
+        <div className="fixed top-[4.5rem] left-2 z-50 flex items-center gap-1 bg-background/20 backdrop-blur-md border rounded-lg p-1 shadow-lg">
           <Button
             variant="ghost"
             size="icon"
@@ -145,15 +142,17 @@ export function ChatSidebar({
 
         <SidebarContent>
           <div className="p-3">
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-muted-foreground"
+              onClick={handleSearchClick}
+            >
+              <SearchIcon className="size-4 mr-2" />
+              <span>Search conversations...</span>
+              <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </Button>
           </div>
 
           <Separator />
@@ -174,7 +173,10 @@ export function ChatSidebar({
                           : conversation.title;
 
                       return (
-                        <SidebarMenuItem key={conversation.id} className="my-1 group relative">
+                        <SidebarMenuItem
+                          key={conversation.id}
+                          className="my-1 group relative"
+                        >
                           <SidebarMenuButton
                             isActive={currentConversationId === conversation.id}
                             onClick={() =>
@@ -250,16 +252,23 @@ export function ChatSidebar({
               </SidebarGroup>
             ))}
 
-            {filteredConversations.length === 0 && (
+            {MOCK_CONVERSATIONS.length === 0 && (
               <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                <SearchIcon className="size-8 mb-2" />
-                <p className="text-sm">No conversations found</p>
-                <p className="text-xs mt-1">Try a different search term</p>
+                <MessageSquarePlusIcon className="size-8 mb-2" />
+                <p className="text-sm">No conversations yet</p>
+                <p className="text-xs mt-1">Start a new chat to begin</p>
               </div>
             )}
           </ScrollArea>
         </SidebarContent>
       </Sidebar>
+
+      <ConversationSearchDialog
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
+        currentConversationId={currentConversationId}
+        onSelectConversation={onSelectConversation}
+      />
     </>
   );
 }

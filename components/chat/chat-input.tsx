@@ -13,16 +13,10 @@ import {
   PromptInputFooter,
   PromptInputHeader,
   type PromptInputMessage,
-  PromptInputModelSelect,
-  PromptInputModelSelectContent,
-  PromptInputModelSelectItem,
-  PromptInputModelSelectTrigger,
-  PromptInputModelSelectValue,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { MODELS } from "@/types/chat";
 import { GlobeIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,8 +24,6 @@ interface ChatInputProps {
   input: string;
   onInputChange: (value: string) => void;
   onSubmit: (message: PromptInputMessage) => void;
-  model: string;
-  onModelChange: (model: string) => void;
   webSearch: boolean;
   onWebSearchChange: (enabled: boolean) => void;
   status: "submitted" | "streaming" | "ready" | "error";
@@ -42,8 +34,6 @@ export function ChatInput({
   input,
   onInputChange,
   onSubmit,
-  model,
-  onModelChange,
   webSearch,
   onWebSearchChange,
   status,
@@ -111,23 +101,6 @@ export function ChatInput({
             <GlobeIcon className="size-4" />
             <span>Search</span>
           </PromptInputButton>
-
-          <PromptInputModelSelect
-            onValueChange={onModelChange}
-            value={model}
-            disabled={disabled}
-          >
-            <PromptInputModelSelectTrigger>
-              <PromptInputModelSelectValue />
-            </PromptInputModelSelectTrigger>
-            <PromptInputModelSelectContent>
-              {MODELS.map((model) => (
-                <PromptInputModelSelectItem key={model.id} value={model.id}>
-                  {model.name}
-                </PromptInputModelSelectItem>
-              ))}
-            </PromptInputModelSelectContent>
-          </PromptInputModelSelect>
         </PromptInputTools>
 
         <PromptInputSubmit disabled={!input && !status} status={status} />

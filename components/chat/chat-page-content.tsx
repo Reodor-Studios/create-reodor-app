@@ -15,7 +15,6 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { type PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { useState } from "react";
-import { MODELS } from "@/types/chat";
 import { cn } from "@/lib/utils";
 
 interface ChatPageContentProps {
@@ -24,7 +23,6 @@ interface ChatPageContentProps {
 
 function ChatContent({ userId }: ChatPageContentProps) {
   const [input, setInput] = useState("");
-  const [model, setModel] = useState(MODELS[0].id);
   const [webSearch, setWebSearch] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | undefined
@@ -69,7 +67,6 @@ function ChatContent({ userId }: ChatPageContentProps) {
       },
       {
         body: {
-          model,
           webSearch,
         },
       }
@@ -135,8 +132,6 @@ function ChatContent({ userId }: ChatPageContentProps) {
                 input={input}
                 onInputChange={setInput}
                 onSubmit={handleSubmit}
-                model={model}
-                onModelChange={setModel}
                 webSearch={webSearch}
                 onWebSearchChange={setWebSearch}
                 status={status}
