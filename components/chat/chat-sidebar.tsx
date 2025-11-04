@@ -96,77 +96,84 @@ export function ChatSidebar({
 
         <ScrollArea className="flex-1">
           {conversationGroups.map((group) => (
-            <SidebarGroup key={group.label}>
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroup key={group.label} className="py-2">
+              <SidebarGroupLabel className="mb-2">{group.label}</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.conversations.map((conversation) => (
-                    <SidebarMenuItem key={conversation.id}>
-                      <SidebarMenuButton
-                        isActive={currentConversationId === conversation.id}
-                        onClick={() => onSelectConversation(conversation.id)}
-                        className="w-full justify-start"
-                      >
-                        <div className="flex items-start gap-2 w-full min-w-0">
-                          {conversation.pinned && (
-                            <PinIcon className="size-3 mt-0.5 shrink-0 text-primary" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">
-                              {conversation.title}
-                            </div>
-                            {conversation.preview && (
-                              <div className="text-xs text-muted-foreground truncate">
-                                {conversation.preview}
-                              </div>
+                <SidebarMenu className="gap-1">
+                  {group.conversations.map((conversation) => {
+                    // Truncate title at 25 characters
+                    const displayTitle =
+                      conversation.title.length > 25
+                        ? conversation.title.slice(0, 25) + "..."
+                        : conversation.title;
+
+                    return (
+                      <SidebarMenuItem key={conversation.id} className="my-1">
+                        <SidebarMenuButton
+                          isActive={currentConversationId === conversation.id}
+                          onClick={() => onSelectConversation(conversation.id)}
+                          className="w-full justify-start py-2"
+                        >
+                          <div className="flex items-center gap-2 w-full min-w-0">
+                            {conversation.pinned && (
+                              <PinIcon className="size-3 shrink-0 text-primary" />
                             )}
+                            <div className="flex-1 min-w-0 font-medium text-sm">
+                              {displayTitle}
+                            </div>
                           </div>
-                        </div>
-                      </SidebarMenuButton>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-6 absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100"
-                          >
-                            <MoreVerticalIcon className="size-3" />
-                            <span className="sr-only">Actions</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log("Pin conversation:", conversation.id);
-                            }}
-                          >
-                            <PinIcon className="size-3 mr-2" />
-                            {conversation.pinned ? "Unpin" : "Pin"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log("Rename conversation:", conversation.id);
-                            }}
-                          >
-                            <PencilIcon className="size-3 mr-2" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log("Delete conversation:", conversation.id);
-                            }}
-                            className="text-destructive"
-                          >
-                            <Trash2Icon className="size-3 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </SidebarMenuItem>
-                  ))}
+                        </SidebarMenuButton>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-6 absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100"
+                            >
+                              <MoreVerticalIcon className="size-3" />
+                              <span className="sr-only">Actions</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log("Pin conversation:", conversation.id);
+                              }}
+                            >
+                              <PinIcon className="size-3 mr-2" />
+                              {conversation.pinned ? "Unpin" : "Pin"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(
+                                  "Rename conversation:",
+                                  conversation.id,
+                                );
+                              }}
+                            >
+                              <PencilIcon className="size-3 mr-2" />
+                              Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(
+                                  "Delete conversation:",
+                                  conversation.id,
+                                );
+                              }}
+                              className="text-destructive"
+                            >
+                              <Trash2Icon className="size-3 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

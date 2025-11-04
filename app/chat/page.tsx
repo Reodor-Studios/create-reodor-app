@@ -20,9 +20,5 @@ export default async function ChatPage() {
     redirect("/auth/login");
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <ChatPageContent userId={user.id} />
-    </div>
-  );
+  return <ChatPageContent userId={user.id} />;
 }

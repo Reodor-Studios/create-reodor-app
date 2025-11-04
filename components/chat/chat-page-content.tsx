@@ -78,19 +78,22 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-screen w-full">
+      {/* Account for navbar height (min-h-16 = 64px) */}
+      <div className="flex w-full h-screen pt-16">
         <ChatSidebar
           currentConversationId={currentConversationId}
           onNewChat={handleNewChat}
           onSelectConversation={handleSelectConversation}
         />
 
-        <SidebarInset className="flex flex-col">
+        <SidebarInset className="flex flex-col h-full w-full">
           {showEmptyState ? (
-            <ChatEmptyState onQuestionSelect={handleQuestionSelect} />
+            <div className="flex-1 overflow-y-auto">
+              <ChatEmptyState onQuestionSelect={handleQuestionSelect} />
+            </div>
           ) : (
-            <div className="flex flex-col h-full">
-              <Conversation className="flex-1">
+            <div className="flex-1 overflow-hidden">
+              <Conversation className="h-full">
                 <ConversationContent>
                   {messages.map((message, index) => (
                     <ChatMessage
@@ -113,7 +116,7 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
             </div>
           )}
 
-          <div className="border-t">
+          <div className="border-t flex-shrink-0">
             <ChatInput
               input={input}
               onInputChange={setInput}

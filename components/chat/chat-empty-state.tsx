@@ -1,8 +1,8 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { BlurFade } from "@/components/ui/blur-fade";
-import { CATEGORIES, type Category } from "@/types/chat";
+import { CATEGORIES } from "@/types/chat";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -11,110 +11,70 @@ interface ChatEmptyStateProps {
 }
 
 export function ChatEmptyState({ onQuestionSelect }: ChatEmptyStateProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    CATEGORIES[0].id,
+  );
 
-  const handleCategoryClick = (categoryId: string) => {
-    setSelectedCategory(selectedCategory === categoryId ? null : categoryId);
-  };
+  const selectedCategoryData = CATEGORIES.find(
+    (cat) => cat.id === selectedCategory,
+  );
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-6">
+    <div className="flex flex-col items-center justify-center h-full p-6 max-w-4xl mx-auto">
       <BlurFade delay={0.1} duration={0.5} inView>
         <h1 className="text-4xl font-bold text-center mb-2">
           How can I help you?
         </h1>
-        <p className="text-muted-foreground text-center mb-12">
-          Choose a category or type your question below
+        <p className="text-muted-foreground text-center mb-8">
+          Choose a category to see suggested prompts
         </p>
       </BlurFade>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
-        {CATEGORIES.map((category, categoryIndex) => (
-          <BlurFade
-            key={category.id}
-            delay={0.2 + categoryIndex * 0.1}
-            duration={0.5}
-            inView
-          >
-            <CategoryCard
-              category={category}
-              isSelected={selectedCategory === category.id}
-              onClick={() => handleCategoryClick(category.id)}
-              onQuestionSelect={onQuestionSelect}
-            />
-          </BlurFade>
-        ))}
-      </div>
-    </div>
-  );
-}
+      {/* Horizontal Category Buttons */}
+      <BlurFade delay={0.2} duration={0.5} inView>
+        <div className="flex items-center gap-2 mb-8 p-1 bg-muted rounded-lg">
+          {CATEGORIES.map((category) => {
+            const Icon = category.icon;
+            const isSelected = selectedCategory === category.id;
 
-interface CategoryCardProps {
-  category: Category;
-  isSelected: boolean;
-  onClick: () => void;
-  onQuestionSelect: (question: string) => void;
-}
-
-function CategoryCard({
-  category,
-  isSelected,
-  onClick,
-  onQuestionSelect,
-}: CategoryCardProps) {
-  const Icon = category.icon;
-
-  return (
-    <Card
-      className={cn(
-        "cursor-pointer transition-all hover:shadow-md border-2",
-        isSelected
-          ? "border-primary bg-primary/5"
-          : "border-border hover:border-primary/50",
-      )}
-      onClick={onClick}
-    >
-      <CardContent className="p-6">
-        <div className="flex items-start gap-3 mb-4">
-          <div
-            className={cn(
-              "p-2 rounded-lg",
-              isSelected ? "bg-primary text-primary-foreground" : "bg-muted",
-            )}
-          >
-            <Icon className="size-5" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">{category.name}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {category.description}
-            </p>
-          </div>
-        </div>
-
-        {isSelected && (
-          <div className="space-y-2 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-            {category.questions.map((question, index) => (
-              <BlurFade
-                key={index}
-                delay={index * 0.05}
-                duration={0.3}
-                inView
+            return (
+              <Button
+                key={category.id}
+                variant={isSelected ? "default" : "ghost"}
+                onClick={() => setSelectedCategory(category.id)}
+                className={cn(
+                  "flex items-center gap-2 transition-all",
+                  isSelected && "shadow-sm",
+                )}
               >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onQuestionSelect(question);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
-                >
-                  {question}
-                </button>
-              </BlurFade>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                <Icon className="size-4" />
+                <span>{category.name}</span>
+              </Button>
+            );
+          })}
+        </div>
+      </BlurFade>
+
+      {/* Questions Grid */}
+      {selectedCategoryData && (
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-3">
+          {selectedCategoryData.questions.map((question, index) => (
+            <BlurFade
+              key={index}
+              delay={0.3 + index * 0.05}
+              duration={0.4}
+              inView
+            >
+              <button
+                onClick={() => onQuestionSelect(question)}
+                className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-primary hover:bg-accent transition-all text-sm"
+              >
+                {question}
+              </button>
+            </BlurFade>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
