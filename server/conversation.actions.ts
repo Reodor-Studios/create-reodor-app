@@ -338,6 +338,35 @@ export async function deleteConversation(id: string) {
   return { error: null, data: { id } };
 }
 
+/**
+ * Delete all conversations for the current user
+ */
+export async function deleteAllConversations(userId: string) {
+  const supabase = await createClient();
+
+  // Auth check
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (!user || userError || user.id !== userId) {
+    return { error: "Unauthorized", data: null };
+  }
+
+  // Delete all conversations for the user (cascade will delete messages)
+  const { error, count } = await supabase
+    .from("conversations")
+    .delete({ count: "exact" })
+    .eq("user_id", userId);
+
+  if (error) {
+    return { error: error.message, data: null };
+  }
+
+  return { error: null, data: { deletedCount: count || 0 } };
+}
+
 // ============================================================================
 // Message Management
 // ============================================================================

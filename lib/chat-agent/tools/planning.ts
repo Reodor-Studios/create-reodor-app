@@ -67,19 +67,7 @@ export const createPlan = tool({
         "Optional: A suggested action plan based on current understanding"
       ),
   }),
-  execute: async ({ summary, questions, suggestedAction }: {
-    summary: string;
-    questions: Array<{
-      question: string;
-      rationale: string;
-      options?: string[];
-    }>;
-    suggestedAction?: {
-      type: string;
-      description: string;
-      steps: string[];
-    };
-  }) => {
+  execute: async ({ summary, questions, suggestedAction }) => {
     const planningRequest: PlanningRequest = {
       requiresPlanning: true,
       plan: {
@@ -124,12 +112,6 @@ export const finalizePlan = tool({
     actionDescription,
     actionSteps,
     impact,
-  }: {
-    planSummary: string;
-    actionType: string;
-    actionDescription: string;
-    actionSteps: string[];
-    impact: string;
   }) => {
     return {
       requiresConfirmation: true,
@@ -168,11 +150,7 @@ export const askClarification = tool({
       .optional()
       .describe("Optional: suggested answers to choose from"),
   }),
-  execute: async ({ question, context, suggestedAnswers }: {
-    question: string;
-    context: string;
-    suggestedAnswers?: string[];
-  }) => {
+  execute: async ({ question, context, suggestedAnswers }) => {
     return {
       requiresClarification: true,
       clarification: {

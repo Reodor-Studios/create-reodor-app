@@ -58,22 +58,51 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
       api: "/api/chat",
     }),
     onFinish: () => {
+      console.log("[Chat] useChat onFinish called");
+
       // Invalidate conversations list to show updated preview/timestamp
       queryClient.invalidateQueries({
         queryKey: conversationKeys.lists(),
       });
       // Invalidate current conversation to get updated messages
       if (currentConversationId) {
+        console.log("[Chat] Invalidating conversation queries for:", currentConversationId);
         queryClient.invalidateQueries({
           queryKey: conversationKeys.detail(currentConversationId),
         });
       }
     },
+    onError: (error) => {
+      console.error("[Chat] useChat error:", error);
+    },
   });
+
+  // Log messages changes
+  useEffect(() => {
+    console.log("[Chat] Messages state changed:", {
+      count: messages.length,
+      messages: messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        partsCount: m.parts.length,
+      })),
+    });
+  }, [messages]);
 
   // Load messages when conversation is selected
   useEffect(() => {
-    if (conversationData?.messages) {
+    console.log("[Chat] Conversation data changed:", {
+      hasData: !!conversationData,
+      messageCount: conversationData?.messages?.length,
+      conversationId: conversationData?.id,
+      currentMessagesCount: messages.length,
+    });
+
+    // Only load from DB if we have conversation data AND:
+    // 1. We have no messages yet (initial load), OR
+    // 2. We have messages in DB (not empty conversation)
+    // This prevents clearing messages during active chat session
+    if (conversationData?.messages && conversationData.messages.length > 0) {
       // Convert database messages to UIMessage format
       const uiMessages: UIMessage[] = conversationData.messages.map((msg) => ({
         id: msg.id,
@@ -81,9 +110,19 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
         parts: msg.parts as any, // Type cast Json to UIMessagePart[]
         metadata: (msg.metadata || {}) as Record<string, unknown>,
       }));
+
+      console.log("[Chat] Setting messages from DB:", {
+        count: uiMessages.length,
+        messages: uiMessages,
+      });
+
       setMessages(uiMessages);
+    } else if (conversationData?.messages && conversationData.messages.length === 0 && messages.length === 0) {
+      // Only clear messages if both DB and local are empty (switching to empty conversation)
+      console.log("[Chat] Both DB and local messages are empty, clearing state");
+      setMessages([]);
     }
-  }, [conversationData, setMessages]);
+  }, [conversationData, setMessages, messages.length]);
 
   const handleNewChat = () => {
     // Reset to empty state
@@ -105,24 +144,31 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
   };
 
   const handleSubmit = async (message: PromptInputMessage) => {
+    console.log("[Chat] handleSubmit called", { message });
+
     // Create conversation if this is the first message
     let conversationId = currentConversationId;
 
     if (!conversationId) {
+      console.log("[Chat] Creating new conversation");
       const result = await createConversationMutation.mutateAsync({
         title: "New conversation",
       });
 
       if (result.error || !result.data) {
+        console.error("[Chat] Failed to create conversation:", result.error);
         return;
       }
 
       conversationId = result.data.id;
+      console.log("[Chat] Conversation created:", conversationId);
       setCurrentConversationId(conversationId);
 
       // Navigate to the chat page with the conversation ID (soft navigation)
       router.push(`/chat/${conversationId}`);
     }
+
+    console.log("[Chat] Sending message with conversationId:", conversationId);
 
     // Send message with conversationId - this will immediately add the user message to the messages array
     await sendMessage(
@@ -137,6 +183,8 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
         },
       }
     );
+
+    console.log("[Chat] Message sent");
   };
 
   // Callback for handling confirmation responses
@@ -219,6 +267,13 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
 
   // Don't show empty state if we're submitting or streaming (prevents flash)
   const showEmptyState = messages.length === 0 && status === "ready";
+
+  console.log("[Chat] Render state:", {
+    messagesCount: messages.length,
+    status,
+    showEmptyState,
+    currentConversationId,
+  });
 
   return (
     <>

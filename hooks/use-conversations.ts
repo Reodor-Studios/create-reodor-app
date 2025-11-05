@@ -7,6 +7,7 @@ import {
   createConversation,
   updateConversation,
   deleteConversation,
+  deleteAllConversations,
   type ConversationFilters,
 } from "@/server/conversation.actions";
 import { toast } from "sonner";
@@ -158,6 +159,41 @@ export function useDeleteConversation() {
     },
     onError: () => {
       toast.error("Failed to delete conversation");
+    },
+  });
+}
+
+/**
+ * Delete all conversations for a user
+ */
+export function useDeleteAllConversations() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteAllConversations,
+    onSuccess: (result) => {
+      if (result.error) {
+        toast.error("Failed to delete all conversations");
+        return;
+      }
+
+      // Clear all conversation caches
+      queryClient.removeQueries({
+        queryKey: conversationKeys.all,
+      });
+
+      // Invalidate conversations list
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.lists(),
+      });
+
+      const deletedCount = result.data?.deletedCount || 0;
+      toast.success(
+        `${deletedCount} conversation${deletedCount !== 1 ? "s" : ""} deleted`,
+      );
+    },
+    onError: () => {
+      toast.error("Failed to delete all conversations");
     },
   });
 }

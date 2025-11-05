@@ -17,23 +17,42 @@ export async function POST(req: Request) {
       conversationId?: string;
     };
 
+    console.log("[Chat API] Received request:", {
+      messageCount: messages.length,
+      conversationId,
+      webSearch,
+      lastMessage: messages[messages.length - 1],
+    });
+
     // Use the agent's stream method to get the streaming response
     const result = await chatAgent.stream({
       messages: convertToModelMessages(messages),
     });
 
+    console.log("[Chat API] Agent stream initialized");
+
     // Return streaming response with onFinish callback for message persistence
     return result.toUIMessageStreamResponse({
       async onFinish({ responseMessage }) {
+        console.log("[Chat API] onFinish called", {
+          responseParts: responseMessage.parts.length,
+          partsTypes: responseMessage.parts.map((p: any) => p.type),
+        });
+
         const text = responseMessage.parts
           .filter((p: any) => p.type === "text")
           .map((p: any) => ("text" in p ? p.text : ""))
           .join("");
+
+        console.log("[Chat API] Extracted text length:", text.length);
+
         // Only save if we have a conversationId
         if (!conversationId) {
-          console.warn("No conversationId provided, messages not saved");
+          console.warn("[Chat API] No conversationId provided, messages not saved");
           return;
         }
+
+        console.log("[Chat API] Saving messages to conversation:", conversationId);
 
         // Combine user message(s) with assistant response
         const messagesToSave: UIMessage[] = [];
@@ -52,12 +71,22 @@ export async function POST(req: Request) {
           metadata: {},
         });
 
+        console.log("[Chat API] Messages to save:", {
+          count: messagesToSave.length,
+          messages: messagesToSave.map((m) => ({
+            role: m.role,
+            partsCount: m.parts.length,
+          })),
+        });
+
         // Save messages to database
         const saveResult = await saveMessages(conversationId, messagesToSave);
         if (saveResult.error) {
-          console.error("Failed to save messages:", saveResult.error);
+          console.error("[Chat API] Failed to save messages:", saveResult.error);
           return;
         }
+
+        console.log("[Chat API] Messages saved successfully");
 
         // Generate title if this is the first message (only user message)
         if (
@@ -65,6 +94,8 @@ export async function POST(req: Request) {
           lastUserMessage &&
           lastUserMessage.role === "user"
         ) {
+          console.log("[Chat API] Generating title for first message");
+
           const firstUserMessageText = lastUserMessage.parts
             .filter((p) => p.type === "text")
             .map((p) => ("text" in p ? p.text : ""))
@@ -76,14 +107,16 @@ export async function POST(req: Request) {
               firstUserMessageText,
             );
             if (titleResult.error) {
-              console.error("Failed to generate title:", titleResult.error);
+              console.error("[Chat API] Failed to generate title:", titleResult.error);
+            } else {
+              console.log("[Chat API] Title generated successfully");
             }
           }
         }
       },
     });
   } catch (error) {
-    console.error("Chat API error:", error);
+    console.error("[Chat API] Error:", error);
     return new Response(
       JSON.stringify({
         error: "Failed to process chat request",

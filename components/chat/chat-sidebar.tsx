@@ -3,6 +3,7 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -50,6 +51,7 @@ import {
   useConversations,
   useUpdateConversation,
   useDeleteConversation,
+  useDeleteAllConversations,
 } from "@/hooks/use-conversations";
 import type { Conversation } from "@/lib/chat";
 import { BlurFade } from "../ui/blur-fade";
@@ -72,6 +74,7 @@ export function ChatSidebar({
     useState<Conversation | null>(null);
   const [deleteConversation, setDeleteConversation] =
     useState<Conversation | null>(null);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
 
   const { open, toggleSidebar } = useSidebar();
   const isMobile = useIsMobile();
@@ -80,6 +83,7 @@ export function ChatSidebar({
   const { data: conversationsData, isLoading } = useConversations({ userId });
   const updateConversationMutation = useUpdateConversation();
   const deleteConversationMutation = useDeleteConversation();
+  const deleteAllConversationsMutation = useDeleteAllConversations();
 
   // On desktop/tablet (>=768px), sidebar is always inline (collapsible="none")
   // On mobile (<768px), sidebar becomes a drawer (handled by Sidebar component's isMobile check)
@@ -260,6 +264,19 @@ export function ChatSidebar({
             )}
           </ScrollArea>
         </SidebarContent>
+
+        <SidebarFooter className="border-t p-4">
+          <Button
+            onClick={() => setDeleteAllDialogOpen(true)}
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-muted-foreground hover:text-destructive"
+            disabled={conversations.length === 0}
+          >
+            <Trash2Icon className="size-4" />
+            <span>Delete all conversations</span>
+          </Button>
+        </SidebarFooter>
       </Sidebar>
 
       <ConversationSearchDialog
@@ -312,6 +329,40 @@ export function ChatSidebar({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={deleteAllDialogOpen}
+        onOpenChange={setDeleteAllDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete all conversations</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete all {conversations.length}{" "}
+              conversation{conversations.length !== 1 ? "s" : ""}? This action
+              cannot be undone and will permanently delete all conversations and
+              their messages.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                deleteAllConversationsMutation.mutate(userId, {
+                  onSuccess: () => {
+                    // Reset to new chat after deleting all
+                    onNewChat();
+                    setDeleteAllDialogOpen(false);
+                  },
+                });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete All
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
