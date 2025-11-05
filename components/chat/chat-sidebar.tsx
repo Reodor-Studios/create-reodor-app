@@ -95,7 +95,7 @@ export function ChatSidebar({
       />
 
       <Sidebar collapsible="offcanvas">
-        <SidebarHeader className="border-b p-4 pt-20">
+        <SidebarHeader className="border-b p-4 md:pt-20">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
             <Button
