@@ -21,22 +21,26 @@ import {
 } from "@/hooks/use-conversations";
 import { useQueryClient } from "@tanstack/react-query";
 import { conversationKeys } from "@/hooks/use-conversations";
+import { useRouter } from "next/navigation";
 
 interface ChatPageContentProps {
   userId: string;
+  chatId?: string;
 }
 
 interface ChatContentProps {
   userId: string;
+  chatId?: string;
 }
 
-function ChatContent({ userId }: ChatContentProps) {
+function ChatContent({ userId, chatId }: ChatContentProps) {
   const [input, setInput] = useState("");
   const [webSearch, setWebSearch] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | undefined
-  >(undefined);
+  >(chatId);
 
+  const router = useRouter();
   const queryClient = useQueryClient();
   const createConversationMutation = useCreateConversation();
 
@@ -82,10 +86,14 @@ function ChatContent({ userId }: ChatContentProps) {
     setCurrentConversationId(undefined);
     setInput("");
     setMessages([]);
+    // Navigate to the new chat page
+    router.push("/chat");
   };
 
   const handleSelectConversation = (conversationId: string) => {
     setCurrentConversationId(conversationId);
+    // Navigate to the chat page with the conversation ID
+    router.push(`/chat/${conversationId}`);
   };
 
   const handleQuestionSelect = (question: string) => {
@@ -107,10 +115,13 @@ function ChatContent({ userId }: ChatContentProps) {
 
       conversationId = result.data.id;
       setCurrentConversationId(conversationId);
+
+      // Navigate to the chat page with the conversation ID (soft navigation)
+      router.push(`/chat/${conversationId}`);
     }
 
-    // Send message with conversationId
-    sendMessage(
+    // Send message with conversationId - this will immediately add the user message to the messages array
+    await sendMessage(
       {
         text: message.text || "Sent with attachments",
         files: message.files,
@@ -124,7 +135,8 @@ function ChatContent({ userId }: ChatContentProps) {
     );
   };
 
-  const showEmptyState = messages.length === 0;
+  // Don't show empty state if we're submitting or streaming (prevents flash)
+  const showEmptyState = messages.length === 0 && status === "ready";
 
   return (
     <>
@@ -190,7 +202,7 @@ function ChatContent({ userId }: ChatContentProps) {
   );
 }
 
-export function ChatPageContent({ userId }: ChatPageContentProps) {
+export function ChatPageContent({ userId, chatId }: ChatPageContentProps) {
   return (
     <SidebarProvider
       style={
@@ -202,7 +214,7 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
     >
       {/* Full height container accounting for navbar (h-16 = 64px) */}
       <div className="flex w-full" style={{ height: "calc(100vh - 64px)" }}>
-        <ChatContent userId={userId} />
+        <ChatContent userId={userId} chatId={chatId} />
       </div>
     </SidebarProvider>
   );

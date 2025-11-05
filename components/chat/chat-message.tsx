@@ -40,7 +40,9 @@ export function ChatMessage({
   onRegenerate,
 }: ChatMessageProps) {
   // Filter source parts
-  const sourceParts = message.parts.filter((part) => part.type === "source-url");
+  const sourceParts = message.parts.filter(
+    (part) => part.type === "source-url"
+  );
   const hasReasoningStreaming =
     status === "streaming" &&
     isLast &&
@@ -48,10 +50,10 @@ export function ChatMessage({
 
   // Filter tool call parts
   const toolCallParts = message.parts.filter(
-    (part) => part.type === "tool-call",
+    (part) => part.type === "tool-call"
   );
   const toolResultParts = message.parts.filter(
-    (part) => part.type === "tool-result",
+    (part) => part.type === "tool-result"
   );
 
   const handleCopy = async (text: string) => {
@@ -63,7 +65,7 @@ export function ChatMessage({
   };
 
   return (
-    <BlurFade delay={0.1} duration={0.5} inView>
+    <BlurFade delay={0.1} duration={0.5}>
       <div className="space-y-2">
         {/* Tool Calls (if available) */}
         {message.role === "assistant" && toolCallParts.length > 0 && (
@@ -76,7 +78,7 @@ export function ChatMessage({
               {toolCallParts.map((toolCall, index) => {
                 // Find corresponding result
                 const result = toolResultParts.find(
-                  (r) => r.toolCallId === toolCall.toolCallId,
+                  (r) => r.toolCallId === toolCall.toolCallId
                 );
 
                 return (
@@ -101,7 +103,9 @@ export function ChatMessage({
                   >
                     {/* Tool Input */}
                     <div className="space-y-2">
-                      <div className="text-xs text-muted-foreground">Input:</div>
+                      <div className="text-xs text-muted-foreground">
+                        Input:
+                      </div>
                       <div className="rounded-md bg-muted p-2 text-xs">
                         <pre className="overflow-x-auto">
                           {JSON.stringify(toolCall.input, null, 2)}
