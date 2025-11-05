@@ -38,9 +38,10 @@ export function ChatFloatingActions({
   onSearchClick,
   onNewChatClick,
 }: ChatFloatingActionsProps) {
-  // Show floating actions when sidebar is collapsed on any viewport,
-  // or when on mobile and sidebar is not expanded
-  const shouldShow = !open || (isMobile && !open);
+  // Show floating actions when:
+  // - Sidebar is collapsed on desktop (!open)
+  // - Always on mobile (isMobile), regardless of sidebar state
+  const shouldShow = !open || isMobile;
 
   if (!shouldShow) {
     return null;
