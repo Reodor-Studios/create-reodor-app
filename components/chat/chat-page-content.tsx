@@ -90,12 +90,7 @@ function ChatContent({ userId }: ChatPageContentProps) {
       <SidebarInset className="flex flex-col h-full w-full relative">
         {/* Scrollable content area with padding for fixed input and bottom spacing */}
         <div className="flex-1 overflow-y-auto pb-[250px]">
-          <div
-            className={cn(
-              "mx-auto transition-all duration-300 px-4 md:px-6",
-              open ? "max-w-3xl lg:max-w-4xl" : "max-w-4xl"
-            )}
-          >
+          <div className="mx-auto transition-all duration-300 px-4 md:px-6 max-w-4xl">
             {showEmptyState ? (
               <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
                 <ChatEmptyState onQuestionSelect={handleQuestionSelect} />
@@ -123,15 +118,10 @@ function ChatContent({ userId }: ChatPageContentProps) {
           </div>
         </div>
 
-        {/* Fixed input at bottom of viewport - respects sidebar on desktop */}
-        <div className="fixed bottom-6 left-0 right-0 z-40 md:left-auto md:right-auto md:w-full">
+        {/* Fixed input at bottom - positioned relative to SidebarInset */}
+        <div className="absolute bottom-6 inset-x-0 z-40">
           <div className="w-full px-4 md:px-6">
-            <div
-              className={cn(
-                "mx-auto transition-all duration-300 bg-background border rounded-lg shadow-lg",
-                open ? "max-w-3xl lg:max-w-4xl" : "max-w-4xl"
-              )}
-            >
+            <div className="mx-auto transition-all duration-300 bg-background border rounded-lg shadow-lg max-w-4xl">
               <ChatInput
                 input={input}
                 onInputChange={setInput}
