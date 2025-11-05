@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  SidebarProvider,
-  SidebarInset,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import {
   Conversation,
   ConversationContent,
@@ -19,19 +15,17 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { type PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface ChatPageContentProps {
   userId: string;
 }
 
-function ChatContent({ userId }: ChatPageContentProps) {
+function ChatContent() {
   const [input, setInput] = useState("");
   const [webSearch, setWebSearch] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | undefined
   >(undefined);
-  const { open } = useSidebar();
 
   const { messages, sendMessage, status, regenerate } = useChat({
     transport: new DefaultChatTransport({
@@ -87,16 +81,19 @@ function ChatContent({ userId }: ChatPageContentProps) {
         onSelectConversation={handleSelectConversation}
       />
 
-      <SidebarInset className="flex flex-col h-full w-full relative">
-        {/* Scrollable content area with padding for fixed input and bottom spacing */}
-        <div className="flex-1 overflow-y-auto pb-[250px]">
-          <div className="mx-auto transition-all duration-300 px-4 md:px-6 max-w-4xl">
+      <SidebarInset className="flex flex-col flex-1 min-w-0">
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-4xl px-4 md:px-6 py-6">
             {showEmptyState ? (
-              <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
+              <div
+                className="flex items-center justify-center"
+                style={{ minHeight: "calc(100vh - 250px)" }}
+              >
                 <ChatEmptyState onQuestionSelect={handleQuestionSelect} />
               </div>
             ) : (
-              <Conversation className="min-h-[calc(100vh-200px)]">
+              <Conversation>
                 <ConversationContent>
                   {messages.map((message, index) => (
                     <ChatMessage
@@ -118,10 +115,10 @@ function ChatContent({ userId }: ChatPageContentProps) {
           </div>
         </div>
 
-        {/* Fixed input at bottom - positioned relative to SidebarInset */}
-        <div className="absolute bottom-6 inset-x-0 z-40">
-          <div className="w-full px-4 md:px-6">
-            <div className="mx-auto transition-all duration-300 bg-background border rounded-lg shadow-lg max-w-4xl">
+        {/* Input at bottom */}
+        <div className="flex-shrink-0 bg-background">
+          <div className="mx-auto w-full max-w-4xl px-4 md:px-6 py-4">
+            <div className="bg-background border rounded-lg shadow-lg">
               <ChatInput
                 input={input}
                 onInputChange={setInput}
@@ -150,9 +147,9 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
         } as React.CSSProperties
       }
     >
-      {/* Account for navbar height (min-h-16 = 64px) */}
-      <div className="flex w-full h-screen pt-18">
-        <ChatContent userId={userId} />
+      {/* Full height container accounting for navbar (h-16 = 64px) */}
+      <div className="flex w-full" style={{ height: "calc(100vh - 64px)" }}>
+        <ChatContent />
       </div>
     </SidebarProvider>
   );
