@@ -22,7 +22,6 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { conversationKeys } from "@/hooks/use-conversations";
 import { useRouter } from "next/navigation";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatPageContentProps {
   userId: string;
@@ -44,13 +43,6 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const createConversationMutation = useCreateConversation();
-
-  // Sync chatId prop with currentConversationId state when it changes
-  useEffect(() => {
-    if (chatId !== currentConversationId) {
-      setCurrentConversationId(chatId);
-    }
-  }, [chatId, currentConversationId]);
 
   // Fetch current conversation with messages if one is selected
   const { data: conversationData } = useConversation({
@@ -155,9 +147,9 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
         onSelectConversation={handleSelectConversation}
       />
 
-      <SidebarInset className="flex flex-col flex-1 min-w-0">
+      <SidebarInset className="flex pt-8 flex-col flex-1 min-w-0">
         {/* Scrollable content area */}
-        <ScrollArea className="flex-1" style={{ height: "calc(100vh - 64px - 120px)" }}>
+        <div className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-4xl px-4 md:px-6 py-6">
             {showEmptyState ? (
               <div
@@ -187,11 +179,11 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
               </Conversation>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Input at bottom */}
         <div className="flex-shrink-0 bg-background">
-          <div className="mx-auto w-full max-w-4xl px-4 md:px-6 pt-4 pb-2">
+          <div className="mx-auto w-full max-w-4xl px-4 md:px-6 py-4">
             <div className="bg-background border rounded-lg shadow-lg">
               <ChatInput
                 input={input}
@@ -220,8 +212,7 @@ export function ChatPageContent({ userId, chatId }: ChatPageContentProps) {
         } as React.CSSProperties
       }
     >
-      {/* Full height container accounting for navbar (h-16 = 64px) */}
-      <div className="flex w-full pt-16">
+      <div className="flex w-full">
         <ChatContent userId={userId} chatId={chatId} />
       </div>
     </SidebarProvider>

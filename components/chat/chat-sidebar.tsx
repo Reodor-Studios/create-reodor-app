@@ -124,7 +124,7 @@ export function ChatSidebar({
 
       <Sidebar
         collapsible={collapsibleBehavior}
-        className="border-r shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_8px_-2px_rgba(0,0,0,0.3)]"
+        className="border-r pt-16 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_8px_-2px_rgba(0,0,0,0.3)]"
       >
         <SidebarHeader className="border-b p-4">
           <div className="flex items-center gap-2">
