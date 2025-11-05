@@ -1,9 +1,10 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { convertToModelMessages, streamText, type UIMessage, stepCountIs } from "ai";
 import {
   generateConversationTitle,
   saveMessages,
 } from "@/server/conversation.actions";
+import { chatAgent } from "@/lib/chat-agent";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -17,12 +18,13 @@ export async function POST(req: Request) {
       conversationId?: string;
     };
 
-    // Stream the response using Anthropic Claude
+    // Stream the response using Anthropic Claude with agent tools
     const result = streamText({
       model: anthropic("claude-sonnet-4-5-20250929"),
       messages: convertToModelMessages(messages),
-      system:
-        "You are a helpful AI assistant built with Vercel AI SDK and AI Elements. Provide clear, concise, and helpful responses.",
+      system: chatAgent.systemPrompt,
+      tools: chatAgent.tools,
+      stopWhen: stepCountIs(chatAgent.maxSteps), // Enable multi-step tool calls
       async onFinish({ response, text }) {
         // Only save if we have a conversationId
         if (!conversationId) {
