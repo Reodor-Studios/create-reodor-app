@@ -45,6 +45,7 @@ export const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
 
 export const ConversationsRowSchema = z.object({
   created_at: z.string(),
+  fts_weighted: z.unknown().nullable(),
   id: z.string(),
   pinned: z.boolean(),
   preview: z.string().nullable(),
@@ -55,6 +56,7 @@ export const ConversationsRowSchema = z.object({
 
 export const ConversationsInsertSchema = z.object({
   created_at: z.string().optional(),
+  fts_weighted: z.unknown().optional().nullable(),
   id: z.string().optional(),
   pinned: z.boolean().optional(),
   preview: z.string().optional().nullable(),
@@ -65,6 +67,7 @@ export const ConversationsInsertSchema = z.object({
 
 export const ConversationsUpdateSchema = z.object({
   created_at: z.string().optional(),
+  fts_weighted: z.unknown().optional().nullable(),
   id: z.string().optional(),
   pinned: z.boolean().optional(),
   preview: z.string().optional().nullable(),
@@ -143,6 +146,7 @@ export const MediaRelationshipsSchema = z.tuple([
 export const MessagesRowSchema = z.object({
   conversation_id: z.string(),
   created_at: z.string(),
+  fts: z.unknown().nullable(),
   id: z.string(),
   metadata: jsonSchema.nullable(),
   parts: jsonSchema,
@@ -153,6 +157,7 @@ export const MessagesRowSchema = z.object({
 export const MessagesInsertSchema = z.object({
   conversation_id: z.string(),
   created_at: z.string().optional(),
+  fts: z.unknown().optional().nullable(),
   id: z.string().optional(),
   metadata: jsonSchema.optional().nullable(),
   parts: jsonSchema,
@@ -163,6 +168,7 @@ export const MessagesInsertSchema = z.object({
 export const MessagesUpdateSchema = z.object({
   conversation_id: z.string().optional(),
   created_at: z.string().optional(),
+  fts: z.unknown().optional().nullable(),
   id: z.string().optional(),
   metadata: jsonSchema.optional().nullable(),
   parts: jsonSchema.optional(),
@@ -259,6 +265,12 @@ export const TodosRelationshipsSchema = z.tuple([
   }),
 ]);
 
+export const ExtractMessageTextArgsSchema = z.object({
+  parts: jsonSchema,
+});
+
+export const ExtractMessageTextReturnsSchema = z.string();
+
 export const GetUserTodoStatsArgsSchema = z.object({
   user_uuid: z.string(),
 });
@@ -307,6 +319,61 @@ export const GtrgmOutArgsSchema = z.object({
 });
 
 export const GtrgmOutReturnsSchema = z.unknown();
+
+export const SearchConversationsArgsSchema = z.object({
+  search_text: z.string(),
+  user_uuid: z.string(),
+});
+
+export const SearchConversationsReturnsSchema = z.array(
+  z.object({
+    created_at: z.string(),
+    id: z.string(),
+    pinned: z.boolean(),
+    preview: z.string(),
+    rank: z.number(),
+    title: z.string(),
+    updated_at: z.string(),
+    user_id: z.string(),
+  }),
+);
+
+export const SearchConversationsByMessagesArgsSchema = z.object({
+  search_text: z.string(),
+  user_uuid: z.string(),
+});
+
+export const SearchConversationsByMessagesReturnsSchema = z.array(
+  z.object({
+    created_at: z.string(),
+    id: z.string(),
+    matching_message_count: z.number(),
+    pinned: z.boolean(),
+    preview: z.string(),
+    rank: z.number(),
+    title: z.string(),
+    updated_at: z.string(),
+    user_id: z.string(),
+  }),
+);
+
+export const SearchMessagesInConversationArgsSchema = z.object({
+  conversation_uuid: z.string(),
+  search_text: z.string(),
+});
+
+export const SearchMessagesInConversationReturnsSchema = z.array(
+  z.object({
+    conversation_id: z.string(),
+    created_at: z.string(),
+    id: z.string(),
+    metadata: jsonSchema,
+    parts: jsonSchema,
+    rank: z.number(),
+    role: MessageRoleSchema,
+    sequence_number: z.number(),
+  }),
+);
 
 export const SetLimitArgsSchema = z.object({
   "": z.number(),

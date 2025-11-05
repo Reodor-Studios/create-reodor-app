@@ -82,6 +82,48 @@ create index messages_sequence_idx on public.messages(conversation_id, sequence_
 -- GIN index for JSONB content search (not trgm since it's JSONB)
 create index messages_parts_idx on public.messages using gin (parts);
 
+-- ============================================================================
+-- Full Text Search Setup
+-- ============================================================================
+
+-- Helper function to extract text content from message parts JSONB
+create or replace function public.extract_message_text(parts jsonb)
+returns text as $$
+begin
+  return (
+    select string_agg(
+      case
+        when elem->>'type' = 'text' then elem->>'text'
+        else ''
+      end,
+      ' '
+    )
+    from jsonb_array_elements(parts) as elem
+  );
+end;
+$$ language plpgsql immutable;
+
+-- Add FTS column to conversations with weighted search (title: A, preview: B)
+alter table public.conversations
+add column fts_weighted tsvector
+generated always as (
+  setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+  setweight(to_tsvector('english', coalesce(preview, '')), 'B')
+) stored;
+
+-- Create GIN index for conversations FTS
+create index conversations_fts_weighted_idx on public.conversations using gin (fts_weighted);
+
+-- Add FTS column to messages for searching message content
+alter table public.messages
+add column fts tsvector
+generated always as (
+  to_tsvector('english', coalesce(extract_message_text(parts), ''))
+) stored;
+
+-- Create GIN index for messages FTS
+create index messages_fts_idx on public.messages using gin (fts);
+
 -- Media table for centralized file storage management
 create table public.media (
   id uuid default gen_random_uuid() primary key,
@@ -109,8 +151,10 @@ comment on table public.todos is 'User todo items';
 comment on column public.todos.priority is 'Priority level: low, medium, or high';
 comment on table public.conversations is 'User chat conversations with AI assistant';
 comment on column public.conversations.preview is 'First message preview for sidebar display';
+comment on column public.conversations.fts_weighted is 'Full text search vector with weighted title (A) and preview (B)';
 comment on table public.messages is 'Individual messages within conversations';
 comment on column public.messages.parts is 'UIMessage.parts array from Vercel AI SDK stored as JSONB';
 comment on column public.messages.sequence_number is 'Ensures deterministic message ordering within conversation';
+comment on column public.messages.fts is 'Full text search vector for message content extracted from parts JSONB';
 comment on table public.media is 'Centralized media storage for all file uploads';
 comment on column public.media.file_path is 'Path to file in Supabase Storage (without bucket prefix)';

@@ -12,6 +12,7 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          fts_weighted: unknown | null
           id: string
           pinned: boolean
           preview: string | null
@@ -21,6 +22,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          fts_weighted?: unknown | null
           id?: string
           pinned?: boolean
           preview?: string | null
@@ -30,6 +32,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          fts_weighted?: unknown | null
           id?: string
           pinned?: boolean
           preview?: string | null
@@ -106,6 +109,7 @@ export type Database = {
         Row: {
           conversation_id: string
           created_at: string
+          fts: unknown | null
           id: string
           metadata: Json | null
           parts: Json
@@ -115,6 +119,7 @@ export type Database = {
         Insert: {
           conversation_id: string
           created_at?: string
+          fts?: unknown | null
           id?: string
           metadata?: Json | null
           parts: Json
@@ -124,6 +129,7 @@ export type Database = {
         Update: {
           conversation_id?: string
           created_at?: string
+          fts?: unknown | null
           id?: string
           metadata?: Json | null
           parts?: Json
@@ -222,6 +228,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      extract_message_text: {
+        Args: { parts: Json }
+        Returns: string
+      }
       get_user_todo_stats: {
         Args: { user_uuid: string }
         Returns: {
@@ -256,6 +266,46 @@ export type Database = {
       gtrgm_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      search_conversations: {
+        Args: { search_text: string; user_uuid: string }
+        Returns: {
+          created_at: string
+          id: string
+          pinned: boolean
+          preview: string
+          rank: number
+          title: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      search_conversations_by_messages: {
+        Args: { search_text: string; user_uuid: string }
+        Returns: {
+          created_at: string
+          id: string
+          matching_message_count: number
+          pinned: boolean
+          preview: string
+          rank: number
+          title: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      search_messages_in_conversation: {
+        Args: { conversation_uuid: string; search_text: string }
+        Returns: {
+          conversation_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          parts: Json
+          rank: number
+          role: Database["public"]["Enums"]["message_role"]
+          sequence_number: number
+        }[]
       }
       set_limit: {
         Args: { "": number }

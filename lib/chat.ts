@@ -10,8 +10,12 @@ import type { DatabaseTables } from "@/types";
 // ============================================================================
 
 // Use real database types instead of custom interfaces
-export type Conversation = DatabaseTables["conversations"]["Row"];
-export type Message = DatabaseTables["messages"]["Row"];
+// Omit FTS columns as they're internal implementation details
+export type Conversation = Omit<
+  DatabaseTables["conversations"]["Row"],
+  "fts_weighted"
+>;
+export type Message = Omit<DatabaseTables["messages"]["Row"], "fts">;
 
 export interface ConversationGroup {
   label: string;

@@ -9,9 +9,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { groupConversationsByRecency, searchConversations } from "@/lib/chat";
-import { MessageSquareIcon, PinIcon } from "lucide-react";
+import { groupConversationsByRecency } from "@/lib/chat";
+import { PinIcon } from "lucide-react";
 import { useConversations } from "@/hooks/use-conversations";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface ConversationSearchDialogProps {
   userId: string;
@@ -30,8 +31,16 @@ export function ConversationSearchDialog({
 }: ConversationSearchDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch conversations
-  const { data: conversationsData } = useConversations({ userId });
+  // Debounce search query to avoid excessive server requests
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Fetch conversations with full text search
+  const { data: conversationsData, isLoading } = useConversations({
+    userId,
+    filters: debouncedSearchQuery.trim()
+      ? { search: debouncedSearchQuery }
+      : undefined,
+  });
   const conversations = conversationsData?.data || [];
 
   // Reset search when dialog closes
@@ -41,11 +50,8 @@ export function ConversationSearchDialog({
     }
   }, [open]);
 
-  // Filter conversations based on search
-  const filteredConversations = searchConversations(conversations, searchQuery);
-
-  // Group by recency
-  const conversationGroups = groupConversationsByRecency(filteredConversations);
+  // Group by recency (FTS results are already ranked, but we still group them)
+  const conversationGroups = groupConversationsByRecency(conversations);
 
   const handleSelect = (conversationId: string) => {
     onSelectConversation(conversationId);

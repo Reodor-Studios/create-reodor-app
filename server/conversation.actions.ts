@@ -6,6 +6,7 @@ import type { UIMessage } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import { Json } from "@/types/database.types";
+import { searchConversations as searchConversationsFTS } from "@/lib/supabase/rpc";
 
 // ============================================================================
 // Types
@@ -19,11 +20,15 @@ export type ConversationFilters = {
   limit?: number;
 };
 
-export type ConversationWithMessages =
-  & DatabaseTables["conversations"]["Row"]
-  & {
-    messages: (DatabaseTables["messages"]["Row"])[];
-  };
+// Omit FTS columns from public-facing types since they're internal implementation details
+export type Conversation = Omit<
+  DatabaseTables["conversations"]["Row"],
+  "fts_weighted"
+>;
+
+export type ConversationWithMessages = Conversation & {
+  messages: (Omit<DatabaseTables["messages"]["Row"], "fts">)[];
+};
 
 // ============================================================================
 // Conversation CRUD
@@ -62,20 +67,66 @@ export async function getConversations(
     limit = 50,
   } = options;
 
-  // Build query
+  // Use full text search if search query is provided
+  if (search && search.trim()) {
+    const { data: searchResults, error: searchError } =
+      await searchConversationsFTS(supabase, userId, search);
+
+    if (searchError) {
+      return {
+        error: searchError,
+        data: null,
+        total: 0,
+        totalPages: 0,
+        currentPage: page,
+      };
+    }
+
+    // Apply additional filters on FTS results
+    let filteredResults = searchResults || [];
+    if (pinned !== undefined) {
+      filteredResults = filteredResults.filter((c) => c.pinned === pinned);
+    }
+
+    // FTS results are already sorted by rank, but apply additional sorting if needed
+    if (sortBy === "oldest") {
+      filteredResults.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      );
+    }
+
+    // Apply pagination
+    const total = filteredResults.length;
+    const totalPages = Math.ceil(total / limit);
+    const from = (page - 1) * limit;
+    const to = from + limit;
+    const paginatedResults = filteredResults.slice(from, to);
+
+    // Remove rank property from results to match expected type
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const data = paginatedResults.map(({ rank, ...rest }) => rest);
+
+    return {
+      error: null,
+      data,
+      total,
+      totalPages,
+      currentPage: page,
+    };
+  }
+
+  // Regular query without search
+  // Note: explicitly select columns to exclude FTS columns
   let conversationsQuery = supabase
     .from("conversations")
-    .select("*", { count: "exact" })
+    .select(
+      "id, user_id, title, pinned, preview, created_at, updated_at",
+      { count: "exact" },
+    )
     .eq("user_id", userId);
 
   // Apply filters
-  if (search && search.trim()) {
-    // Use fuzzy search with pg_trgm similarity
-    conversationsQuery = conversationsQuery.or(
-      `title.ilike.%${search}%,preview.ilike.%${search}%`,
-    );
-  }
-
   if (pinned !== undefined) {
     conversationsQuery = conversationsQuery.eq("pinned", pinned);
   }
@@ -140,7 +191,7 @@ export async function getConversation(conversationId: string) {
   // Get conversation with ownership verification
   const { data: conversation, error: conversationError } = await supabase
     .from("conversations")
-    .select("*")
+    .select("id, user_id, title, pinned, preview, created_at, updated_at")
     .eq("id", conversationId)
     .eq("user_id", user.id)
     .single();
@@ -152,7 +203,7 @@ export async function getConversation(conversationId: string) {
   // Get all messages for this conversation
   const { data: messages, error: messagesError } = await supabase
     .from("messages")
-    .select("*")
+    .select("id, conversation_id, role, parts, metadata, created_at, sequence_number")
     .eq("conversation_id", conversationId)
     .order("sequence_number", { ascending: true });
 
