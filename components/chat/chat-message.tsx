@@ -21,7 +21,10 @@ import {
   ChainOfThoughtStep,
 } from "@/components/ai-elements/chain-of-thought";
 import { BlurFade } from "@/components/ui/blur-fade";
-import { CopyIcon, RefreshCcwIcon, WrenchIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CopyIcon, RefreshCcwIcon, WrenchIcon, CheckCircle2Icon, XCircleIcon, MessageCircleIcon, AlertCircleIcon, HelpCircleIcon } from "lucide-react";
 import { Fragment } from "react";
 import type { UIMessage } from "ai";
 import { toast } from "sonner";
@@ -31,6 +34,9 @@ interface ChatMessageProps {
   isLast: boolean;
   status: "submitted" | "streaming" | "ready" | "error";
   onRegenerate: () => void;
+  onConfirmation?: (confirmed: boolean, autoAccept?: boolean, confirmationData?: any) => void;
+  onPlanningResponse?: (answers: Record<number, string>, proceed: boolean) => void;
+  onClarification?: (answer: string) => void;
 }
 
 export function ChatMessage({
@@ -38,6 +44,9 @@ export function ChatMessage({
   isLast,
   status,
   onRegenerate,
+  onConfirmation,
+  onPlanningResponse,
+  onClarification,
 }: ChatMessageProps) {
   // Filter source parts
   const sourceParts = message.parts.filter(
@@ -56,6 +65,30 @@ export function ChatMessage({
   const toolResultParts = message.parts.filter(
     (part) => part.type === "tool-result"
   ) as unknown as Array<{ type: "tool-result"; toolCallId: string; output: any }>;
+
+  // Detect confirmation requests in tool results
+  const confirmationRequests = toolResultParts
+    .filter((part) => part.output && part.output.requiresConfirmation === true)
+    .map((part) => ({
+      toolCallId: part.toolCallId,
+      action: part.output.action,
+    }));
+
+  // Detect planning requests in tool results
+  const planningRequests = toolResultParts
+    .filter((part) => part.output && part.output.requiresPlanning === true)
+    .map((part) => ({
+      toolCallId: part.toolCallId,
+      plan: part.output.plan,
+    }));
+
+  // Detect clarification requests in tool results
+  const clarificationRequests = toolResultParts
+    .filter((part) => part.output && part.output.requiresClarification === true)
+    .map((part) => ({
+      toolCallId: part.toolCallId,
+      clarification: part.output.clarification,
+    }));
 
   const handleCopy = async (text: string) => {
     await toast.promise(navigator.clipboard.writeText(text), {
@@ -134,6 +167,199 @@ export function ChatMessage({
               })}
             </ChainOfThoughtContent>
           </ChainOfThought>
+        )}
+
+        {/* Confirmation Requests (detected from tool results) */}
+        {message.role === "assistant" && confirmationRequests.length > 0 && (
+          <>
+            {confirmationRequests.map((req, i) => (
+              <Card key={`${message.id}-confirmation-${i}`} className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <AlertCircleIcon className="size-5 text-amber-600 dark:text-amber-400" />
+                    <CardTitle className="text-amber-900 dark:text-amber-100">Action Requires Confirmation</CardTitle>
+                  </div>
+                  <CardDescription className="text-amber-800 dark:text-amber-200">
+                    {req.action.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Action Details */}
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-amber-900 dark:text-amber-100">Details:</div>
+                    <div className="rounded-md bg-white dark:bg-amber-950/50 p-3 space-y-1">
+                      {Object.entries(req.action.details).map(([key, value]) => (
+                        <div key={key} className="text-sm">
+                          <span className="font-medium text-amber-900 dark:text-amber-100">{key}:</span>{" "}
+                          <span className="text-amber-800 dark:text-amber-200">
+                            {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Impact */}
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-amber-900 dark:text-amber-100">Impact:</div>
+                    <div className="rounded-md bg-white dark:bg-amber-950/50 p-3">
+                      <p className="text-sm text-amber-800 dark:text-amber-200">{req.action.impact}</p>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex gap-2 flex-wrap">
+                  <Button
+                    onClick={() => onConfirmation?.(true, false, req.action.data)}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <CheckCircle2Icon className="size-4 mr-2" />
+                    Accept
+                  </Button>
+                  <Button
+                    onClick={() => onConfirmation?.(true, true, req.action.data)}
+                    variant="outline"
+                    className="border-green-600 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-300 dark:hover:bg-green-950/30"
+                  >
+                    <CheckCircle2Icon className="size-4 mr-2" />
+                    Accept All
+                  </Button>
+                  <Button
+                    onClick={() => onConfirmation?.(false)}
+                    variant="outline"
+                    className="border-amber-600 text-amber-700 hover:bg-amber-50 dark:border-amber-400 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                  >
+                    <MessageCircleIcon className="size-4 mr-2" />
+                    Keep Planning
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </>
+        )}
+
+        {/* Planning Requests (detected from tool results) */}
+        {message.role === "assistant" && planningRequests.length > 0 && (
+          <>
+            {planningRequests.map((req, i) => (
+              <Card key={`${message.id}-planning-${i}`} className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <HelpCircleIcon className="size-5 text-purple-600 dark:text-purple-400" />
+                    <CardTitle className="text-purple-900 dark:text-purple-100">Planning Phase</CardTitle>
+                  </div>
+                  <CardDescription className="text-purple-800 dark:text-purple-200">
+                    {req.plan.summary}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Questions */}
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                      I have a few questions to clarify:
+                    </div>
+                    {req.plan.questions.map((q: any, qIndex: number) => (
+                      <div key={qIndex} className="rounded-md bg-white dark:bg-purple-950/50 p-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <Badge variant="outline" className="mt-0.5 border-purple-600 text-purple-700 dark:border-purple-400 dark:text-purple-300">
+                            {qIndex + 1}
+                          </Badge>
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-medium text-purple-900 dark:text-purple-100">{q.question}</p>
+                            <p className="text-xs text-purple-700 dark:text-purple-300 italic">
+                              Why: {q.rationale}
+                            </p>
+                            {q.options && q.options.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {q.options.map((option: string, oIndex: number) => (
+                                  <Badge key={oIndex} variant="secondary" className="text-xs">
+                                    {option}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Suggested Action (if available) */}
+                  {req.plan.suggestedAction && (
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                        Suggested Action:
+                      </div>
+                      <div className="rounded-md bg-white dark:bg-purple-950/50 p-3 space-y-2">
+                        <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                          {req.plan.suggestedAction.description}
+                        </p>
+                        <div className="space-y-1">
+                          <p className="text-xs text-purple-700 dark:text-purple-300 font-medium">Steps:</p>
+                          <ol className="list-decimal list-inside space-y-1">
+                            {req.plan.suggestedAction.steps.map((step: string, sIndex: number) => (
+                              <li key={sIndex} className="text-xs text-purple-800 dark:text-purple-200">
+                                {step}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="text-sm text-purple-700 dark:text-purple-300">
+                  Please answer these questions in the chat to proceed.
+                </CardFooter>
+              </Card>
+            ))}
+          </>
+        )}
+
+        {/* Clarification Requests (detected from tool results) */}
+        {message.role === "assistant" && clarificationRequests.length > 0 && (
+          <>
+            {clarificationRequests.map((req, i) => (
+              <Card key={`${message.id}-clarification-${i}`} className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <HelpCircleIcon className="size-5 text-blue-600 dark:text-blue-400" />
+                    <CardTitle className="text-blue-900 dark:text-blue-100">Clarification Needed</CardTitle>
+                  </div>
+                  <CardDescription className="text-blue-800 dark:text-blue-200">
+                    {req.clarification.context}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="rounded-md bg-white dark:bg-blue-950/50 p-3">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      {req.clarification.question}
+                    </p>
+                  </div>
+                  {req.clarification.suggestedAnswers && req.clarification.suggestedAnswers.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-blue-700 dark:text-blue-300">Suggested answers:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {req.clarification.suggestedAnswers.map((answer: string, aIndex: number) => (
+                          <Button
+                            key={aIndex}
+                            onClick={() => onClarification?.(answer)}
+                            variant="outline"
+                            size="sm"
+                            className="border-blue-600 text-blue-700 hover:bg-blue-100 dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-950/50"
+                          >
+                            {answer}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="text-sm text-blue-700 dark:text-blue-300">
+                  Please provide your answer in the chat.
+                </CardFooter>
+              </Card>
+            ))}
+          </>
         )}
 
         {/* Sources (if available) */}
@@ -237,6 +463,19 @@ export function ChatMessage({
               return null;
 
             default:
+              // Handle custom part types (confirmation, planning, clarification)
+              // These are rendered in dedicated sections above
+              const partType = (part as any).type;
+              if (
+                partType === "confirmation-request" ||
+                partType === "planning-request" ||
+                partType === "clarification-request" ||
+                partType === "confirmation-response" ||
+                partType === "planning-response" ||
+                partType === "clarification-response"
+              ) {
+                return null;
+              }
               return null;
           }
         })}

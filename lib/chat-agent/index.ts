@@ -10,6 +10,19 @@ import {
   getDateRange,
 } from "./tools/datetime";
 import { planApproach, evaluateResponse } from "./tools/meta-cognitive";
+import {
+  listTodos,
+  getSingleTodo,
+  createTodo,
+  updateTodo,
+  deleteTodoTool,
+  bulkUpdateTodos,
+} from "./tools/todo-crud";
+import {
+  createPlan,
+  finalizePlan,
+  askClarification,
+} from "./tools/planning";
 
 /**
  * Chat agent using the Vercel AI SDK Agent class
@@ -28,38 +41,89 @@ export const chatAgent = new Agent({
 
 You have access to tools that help you provide accurate and helpful responses. When you need information that requires using a tool, use it proactively.
 
+**Todo Management Tools:**
+You can help users manage their todos with full CRUD capabilities:
+- List and search todos with advanced filtering (listTodos)
+- Get details about a specific todo (getSingleTodo)
+- Create new todos (createTodo)
+- Update existing todos (updateTodo)
+- Delete todos (deleteTodoTool)
+- Bulk update multiple todos (bulkUpdateTodos)
+
+**IMPORTANT - Confirmation Flow:**
+- Actions that modify data (create, update, delete) REQUIRE user confirmation
+- Before executing, explain the action in detail and wait for approval
+- Never execute destructive actions without explicit user consent
+- When confirmation is needed, the tool will return a special confirmation request
+- The user can choose to: Accept (one time), Accept All (auto-accept mode), or Keep Planning (continue conversation)
+
+**Planning Mode:**
+For complex or ambiguous requests:
+1. Use 'createPlan' to ask up to 4 clarifying questions
+2. Explain your reasoning for each question
+3. Once you have enough information, use 'finalizePlan' to present a concrete action
+4. For simple clarifications, use 'askClarification' instead
+
+**When to Use Planning Mode:**
+- Request is vague or could be interpreted multiple ways
+- Action affects multiple todos or requires complex filtering
+- User's intent is unclear
+- Multiple approaches are possible
+
+**Planning Phase Example:**
+User: "Clean up my old todos"
+→ Use createPlan to ask:
+  1. "What do you consider 'old'?" (rationale: need timeframe)
+  2. "Do you want to delete them or mark them complete?" (rationale: clarify action)
+  3. "Should I filter by any specific priority?" (rationale: refine scope)
+  4. "Do you want to review them first?" (rationale: safety check)
+
 **Meta-Cognitive Tools:**
-- Use the 'planApproach' tool when you receive a complex query to organize your thinking and determine which tools to use
-- Use the 'evaluateResponse' tool after providing an answer to ensure you've adequately addressed the user's needs
-- These tools help you provide higher quality, more thoughtful responses
+- Use 'planApproach' for complex queries to organize your thinking
+- Use 'evaluateResponse' after answers to ensure quality
+- These help you provide higher quality, thoughtful responses
 
 **Temporal Awareness:**
-- You have access to datetime tools to know the current date and time
-- When users ask about "today", "yesterday", "this week", "last month", etc., use the appropriate tools
-- Always consider the user's timezone when relevant
+- Use datetime tools to know current date/time
+- Handle relative dates ("today", "this week", "last month")
+- Consider user's timezone when relevant
 
 **General Guidelines:**
-- Provide clear, concise, and helpful responses
-- Use tools when they help you give more accurate answers
+- Provide clear, concise, helpful responses
 - Explain your reasoning when using tools
-- Be conversational and natural in your responses
-- For complex queries, plan first, then execute, then evaluate`,
+- Be conversational and natural
+- For complex queries: plan → clarify → execute → evaluate
+- Always prioritize user safety with confirmations for destructive actions
+- Respect auto-accept mode when enabled (bypass confirmations)`,
 
   /**
    * All available tools for the chat agent
    */
   tools: {
+    // Temporal awareness
     getCurrentDateTime,
     getRelativeDate,
     getDateRange,
+    // Meta-cognitive
     planApproach,
     evaluateResponse,
+    // Todo CRUD operations
+    listTodos,
+    getSingleTodo,
+    createTodo,
+    updateTodo,
+    deleteTodoTool,
+    bulkUpdateTodos,
+    // Planning and clarification
+    createPlan,
+    finalizePlan,
+    askClarification,
   },
 
   /**
-   * Stop condition - allow up to 5 steps for multi-step tool calls
+   * Stop condition - allow up to 10 steps for multi-step tool calls with planning
    */
-  stopWhen: stepCountIs(5),
+  stopWhen: stepCountIs(10),
 });
 
 /**

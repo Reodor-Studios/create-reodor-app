@@ -22,6 +22,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { conversationKeys } from "@/hooks/use-conversations";
 import { useRouter } from "next/navigation";
+import { useAgentStore } from "@/stores/agent-store";
+import { toast } from "sonner";
 
 interface ChatPageContentProps {
   userId: string;
@@ -43,6 +45,8 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const createConversationMutation = useCreateConversation();
+  const { enableAutoAccept, disableAutoAccept, autoAcceptEnabled } =
+    useAgentStore();
 
   // Fetch current conversation with messages if one is selected
   const { data: conversationData } = useConversation({
@@ -135,6 +139,84 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
     );
   };
 
+  // Callback for handling confirmation responses
+  const handleConfirmation = async (
+    confirmed: boolean,
+    autoAccept?: boolean,
+    confirmationData?: unknown
+  ) => {
+    if (confirmed && autoAccept && currentConversationId) {
+      // Enable auto-accept mode
+      enableAutoAccept(currentConversationId);
+      toast.success("Auto-accept enabled for this conversation");
+    }
+
+    // Send a message indicating the user's choice
+    let responseText = "";
+    if (confirmed) {
+      responseText = autoAccept
+        ? "Yes, proceed with that action and automatically accept all subsequent actions."
+        : "Yes, proceed with that action.";
+    } else {
+      responseText =
+        "No, let's keep planning. I'd like to discuss this more before proceeding.";
+    }
+
+    // Add metadata about confirmation data if available
+    const metadata = confirmationData
+      ? { confirmationData, autoAcceptEnabled: autoAccept }
+      : { autoAcceptEnabled: autoAccept };
+
+    await sendMessage(
+      { text: responseText },
+      {
+        body: {
+          webSearch,
+          conversationId: currentConversationId,
+          metadata,
+        },
+      }
+    );
+  };
+
+  // Callback for handling planning responses
+  const handlePlanningResponse = async (
+    answers: Record<number, string>,
+    proceed: boolean
+  ) => {
+    // Format the answers into a clear message
+    const answersText = Object.entries(answers)
+      .map(([index, answer]) => `${Number(index) + 1}. ${answer}`)
+      .join("\n");
+
+    const responseText = proceed
+      ? `Here are my answers:\n${answersText}\n\nPlease proceed with the suggested action.`
+      : `Here are my answers:\n${answersText}\n\nLet's continue the conversation based on these answers.`;
+
+    await sendMessage(
+      { text: responseText },
+      {
+        body: {
+          webSearch,
+          conversationId: currentConversationId,
+        },
+      }
+    );
+  };
+
+  // Callback for handling clarification responses
+  const handleClarification = async (answer: string) => {
+    await sendMessage(
+      { text: answer },
+      {
+        body: {
+          webSearch,
+          conversationId: currentConversationId,
+        },
+      }
+    );
+  };
+
   // Don't show empty state if we're submitting or streaming (prevents flash)
   const showEmptyState = messages.length === 0 && status === "ready";
 
@@ -168,6 +250,9 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
                       isLast={index === messages.length - 1}
                       status={status}
                       onRegenerate={regenerate}
+                      onConfirmation={handleConfirmation}
+                      onPlanningResponse={handlePlanningResponse}
+                      onClarification={handleClarification}
                     />
                   ))}
 
