@@ -143,12 +143,15 @@ export function ChatMessage({
     });
   };
 
+  // Show chain of thought during streaming OR if tools were executed
+  const shouldShowChainOfThought = message.role === "assistant" && hasToolActivity;
+
   return (
     <BlurFade delay={0.1} duration={0.5}>
       <div className="space-y-2">
-        {/* Tool Calls (if available) */}
-        {message.role === "assistant" && hasToolActivity && (
-          <ChainOfThought defaultOpen={false}>
+        {/* Tool Calls (shown during streaming and after completion) */}
+        {shouldShowChainOfThought && (
+          <ChainOfThought defaultOpen={status === "streaming" && isLast}>
             <ChainOfThoughtHeader>
               Tool Usage ({toolExecutionParts.length + toolCallParts.length}{" "}
               {(toolExecutionParts.length + toolCallParts.length) === 1 ? "call" : "calls"})
@@ -160,20 +163,28 @@ export function ChatMessage({
                 const toolName = toolExecution.type.replace("tool-", "");
                 const toolData = toolExecution as any;
 
+                // Determine status based on whether the tool has output/result
+                const hasOutput = toolData.result !== undefined || toolData.output !== undefined;
+                const isCurrentlyExecuting = status === "streaming" && isLast && !hasOutput;
+
                 return (
                   <ChainOfThoughtStep
                     key={`tool-exec-${index}`}
                     icon={WrenchIcon}
                     label={toolName}
                     description={
-                      status === "streaming" && isLast && index === toolExecutionParts.length - 1
+                      isCurrentlyExecuting
                         ? "Running..."
-                        : "Completed"
+                        : hasOutput
+                          ? "Completed"
+                          : "Pending"
                     }
                     status={
-                      status === "streaming" && isLast && index === toolExecutionParts.length - 1
+                      isCurrentlyExecuting
                         ? "active"
-                        : "complete"
+                        : hasOutput
+                          ? "complete"
+                          : "pending"
                     }
                   >
                     <div className="space-y-2">

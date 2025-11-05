@@ -210,18 +210,19 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
         "No, let's keep planning. I'd like to discuss this more before proceeding.";
     }
 
-    // Add metadata about confirmation data if available
-    const metadata = confirmationData
-      ? { confirmationData, autoAcceptEnabled: autoAccept }
-      : { autoAcceptEnabled: autoAccept };
-
+    // Send confirmation data in the body AND attach to message
+    // The AI SDK sends the body to the API, so we need metadata there
     await sendMessage(
-      { text: responseText },
+      {
+        text: responseText,
+      },
       {
         body: {
           webSearch,
           conversationId: currentConversationId,
-          metadata,
+          // Send confirmation data in body for API to access
+          confirmationData: confirmed ? confirmationData : undefined,
+          autoAcceptEnabled: autoAccept,
         },
       }
     );

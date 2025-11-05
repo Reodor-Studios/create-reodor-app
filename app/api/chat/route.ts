@@ -32,10 +32,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { messages, webSearch, conversationId } = body as {
+    const { messages, webSearch, conversationId, confirmationData } = body as {
       messages: UIMessage[];
       webSearch?: boolean;
       conversationId?: string;
+      confirmationData?: unknown;
     };
 
     console.log("[Chat API] Received request:", {
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
       messageCount: messages.length,
       conversationId,
       webSearch,
+      confirmationData: confirmationData ? "present" : "none",
       lastMessage: messages[messages.length - 1],
     });
 
@@ -52,21 +54,15 @@ export async function POST(req: Request) {
     // Convert messages and include metadata context
     const convertedMessages = convertToModelMessages(messages);
 
-    // If the last message has confirmationData in metadata, add it to the system context
-    const lastMessage = messages[messages.length - 1];
-    const hasConfirmationData = lastMessage?.metadata &&
-      typeof lastMessage.metadata === 'object' &&
-      'confirmationData' in lastMessage.metadata;
-
-    if (hasConfirmationData) {
-      // Inject metadata info into the message for the agent to see
-      console.log("[Chat API] Detected confirmation data in last message:", lastMessage.metadata);
+    // If confirmationData is present in the body, add it to the system context
+    if (confirmationData) {
+      // Inject confirmation data into the message for the agent to see
+      console.log("[Chat API] Detected confirmation data in request body:", confirmationData);
 
       // Add system message with confirmation context
-      const metadata = lastMessage.metadata as Record<string, unknown>;
       convertedMessages.push({
         role: "system",
-        content: `CONFIRMATION CONTEXT: The user has confirmed an action. The confirmation data is: ${JSON.stringify(metadata.confirmationData)}. You MUST now execute the confirmed action by calling the appropriate tool with needsConfirmation: false and the data from confirmationData.`,
+        content: `CONFIRMATION CONTEXT: The user has confirmed an action. The confirmation data is: ${JSON.stringify(confirmationData)}. You MUST now execute the confirmed action by calling the appropriate tool with needsConfirmation: false and the data from confirmationData.`,
       });
     }
 
