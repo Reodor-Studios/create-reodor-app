@@ -24,7 +24,7 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CopyIcon, RefreshCcwIcon, WrenchIcon, CheckCircle2Icon, XCircleIcon, MessageCircleIcon, AlertCircleIcon, HelpCircleIcon } from "lucide-react";
+import { CopyIcon, RefreshCcwIcon, WrenchIcon, CheckCircle2Icon, XCircleIcon, MessageCircleIcon, AlertCircleIcon, HelpCircleIcon, SearchIcon, ExternalLinkIcon } from "lucide-react";
 import { Fragment } from "react";
 import type { UIMessage } from "ai";
 import { toast } from "sonner";
@@ -167,10 +167,13 @@ export function ChatMessage({
                 const hasOutput = toolData.result !== undefined || toolData.output !== undefined;
                 const isCurrentlyExecuting = status === "streaming" && isLast && !hasOutput;
 
+                // Check if this is a web search tool
+                const isWebSearch = ["webSearch", "multiWebSearch", "domainWebSearch"].includes(toolName);
+
                 return (
                   <ChainOfThoughtStep
                     key={`tool-exec-${index}`}
-                    icon={WrenchIcon}
+                    icon={isWebSearch ? SearchIcon : WrenchIcon}
                     label={toolName}
                     description={
                       isCurrentlyExecuting
@@ -202,19 +205,63 @@ export function ChatMessage({
                         </>
                       )}
 
-                      {/* Tool Result (if available) */}
+                      {/* Tool Result - Special handling for web search */}
                       {toolData.result && (
                         <>
                           <div className="text-xs text-muted-foreground pt-2">
                             Result:
                           </div>
-                          <div className="rounded-md bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 border p-2 text-xs">
-                            <pre className="overflow-x-auto text-green-800 dark:text-green-200">
-                              {typeof toolData.result === "string"
-                                ? toolData.result
-                                : JSON.stringify(toolData.result, null, 2)}
-                            </pre>
-                          </div>
+                          {isWebSearch && toolData.result.success && toolData.result.results ? (
+                            <div className="space-y-2">
+                              {/* Web Search Results Display */}
+                              {Array.isArray(toolData.result.results) ? (
+                                toolData.result.results.map((result: any, resultIndex: number) => (
+                                  <div
+                                    key={resultIndex}
+                                    className="rounded-md bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 border p-3 space-y-1"
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <a
+                                        href={result.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm font-medium text-blue-700 dark:text-blue-300 hover:underline flex items-center gap-1"
+                                      >
+                                        {result.title}
+                                        <ExternalLinkIcon className="size-3" />
+                                      </a>
+                                    </div>
+                                    {result.snippet && (
+                                      <p className="text-xs text-blue-800 dark:text-blue-200 line-clamp-3">
+                                        {result.snippet}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                                      {result.publishedDate && (
+                                        <span>Published: {result.publishedDate}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="rounded-md bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 border p-2 text-xs">
+                                  <pre className="overflow-x-auto text-green-800 dark:text-green-200">
+                                    {typeof toolData.result === "string"
+                                      ? toolData.result
+                                      : JSON.stringify(toolData.result, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="rounded-md bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 border p-2 text-xs">
+                              <pre className="overflow-x-auto text-green-800 dark:text-green-200">
+                                {typeof toolData.result === "string"
+                                  ? toolData.result
+                                  : JSON.stringify(toolData.result, null, 2)}
+                              </pre>
+                            </div>
+                          )}
                         </>
                       )}
                     </div>

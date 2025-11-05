@@ -44,9 +44,10 @@ export function ChatInput({
     onWebSearchChange(newValue);
 
     if (newValue) {
-      toast.info("Web search enabled", {
-        description:
-          "Responses will include sources from the web. Full Perplexity Sonar integration coming soon!",
+      toast.success("Web search enabled");
+    } else {
+      toast.info("Web search disabled", {
+        description: "The AI will use its built-in knowledge only.",
       });
     }
   };
@@ -64,11 +65,7 @@ export function ChatInput({
   };
 
   return (
-    <PromptInput
-      onSubmit={handleSubmit}
-      globalDrop
-      multiple
-    >
+    <PromptInput onSubmit={handleSubmit} globalDrop multiple>
       <PromptInputHeader>
         <PromptInputAttachments>
           {(attachment) => <PromptInputAttachment data={attachment} />}

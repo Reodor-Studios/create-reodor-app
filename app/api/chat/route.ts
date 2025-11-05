@@ -49,7 +49,10 @@ export async function POST(req: Request) {
     });
 
     // Create agent for this specific user
-    const chatAgent = createChatAgent({ userId: user.id });
+    const chatAgent = createChatAgent({
+      userId: user.id,
+      webSearchEnabled: webSearch ?? false,
+    });
 
     // Convert messages and include metadata context
     const convertedMessages = convertToModelMessages(messages);

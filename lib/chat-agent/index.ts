@@ -15,17 +15,20 @@ import {
   finalizePlan,
   askClarification,
 } from "./tools/planning";
+import { webSearch, multiWebSearch, domainWebSearch } from "./tools/web-search";
 
 export type ChatAgentConfig = {
   userId: string;
+  webSearchEnabled?: boolean;
 };
 
 /**
  * Create a chat agent for a specific user
  * The agent has access to user-specific tools with the userId baked in
  */
-export function createChatAgent({ userId }: ChatAgentConfig) {
+export function createChatAgent({ userId, webSearchEnabled = false }: ChatAgentConfig) {
   console.log('🤖 [Chat Agent] Creating agent for user:', userId);
+  console.log('🔍 [Chat Agent] Web search enabled:', webSearchEnabled);
 
   // Create todo CRUD tools with userId baked in
   const todoCrudTools = createTodoCrudTools({ userId });
@@ -50,10 +53,30 @@ export function createChatAgent({ userId }: ChatAgentConfig) {
 User Context:
 - Current user ID: ${userId}
 - You have access to this user's personal todos and data
+${webSearchEnabled ? "- Web search is ENABLED - you can search the internet for current information" : ""}
 
 You have access to tools that help you provide accurate and helpful responses. When you need information that requires using a tool, use it proactively.
 
-**Todo Management Tools:**
+${webSearchEnabled ? `**Web Search Capabilities:**
+When web search is enabled, you can use these tools:
+- webSearch: Search the web for current information (use when user mentions URLs, asks about news/current events, or needs real-time data)
+- multiWebSearch: Execute multiple related searches simultaneously (for comprehensive research)
+- domainWebSearch: Search within specific domains or authoritative sources
+
+Use web search when:
+- User asks about recent events, news, or current information
+- User mentions URLs, domains, or web content
+- Query requires real-time or time-sensitive data
+- User explicitly asks to search online
+- You need to verify facts or find authoritative sources
+
+DO NOT use web search for:
+- General knowledge you can answer confidently
+- Historical facts that don't change
+- Basic definitions or concepts
+- Math or logic problems
+
+` : ""}**Todo Management Tools:**
 You can help users manage their todos with full CRUD capabilities:
 - List and search todos with advanced filtering (listTodos)
 - Get details about a specific todo (getSingleTodo)
@@ -172,6 +195,14 @@ User: "Clean up my old todos"
       createPlan,
       finalizePlan,
       askClarification,
+      // Web search (conditionally included)
+      ...(webSearchEnabled
+        ? {
+            webSearch,
+            multiWebSearch,
+            domainWebSearch,
+          }
+        : {}),
     },
 
     /**
