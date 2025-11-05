@@ -3,13 +3,34 @@ import {
   generateConversationTitle,
   saveMessages,
 } from "@/server/conversation.actions";
-import { chatAgent } from "@/lib/chat-agent";
+import { createChatAgent } from "@/lib/chat-agent";
+import { createClient } from "@/lib/supabase/server";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
+    // Get authenticated user
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (!user || authError) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "You must be logged in to use the chat",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     const body = await req.json();
     const { messages, webSearch, conversationId } = body as {
       messages: UIMessage[];
@@ -18,11 +39,15 @@ export async function POST(req: Request) {
     };
 
     console.log("[Chat API] Received request:", {
+      userId: user.id,
       messageCount: messages.length,
       conversationId,
       webSearch,
       lastMessage: messages[messages.length - 1],
     });
+
+    // Create agent for this specific user
+    const chatAgent = createChatAgent({ userId: user.id });
 
     // Use the agent's stream method to get the streaming response
     const result = await chatAgent.stream({

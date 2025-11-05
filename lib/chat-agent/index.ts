@@ -1,6 +1,5 @@
 import {
   Experimental_Agent as Agent,
-  Experimental_InferAgentUIMessage as InferAgentUIMessage,
   stepCountIs,
 } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
@@ -10,34 +9,47 @@ import {
   getDateRange,
 } from "./tools/datetime";
 import { planApproach, evaluateResponse } from "./tools/meta-cognitive";
-import {
-  listTodos,
-  getSingleTodo,
-  createTodo,
-  updateTodo,
-  deleteTodoTool,
-  bulkUpdateTodos,
-} from "./tools/todo-crud";
+import { createTodoCrudTools } from "./tools/todo-crud";
 import {
   createPlan,
   finalizePlan,
   askClarification,
 } from "./tools/planning";
 
-/**
- * Chat agent using the Vercel AI SDK Agent class
- * Handles multi-step tool execution with automatic loop control
- */
-export const chatAgent = new Agent({
-  /**
-   * Model configuration
-   */
-  model: anthropic("claude-sonnet-4-5-20250929"),
+export type ChatAgentConfig = {
+  userId: string;
+};
 
-  /**
-   * System prompt for the agent
-   */
-  system: `You are a helpful AI assistant built with Vercel AI SDK and AI Elements.
+/**
+ * Create a chat agent for a specific user
+ * The agent has access to user-specific tools with the userId baked in
+ */
+export function createChatAgent({ userId }: ChatAgentConfig) {
+  console.log('🤖 [Chat Agent] Creating agent for user:', userId);
+
+  // Create todo CRUD tools with userId baked in
+  const todoCrudTools = createTodoCrudTools({ userId });
+
+  const agent = new Agent({
+    /**
+     * Model configuration
+     */
+    model: anthropic("claude-sonnet-4-5-20250929"),
+
+    /**
+     * System prompt for the agent
+     */
+    system: `You are a helpful AI assistant built with Vercel AI SDK and AI Elements.
+
+**Communication Style:**
+- NEVER use emojis in your responses
+- Keep answers brief and to the point
+- Be concise and direct
+- Provide only the necessary information
+
+User Context:
+- Current user ID: ${userId}
+- You have access to this user's personal todos and data
 
 You have access to tools that help you provide accurate and helpful responses. When you need information that requires using a tool, use it proactively.
 
@@ -49,6 +61,11 @@ You can help users manage their todos with full CRUD capabilities:
 - Update existing todos (updateTodo)
 - Delete todos (deleteTodoTool)
 - Bulk update multiple todos (bulkUpdateTodos)
+
+**IMPORTANT - User Data Access:**
+- All todo operations automatically use the authenticated user's ID (${userId})
+- Users can only access their own todos (enforced by RLS)
+- You don't need to ask for the user ID - it's already configured
 
 **IMPORTANT - Confirmation Flow:**
 - Actions that modify data (create, update, delete) REQUIRE user confirmation
@@ -90,43 +107,47 @@ User: "Clean up my old todos"
 
 **General Guidelines:**
 - Provide clear, concise, helpful responses
-- Explain your reasoning when using tools
-- Be conversational and natural
+- Keep explanations brief
 - For complex queries: plan → clarify → execute → evaluate
 - Always prioritize user safety with confirmations for destructive actions
 - Respect auto-accept mode when enabled (bypass confirmations)`,
 
-  /**
-   * All available tools for the chat agent
-   */
-  tools: {
-    // Temporal awareness
-    getCurrentDateTime,
-    getRelativeDate,
-    getDateRange,
-    // Meta-cognitive
-    planApproach,
-    evaluateResponse,
-    // Todo CRUD operations
-    listTodos,
-    getSingleTodo,
-    createTodo,
-    updateTodo,
-    deleteTodoTool,
-    bulkUpdateTodos,
-    // Planning and clarification
-    createPlan,
-    finalizePlan,
-    askClarification,
-  },
+    /**
+     * All available tools for the chat agent
+     */
+    tools: {
+      // Temporal awareness
+      getCurrentDateTime,
+      getRelativeDate,
+      getDateRange,
+      // Meta-cognitive
+      planApproach,
+      evaluateResponse,
+      // Todo CRUD operations
+      ...todoCrudTools,
+      // Planning and clarification
+      createPlan,
+      finalizePlan,
+      askClarification,
+    },
 
-  /**
-   * Stop condition - allow up to 10 steps for multi-step tool calls with planning
-   */
-  stopWhen: stepCountIs(10),
-});
+    /**
+     * Stop condition - allow up to 10 steps for multi-step tool calls with planning
+     */
+    stopWhen: stepCountIs(10),
+  });
+
+  console.log('✅ [Chat Agent] Agent created with tools:', Object.keys(agent.tools || {}));
+  console.log('✅ [Chat Agent] Model:', 'claude-sonnet-4-5-20250929');
+  console.log('✅ [Chat Agent] Max steps: 10');
+
+  return agent;
+}
 
 /**
- * Type exports for use in the application
+ * Type helper to infer the agent's UIMessage type
+ * Use this for type-safe message handling in UI components
  */
-export type ChatAgentUIMessage = InferAgentUIMessage<typeof chatAgent>;
+export type ChatAgentMessage = ReturnType<typeof createChatAgent> extends Agent<infer Tools>
+  ? Tools
+  : never;
