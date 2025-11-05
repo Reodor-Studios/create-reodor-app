@@ -53,13 +53,18 @@ export function ConversationSearchDialog({
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      className="sm:max-w-[600px] lg:max-w-[700px]"
+    >
       <CommandInput
         placeholder="Search conversations..."
         value={searchQuery}
         onValueChange={setSearchQuery}
+        className="focus:ring-0 focus-visible:ring-0 focus:ring-offset-0"
       />
-      <CommandList>
+      <CommandList className="max-h-[500px] sm:max-h-[600px]">
         <CommandEmpty>No conversations found.</CommandEmpty>
         {conversationGroups.map((group) => (
           <CommandGroup key={group.label} heading={group.label}>
@@ -70,6 +75,11 @@ export function ConversationSearchDialog({
                   ? conversation.title.slice(0, 60) + "..."
                   : conversation.title;
 
+              const displayPreview =
+                conversation.preview && conversation.preview.length > 80
+                  ? conversation.preview.slice(0, 80) + "..."
+                  : conversation.preview;
+
               return (
                 <CommandItem
                   key={conversation.id}
@@ -78,16 +88,23 @@ export function ConversationSearchDialog({
                     ...(conversation.preview ?? ""),
                   ].join(" ")}
                   onSelect={() => handleSelect(conversation.id)}
-                  className="flex items-center gap-2"
+                  className="flex items-start gap-2 py-3"
                 >
                   {conversation.pinned && (
-                    <PinIcon className="w-4 h-4 shrink-0 text-primary" />
+                    <PinIcon className="w-4 h-4 shrink-0 text-primary mt-0.5" />
                   )}
-                  <span className={isActive ? "font-semibold" : ""}>
-                    {displayTitle}
-                  </span>
+                  <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                    <span className={isActive ? "font-semibold" : ""}>
+                      {displayTitle}
+                    </span>
+                    {displayPreview && (
+                      <span className="text-xs text-muted-foreground truncate">
+                        {displayPreview}
+                      </span>
+                    )}
+                  </div>
                   {isActive && (
-                    <span className="ml-auto text-xs text-muted-foreground">
+                    <span className="ml-auto text-xs text-muted-foreground shrink-0">
                       Current
                     </span>
                   )}

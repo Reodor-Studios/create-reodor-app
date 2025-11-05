@@ -93,7 +93,7 @@ function ChatContent({ userId }: ChatPageContentProps) {
           <div
             className={cn(
               "mx-auto transition-all duration-300 px-4 md:px-6",
-              open ? "max-w-4xl" : "max-w-4xl"
+              open ? "max-w-3xl lg:max-w-4xl" : "max-w-4xl"
             )}
           >
             {showEmptyState ? (
@@ -129,7 +129,7 @@ function ChatContent({ userId }: ChatPageContentProps) {
             <div
               className={cn(
                 "mx-auto transition-all duration-300 bg-background border rounded-lg shadow-lg",
-                open ? "max-w-4xl" : "max-w-4xl"
+                open ? "max-w-3xl lg:max-w-4xl" : "max-w-4xl"
               )}
             >
               <ChatInput
