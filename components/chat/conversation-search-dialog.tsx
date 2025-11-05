@@ -73,13 +73,15 @@ export function ConversationSearchDialog({
               return (
                 <CommandItem
                   key={conversation.id}
-                  value={conversation.id}
+                  value={[
+                    conversation.title,
+                    ...(conversation.preview ?? ""),
+                  ].join(" ")}
                   onSelect={() => handleSelect(conversation.id)}
                   className="flex items-center gap-2"
                 >
-                  <MessageSquareIcon className="size-4 shrink-0 text-muted-foreground" />
                   {conversation.pinned && (
-                    <PinIcon className="size-3 shrink-0 text-primary" />
+                    <PinIcon className="w-4 h-4 shrink-0 text-primary" />
                   )}
                   <span className={isActive ? "font-semibold" : ""}>
                     {displayTitle}

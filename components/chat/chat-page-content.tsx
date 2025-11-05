@@ -1,6 +1,10 @@
 "use client";
 
-import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import {
   Conversation,
   ConversationContent,
@@ -89,7 +93,7 @@ function ChatContent({ userId }: ChatPageContentProps) {
           <div
             className={cn(
               "mx-auto transition-all duration-300 px-4 md:px-6",
-              open ? "max-w-4xl" : "max-w-7xl"
+              open ? "max-w-4xl" : "max-w-4xl"
             )}
           >
             {showEmptyState ? (
@@ -125,7 +129,7 @@ function ChatContent({ userId }: ChatPageContentProps) {
             <div
               className={cn(
                 "mx-auto transition-all duration-300 bg-background border rounded-lg shadow-lg",
-                open ? "max-w-4xl" : "max-w-7xl"
+                open ? "max-w-4xl" : "max-w-4xl"
               )}
             >
               <ChatInput
@@ -147,7 +151,15 @@ function ChatContent({ userId }: ChatPageContentProps) {
 
 export function ChatPageContent({ userId }: ChatPageContentProps) {
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider
+      defaultOpen
+      style={
+        {
+          "--sidebar-width": "20rem",
+          "--sidebar-width-mobile": "20rem",
+        } as React.CSSProperties
+      }
+    >
       {/* Account for navbar height (min-h-16 = 64px) */}
       <div className="flex w-full h-screen pt-18">
         <ChatContent userId={userId} />
