@@ -5,6 +5,7 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import { CATEGORIES } from "@/types/chat";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { AnimateIcon } from "@/components/animate-ui/icons/icon";
 
 interface ChatEmptyStateProps {
   onQuestionSelect: (question: string) => void;
@@ -12,11 +13,11 @@ interface ChatEmptyStateProps {
 
 export function ChatEmptyState({ onQuestionSelect }: ChatEmptyStateProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>(
-    CATEGORIES[0].id,
+    CATEGORIES[0].id
   );
 
   const selectedCategoryData = CATEGORIES.find(
-    (cat) => cat.id === selectedCategory,
+    (cat) => cat.id === selectedCategory
   );
 
   return (
@@ -38,18 +39,19 @@ export function ChatEmptyState({ onQuestionSelect }: ChatEmptyStateProps) {
             const isSelected = selectedCategory === category.id;
 
             return (
-              <Button
-                key={category.id}
-                variant={isSelected ? "default" : "ghost"}
-                onClick={() => setSelectedCategory(category.id)}
-                className={cn(
-                  "flex items-center gap-2 transition-all",
-                  isSelected && "shadow-sm",
-                )}
-              >
-                <Icon className="size-4" />
-                <span>{category.name}</span>
-              </Button>
+              <AnimateIcon key={category.id} animateOnHover>
+                <Button
+                  variant={isSelected ? "default" : "ghost"}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={cn(
+                    "flex items-center gap-2 transition-all",
+                    isSelected && "shadow-sm"
+                  )}
+                >
+                  <Icon className="size-4" />
+                  <span>{category.name}</span>
+                </Button>
+              </AnimateIcon>
             );
           })}
         </div>

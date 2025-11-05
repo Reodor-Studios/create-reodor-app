@@ -1,10 +1,8 @@
-import {
-  BookOpenIcon,
-  CodeIcon,
-  CompassIcon,
-  SparklesIcon,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Sparkles } from "@/components/animate-ui/icons/sparkles";
+import { Compass } from "@/components/animate-ui/icons/compass";
+import { Terminal } from "@/components/animate-ui/icons/terminal";
+import { Lightbulb } from "@/components/animate-ui/icons/lightbulb";
+import type { ComponentType } from "react";
 
 // ============================================================================
 // Core Types
@@ -28,7 +26,7 @@ export interface ConversationGroup {
 export interface Category {
   id: string;
   name: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string; animateOnHover?: boolean }>;
   description: string;
   questions: string[];
 }
@@ -203,7 +201,7 @@ export const CATEGORIES: Category[] = [
   {
     id: "create",
     name: "Create",
-    icon: SparklesIcon,
+    icon: Sparkles,
     description: "Generate content, code, and creative ideas",
     questions: [
       "Write a blog post about sustainable technology",
@@ -215,7 +213,7 @@ export const CATEGORIES: Category[] = [
   {
     id: "explore",
     name: "Explore",
-    icon: CompassIcon,
+    icon: Compass,
     description: "Research, analyze, and learn new concepts",
     questions: [
       "Explain how quantum computing works",
@@ -227,7 +225,7 @@ export const CATEGORIES: Category[] = [
   {
     id: "code",
     name: "Code",
-    icon: CodeIcon,
+    icon: Terminal,
     description: "Debug, refactor, and optimize your code",
     questions: [
       "Debug this TypeScript type error",
@@ -239,7 +237,7 @@ export const CATEGORIES: Category[] = [
   {
     id: "learn",
     name: "Learn",
-    icon: BookOpenIcon,
+    icon: Lightbulb,
     description: "Educational content and step-by-step guides",
     questions: [
       "Teach me about machine learning fundamentals",

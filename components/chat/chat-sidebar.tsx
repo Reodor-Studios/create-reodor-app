@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ConversationSearchDialog } from "@/components/chat/conversation-search-dialog";
+import { ChatFloatingActions } from "@/components/chat/chat-floating-actions";
 
 interface ChatSidebarProps {
   currentConversationId?: string;
@@ -83,46 +84,15 @@ export function ChatSidebar({
     onNewChat();
   };
 
-  // Show floating trigger when sidebar is collapsed on any viewport,
-  // or when on mobile and sidebar is not expanded
-  const shouldShowFloatingTrigger = !open || (isMobile && !open);
-
   return (
     <>
-      {/* Floating trigger visible when sidebar is collapsed */}
-      {shouldShowFloatingTrigger && (
-        <div className="fixed top-[4.5rem] left-2 z-50 flex items-center gap-1 bg-background/20 backdrop-blur-md border rounded-lg p-1 shadow-lg">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="size-8"
-            aria-label="Open sidebar"
-          >
-            <PanelLeftIcon className="size-4" />
-          </Button>
-          <Separator orientation="vertical" className="h-6" />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSearchClick}
-            className="size-8"
-            aria-label="Search conversations"
-          >
-            <SearchIcon className="size-4" />
-          </Button>
-          <Separator orientation="vertical" className="h-6" />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleNewChatClick}
-            className="size-8"
-            aria-label="New chat"
-          >
-            <MessageSquarePlusIcon className="size-4" />
-          </Button>
-        </div>
-      )}
+      <ChatFloatingActions
+        open={open}
+        isMobile={isMobile}
+        onToggleSidebar={toggleSidebar}
+        onSearchClick={handleSearchClick}
+        onNewChatClick={handleNewChatClick}
+      />
 
       <Sidebar collapsible="offcanvas">
         <SidebarHeader className="border-b p-4 pt-20">
