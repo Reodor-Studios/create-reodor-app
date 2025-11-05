@@ -139,7 +139,6 @@ function ChatContent() {
 export function ChatPageContent({ userId }: ChatPageContentProps) {
   return (
     <SidebarProvider
-      defaultOpen
       style={
         {
           "--sidebar-width": "20rem",

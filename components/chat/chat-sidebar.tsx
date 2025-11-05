@@ -39,7 +39,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ConversationSearchDialog } from "@/components/chat/conversation-search-dialog";
 import { ChatFloatingActions } from "@/components/chat/chat-floating-actions";
 
@@ -56,7 +56,11 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const { open, toggleSidebar } = useSidebar();
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
+
+  // On desktop/tablet (>=768px), sidebar is always inline (collapsible="none")
+  // On mobile (<768px), sidebar becomes a drawer (handled by Sidebar component's isMobile check)
+  const collapsibleBehavior = isMobile ? "offcanvas" : "none";
 
   // Group all conversations by recency for sidebar display
   const conversationGroups = groupConversationsByRecency(MOCK_CONVERSATIONS);
@@ -94,10 +98,11 @@ export function ChatSidebar({
         onNewChatClick={handleNewChatClick}
       />
 
-      <Sidebar collapsible="offcanvas">
+      <Sidebar collapsible={collapsibleBehavior}>
         <SidebarHeader className="border-b p-4 md:pt-20">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1" />
+            {/* Only show toggle on mobile - on desktop, sidebar is always visible */}
+            {isMobile && <SidebarTrigger className="-ml-1" />}
             <Button
               onClick={onNewChat}
               variant="outline"

@@ -38,10 +38,9 @@ export function ChatFloatingActions({
   onSearchClick,
   onNewChatClick,
 }: ChatFloatingActionsProps) {
-  // Show floating actions when:
-  // - Sidebar is collapsed on desktop (!open)
-  // - Always on mobile (isMobile), regardless of sidebar state
-  const shouldShow = !open || isMobile;
+  // Show floating actions only on mobile
+  // On desktop/tablet, the sidebar is always visible and inline (part of the layout)
+  const shouldShow = isMobile;
 
   if (!shouldShow) {
     return null;
