@@ -57,7 +57,13 @@ export function ChatMessage({
     isLast &&
     message.parts.some((part) => part.type === "reasoning");
 
-  // Filter tool call parts (with type assertion for tool-specific properties)
+  // Filter tool execution parts from AI SDK Agent
+  // Agent returns parts with type like "tool-getCurrentDateTime", "tool-createTodo", etc.
+  const toolExecutionParts = message.parts.filter(
+    (part) => typeof part.type === "string" && part.type.startsWith("tool-")
+  ) as unknown as Array<{ type: string; [key: string]: any }>;
+
+  // For backwards compatibility, also check for standard tool-call/tool-result parts
   const toolCallParts = message.parts.filter(
     (part) => part.type === "tool-call"
   ) as unknown as Array<{ type: "tool-call"; toolCallId: string; toolName: string; input: any }>;
@@ -66,29 +72,68 @@ export function ChatMessage({
     (part) => part.type === "tool-result"
   ) as unknown as Array<{ type: "tool-result"; toolCallId: string; output: any }>;
 
-  // Detect confirmation requests in tool results
-  const confirmationRequests = toolResultParts
+  // Combine both formats for display
+  const hasToolActivity = toolExecutionParts.length > 0 || toolCallParts.length > 0;
+
+  // Detect confirmation requests in tool results (both old and new format)
+  const confirmationRequestsFromResults = toolResultParts
     .filter((part) => part.output && part.output.requiresConfirmation === true)
     .map((part) => ({
       toolCallId: part.toolCallId,
       action: part.output.action,
     }));
 
+  const confirmationRequestsFromExecutions = toolExecutionParts
+    .filter((part: any) => part.result && part.result.requiresConfirmation === true)
+    .map((part: any, index) => ({
+      toolCallId: `exec-${index}`,
+      action: part.result.action,
+    }));
+
+  const confirmationRequests = [
+    ...confirmationRequestsFromResults,
+    ...confirmationRequestsFromExecutions,
+  ];
+
   // Detect planning requests in tool results
-  const planningRequests = toolResultParts
+  const planningRequestsFromResults = toolResultParts
     .filter((part) => part.output && part.output.requiresPlanning === true)
     .map((part) => ({
       toolCallId: part.toolCallId,
       plan: part.output.plan,
     }));
 
+  const planningRequestsFromExecutions = toolExecutionParts
+    .filter((part: any) => part.result && part.result.requiresPlanning === true)
+    .map((part: any, index) => ({
+      toolCallId: `exec-${index}`,
+      plan: part.result.plan,
+    }));
+
+  const planningRequests = [
+    ...planningRequestsFromResults,
+    ...planningRequestsFromExecutions,
+  ];
+
   // Detect clarification requests in tool results
-  const clarificationRequests = toolResultParts
+  const clarificationRequestsFromResults = toolResultParts
     .filter((part) => part.output && part.output.requiresClarification === true)
     .map((part) => ({
       toolCallId: part.toolCallId,
       clarification: part.output.clarification,
     }));
+
+  const clarificationRequestsFromExecutions = toolExecutionParts
+    .filter((part: any) => part.result && part.result.requiresClarification === true)
+    .map((part: any, index) => ({
+      toolCallId: `exec-${index}`,
+      clarification: part.result.clarification,
+    }));
+
+  const clarificationRequests = [
+    ...clarificationRequestsFromResults,
+    ...clarificationRequestsFromExecutions,
+  ];
 
   const handleCopy = async (text: string) => {
     await toast.promise(navigator.clipboard.writeText(text), {
@@ -102,13 +147,71 @@ export function ChatMessage({
     <BlurFade delay={0.1} duration={0.5}>
       <div className="space-y-2">
         {/* Tool Calls (if available) */}
-        {message.role === "assistant" && toolCallParts.length > 0 && (
+        {message.role === "assistant" && hasToolActivity && (
           <ChainOfThought defaultOpen={false}>
             <ChainOfThoughtHeader>
-              Tool Usage ({toolCallParts.length}{" "}
-              {toolCallParts.length === 1 ? "call" : "calls"})
+              Tool Usage ({toolExecutionParts.length + toolCallParts.length}{" "}
+              {(toolExecutionParts.length + toolCallParts.length) === 1 ? "call" : "calls"})
             </ChainOfThoughtHeader>
             <ChainOfThoughtContent>
+              {/* Render AI SDK Agent tool executions */}
+              {toolExecutionParts.map((toolExecution, index) => {
+                // Extract tool name from type (e.g., "tool-createTodo" -> "createTodo")
+                const toolName = toolExecution.type.replace("tool-", "");
+                const toolData = toolExecution as any;
+
+                return (
+                  <ChainOfThoughtStep
+                    key={`tool-exec-${index}`}
+                    icon={WrenchIcon}
+                    label={toolName}
+                    description={
+                      status === "streaming" && isLast && index === toolExecutionParts.length - 1
+                        ? "Running..."
+                        : "Completed"
+                    }
+                    status={
+                      status === "streaming" && isLast && index === toolExecutionParts.length - 1
+                        ? "active"
+                        : "complete"
+                    }
+                  >
+                    <div className="space-y-2">
+                      {/* Tool Arguments (if available) */}
+                      {toolData.args && (
+                        <>
+                          <div className="text-xs text-muted-foreground">
+                            Input:
+                          </div>
+                          <div className="rounded-md bg-muted p-2 text-xs">
+                            <pre className="overflow-x-auto">
+                              {JSON.stringify(toolData.args, null, 2)}
+                            </pre>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Tool Result (if available) */}
+                      {toolData.result && (
+                        <>
+                          <div className="text-xs text-muted-foreground pt-2">
+                            Result:
+                          </div>
+                          <div className="rounded-md bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 border p-2 text-xs">
+                            <pre className="overflow-x-auto text-green-800 dark:text-green-200">
+                              {typeof toolData.result === "string"
+                                ? toolData.result
+                                : JSON.stringify(toolData.result, null, 2)}
+                            </pre>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </ChainOfThoughtStep>
+                );
+              })}
+
+              {/* Render standard tool-call/tool-result parts (backwards compatibility) */}
               {toolCallParts.map((toolCall, index) => {
                 // Find corresponding result
                 const result = toolResultParts.find(
@@ -463,6 +566,15 @@ export function ChatMessage({
               return null;
 
             default:
+              // Handle tool execution parts (type starts with "tool-")
+              if (typeof part.type === "string" && part.type.startsWith("tool-")) {
+                // Rendered in ChainOfThought section above
+                return null;
+              }
+              // Handle step-start parts from agent
+              if (part.type === "step-start") {
+                return null;
+              }
               // Handle custom part types (confirmation, planning, clarification)
               // These are rendered in dedicated sections above
               const partType = (part as any).type;

@@ -49,9 +49,30 @@ export async function POST(req: Request) {
     // Create agent for this specific user
     const chatAgent = createChatAgent({ userId: user.id });
 
+    // Convert messages and include metadata context
+    const convertedMessages = convertToModelMessages(messages);
+
+    // If the last message has confirmationData in metadata, add it to the system context
+    const lastMessage = messages[messages.length - 1];
+    const hasConfirmationData = lastMessage?.metadata &&
+      typeof lastMessage.metadata === 'object' &&
+      'confirmationData' in lastMessage.metadata;
+
+    if (hasConfirmationData) {
+      // Inject metadata info into the message for the agent to see
+      console.log("[Chat API] Detected confirmation data in last message:", lastMessage.metadata);
+
+      // Add system message with confirmation context
+      const metadata = lastMessage.metadata as Record<string, unknown>;
+      convertedMessages.push({
+        role: "system",
+        content: `CONFIRMATION CONTEXT: The user has confirmed an action. The confirmation data is: ${JSON.stringify(metadata.confirmationData)}. You MUST now execute the confirmed action by calling the appropriate tool with needsConfirmation: false and the data from confirmationData.`,
+      });
+    }
+
     // Use the agent's stream method to get the streaming response
     const result = await chatAgent.stream({
-      messages: convertToModelMessages(messages),
+      messages: convertedMessages,
     });
 
     console.log("[Chat API] Agent stream initialized");
