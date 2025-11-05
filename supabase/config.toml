@@ -120,6 +120,24 @@ public = true
 file_size_limit = "5MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"]
 
+[storage.buckets.chat_attachments]
+public = false
+file_size_limit = "10MiB"
+allowed_mime_types = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "text/plain",
+  "text/markdown",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  # .docx
+  "application/msword",  # .doc
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # .xlsx
+  "application/vnd.ms-excel",  # .xls
+  "text/csv"  # .csv
+]
+
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
