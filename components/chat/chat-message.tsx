@@ -14,8 +14,14 @@ import {
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import { Action, Actions } from "@/components/ai-elements/actions";
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtHeader,
+  ChainOfThoughtStep,
+} from "@/components/ai-elements/chain-of-thought";
 import { BlurFade } from "@/components/ui/blur-fade";
-import { CopyIcon, RefreshCcwIcon } from "lucide-react";
+import { CopyIcon, RefreshCcwIcon, WrenchIcon } from "lucide-react";
 import { Fragment } from "react";
 import type { UIMessage } from "ai";
 import { toast } from "sonner";
@@ -40,6 +46,14 @@ export function ChatMessage({
     isLast &&
     message.parts.some((part) => part.type === "reasoning");
 
+  // Filter tool call parts
+  const toolCallParts = message.parts.filter(
+    (part) => part.type === "tool-call",
+  );
+  const toolResultParts = message.parts.filter(
+    (part) => part.type === "tool-result",
+  );
+
   const handleCopy = async (text: string) => {
     await toast.promise(navigator.clipboard.writeText(text), {
       loading: "Copying...",
@@ -51,6 +65,72 @@ export function ChatMessage({
   return (
     <BlurFade delay={0.1} duration={0.5} inView>
       <div className="space-y-2">
+        {/* Tool Calls (if available) */}
+        {message.role === "assistant" && toolCallParts.length > 0 && (
+          <ChainOfThought defaultOpen={false}>
+            <ChainOfThoughtHeader>
+              Tool Usage ({toolCallParts.length}{" "}
+              {toolCallParts.length === 1 ? "call" : "calls"})
+            </ChainOfThoughtHeader>
+            <ChainOfThoughtContent>
+              {toolCallParts.map((toolCall, index) => {
+                // Find corresponding result
+                const result = toolResultParts.find(
+                  (r) => r.toolCallId === toolCall.toolCallId,
+                );
+
+                return (
+                  <ChainOfThoughtStep
+                    key={toolCall.toolCallId}
+                    icon={WrenchIcon}
+                    label={`${toolCall.toolName}`}
+                    description={
+                      result
+                        ? "Completed"
+                        : status === "streaming" && isLast
+                          ? "Running..."
+                          : "Pending"
+                    }
+                    status={
+                      result
+                        ? "complete"
+                        : status === "streaming" && isLast
+                          ? "active"
+                          : "pending"
+                    }
+                  >
+                    {/* Tool Input */}
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground">Input:</div>
+                      <div className="rounded-md bg-muted p-2 text-xs">
+                        <pre className="overflow-x-auto">
+                          {JSON.stringify(toolCall.input, null, 2)}
+                        </pre>
+                      </div>
+
+                      {/* Tool Result */}
+                      {result && (
+                        <>
+                          <div className="text-xs text-muted-foreground pt-2">
+                            Result:
+                          </div>
+                          <div className="rounded-md bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 border p-2 text-xs">
+                            <pre className="overflow-x-auto text-green-800 dark:text-green-200">
+                              {typeof result.output === "string"
+                                ? result.output
+                                : JSON.stringify(result.output, null, 2)}
+                            </pre>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </ChainOfThoughtStep>
+                );
+              })}
+            </ChainOfThoughtContent>
+          </ChainOfThought>
+        )}
+
         {/* Sources (if available) */}
         {message.role === "assistant" && sourceParts.length > 0 && (
           <Sources>
@@ -146,22 +226,10 @@ export function ChatMessage({
                 </div>
               );
 
-            case "tool-weather":
-            case "tool-calculator":
-              // Render tool call results
-              return (
-                <div
-                  key={`${message.id}-${partIndex}`}
-                  className="rounded-lg border bg-blue-50 dark:bg-blue-950/30 p-4"
-                >
-                  <div className="text-sm font-medium mb-2 text-blue-900 dark:text-blue-100">
-                    Tool: {part.type.replace("tool-", "")}
-                  </div>
-                  <pre className="text-xs text-blue-800 dark:text-blue-200 overflow-x-auto">
-                    {JSON.stringify(part, null, 2)}
-                  </pre>
-                </div>
-              );
+            case "tool-call":
+            case "tool-result":
+              // Tool calls and results are rendered in the ChainOfThought section above
+              return null;
 
             default:
               return null;
