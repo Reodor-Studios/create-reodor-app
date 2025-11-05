@@ -144,10 +144,11 @@ export function ChatSidebar({
                 <SidebarGroupContent>
                   <SidebarMenu className="gap-1">
                     {group.conversations.map((conversation) => {
-                      // Truncate title at 25 characters
+                      // Truncate title: 25 chars if pinned, 29 chars if not pinned
+                      const charLimit = conversation.pinned ? 25 : 29;
                       const displayTitle =
-                        conversation.title.length > 25
-                          ? conversation.title.slice(0, 25) + "..."
+                        conversation.title.length > charLimit
+                          ? conversation.title.slice(0, charLimit) + "..."
                           : conversation.title;
 
                       return (
@@ -160,7 +161,7 @@ export function ChatSidebar({
                             onClick={() =>
                               onSelectConversation(conversation.id)
                             }
-                            className="w-full justify-start py-2 pr-10"
+                            className="w-full justify-start py-2 pr-2"
                           >
                             <div className="flex items-center gap-2 w-full min-w-0">
                               {conversation.pinned && (
