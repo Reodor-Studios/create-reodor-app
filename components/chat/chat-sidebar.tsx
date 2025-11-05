@@ -22,12 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  groupConversationsByRecency,
-  MOCK_CONVERSATIONS,
-  searchConversations,
-  type Conversation,
-} from "@/types/chat";
+import { groupConversationsByRecency } from "@/lib/chat";
 import {
   MessageSquarePlusIcon,
   SearchIcon,
@@ -35,35 +30,64 @@ import {
   MoreVerticalIcon,
   Trash2Icon,
   PencilIcon,
-  PanelLeftIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ConversationSearchDialog } from "@/components/chat/conversation-search-dialog";
 import { ChatFloatingActions } from "@/components/chat/chat-floating-actions";
+import { RenameConversationDialog } from "@/components/chat/rename-conversation-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  useConversations,
+  useUpdateConversation,
+  useDeleteConversation,
+} from "@/hooks/use-conversations";
+import type { Conversation } from "@/lib/chat";
+import { BlurFade } from "../ui/blur-fade";
 
 interface ChatSidebarProps {
+  userId: string;
   currentConversationId?: string;
   onNewChat: () => void;
   onSelectConversation: (conversationId: string) => void;
 }
 
 export function ChatSidebar({
+  userId,
   currentConversationId,
   onNewChat,
   onSelectConversation,
 }: ChatSidebarProps) {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [renameConversation, setRenameConversation] =
+    useState<Conversation | null>(null);
+  const [deleteConversation, setDeleteConversation] =
+    useState<Conversation | null>(null);
+
   const { open, toggleSidebar } = useSidebar();
   const isMobile = useIsMobile();
+
+  // Fetch conversations from the database
+  const { data: conversationsData, isLoading } = useConversations({ userId });
+  const updateConversationMutation = useUpdateConversation();
+  const deleteConversationMutation = useDeleteConversation();
 
   // On desktop/tablet (>=768px), sidebar is always inline (collapsible="none")
   // On mobile (<768px), sidebar becomes a drawer (handled by Sidebar component's isMobile check)
   const collapsibleBehavior = isMobile ? "offcanvas" : "none";
 
   // Group all conversations by recency for sidebar display
-  const conversationGroups = groupConversationsByRecency(MOCK_CONVERSATIONS);
+  const conversations = conversationsData?.data || [];
+  const conversationGroups = groupConversationsByRecency(conversations);
 
   // Add cmd+k keyboard shortcut
   useEffect(() => {
@@ -187,10 +211,10 @@ export function ChatSidebar({
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  console.log(
-                                    "Pin conversation:",
-                                    conversation.id
-                                  );
+                                  updateConversationMutation.mutate({
+                                    id: conversation.id,
+                                    data: { pinned: !conversation.pinned },
+                                  });
                                 }}
                               >
                                 <PinIcon className="size-3 mr-2" />
@@ -199,10 +223,7 @@ export function ChatSidebar({
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  console.log(
-                                    "Rename conversation:",
-                                    conversation.id
-                                  );
+                                  setRenameConversation(conversation);
                                 }}
                               >
                                 <PencilIcon className="size-3 mr-2" />
@@ -211,10 +232,7 @@ export function ChatSidebar({
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  console.log(
-                                    "Delete conversation:",
-                                    conversation.id
-                                  );
+                                  setDeleteConversation(conversation);
                                 }}
                                 className="text-destructive"
                               >
@@ -231,23 +249,73 @@ export function ChatSidebar({
               </SidebarGroup>
             ))}
 
-            {MOCK_CONVERSATIONS.length === 0 && (
-              <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                <MessageSquarePlusIcon className="size-8 mb-2" />
-                <p className="text-sm">No conversations yet</p>
-                <p className="text-xs mt-1">Start a new chat to begin</p>
-              </div>
+            {!isLoading && conversations.length === 0 && (
+              <BlurFade delay={0.2} duration={0.5} inView>
+                <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                  <MessageSquarePlusIcon className="size-8 mb-2" />
+                  <p className="text-sm">No conversations yet</p>
+                  <p className="text-xs mt-1">Start a new chat to begin</p>
+                </div>
+              </BlurFade>
             )}
           </ScrollArea>
         </SidebarContent>
       </Sidebar>
 
       <ConversationSearchDialog
+        userId={userId}
         open={searchDialogOpen}
         onOpenChange={setSearchDialogOpen}
         currentConversationId={currentConversationId}
         onSelectConversation={onSelectConversation}
       />
+
+      <RenameConversationDialog
+        conversation={renameConversation}
+        open={renameConversation !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenameConversation(null);
+        }}
+      />
+
+      <AlertDialog
+        open={deleteConversation !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConversation(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete conversation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;
+              {deleteConversation?.title}&quot;? This action cannot be undone
+              and will permanently delete the conversation and all its messages.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteConversation) {
+                  deleteConversationMutation.mutate(deleteConversation.id, {
+                    onSuccess: () => {
+                      // If deleting current conversation, reset to new chat
+                      if (currentConversationId === deleteConversation.id) {
+                        onNewChat();
+                      }
+                      setDeleteConversation(null);
+                    },
+                  });
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

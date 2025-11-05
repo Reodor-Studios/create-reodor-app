@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { BlurFade } from "@/components/ui/blur-fade";
-import { CATEGORIES } from "@/types/chat";
+import { CATEGORIES } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { AnimateIcon } from "@/components/animate-ui/icons/icon";

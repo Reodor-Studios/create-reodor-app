@@ -3,20 +3,15 @@ import { Compass } from "@/components/animate-ui/icons/compass";
 import { Terminal } from "@/components/animate-ui/icons/terminal";
 import { Lightbulb } from "@/components/animate-ui/icons/lightbulb";
 import type { ComponentType } from "react";
+import type { DatabaseTables } from "@/types";
 
 // ============================================================================
 // Core Types
 // ============================================================================
 
-export interface Conversation {
-  id: string;
-  userId: string;
-  title: string;
-  pinned: boolean;
-  createdAt: string;
-  updatedAt: string;
-  preview?: string;
-}
+// Use real database types instead of custom interfaces
+export type Conversation = DatabaseTables["conversations"]["Row"];
+export type Message = DatabaseTables["messages"]["Row"];
 
 export interface ConversationGroup {
   label: string;
@@ -40,162 +35,8 @@ export interface Model {
 }
 
 // ============================================================================
-// Mock Data
+// Constants
 // ============================================================================
-
-export const MOCK_CONVERSATIONS: Conversation[] = [
-  // Today
-  {
-    id: "conv-1",
-    userId: "user-1",
-    title: "React Server Components explained",
-    pinned: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    preview: "Can you explain how React Server Components work?",
-  },
-  {
-    id: "conv-2",
-    userId: "user-1",
-    title: "Database schema design for chat",
-    pinned: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    preview: "Help me design a database schema for a chat application",
-  },
-  {
-    id: "conv-3",
-    userId: "user-1",
-    title: "TypeScript utility types",
-    pinned: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    preview: "What are the most useful TypeScript utility types?",
-  },
-
-  // This week (2-6 days ago)
-  {
-    id: "conv-4",
-    userId: "user-1",
-    title: "Next.js App Router vs Pages Router",
-    pinned: false,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "What are the key differences between App Router and Pages Router?",
-  },
-  {
-    id: "conv-5",
-    userId: "user-1",
-    title: "Supabase RLS policies best practices",
-    pinned: false,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "How do I write secure RLS policies in Supabase?",
-  },
-  {
-    id: "conv-6",
-    userId: "user-1",
-    title: "TanStack Query mutation patterns",
-    pinned: false,
-    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "Show me common patterns for TanStack Query mutations",
-  },
-  {
-    id: "conv-7",
-    userId: "user-1",
-    title: "Zod validation schemas",
-    pinned: false,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "Help me create complex Zod validation schemas",
-  },
-
-  // This month (7-30 days ago)
-  {
-    id: "conv-8",
-    userId: "user-1",
-    title: "Tailwind CSS utility classes",
-    pinned: false,
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "What are some lesser-known Tailwind CSS utility classes?",
-  },
-  {
-    id: "conv-9",
-    userId: "user-1",
-    title: "Vercel AI SDK streaming",
-    pinned: false,
-    createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "How does streaming work with Vercel AI SDK?",
-  },
-  {
-    id: "conv-10",
-    userId: "user-1",
-    title: "PostgreSQL performance tuning",
-    pinned: false,
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "What are the best practices for PostgreSQL performance?",
-  },
-  {
-    id: "conv-11",
-    userId: "user-1",
-    title: "React Hook Form patterns",
-    pinned: false,
-    createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "Show me advanced React Hook Form patterns",
-  },
-  {
-    id: "conv-12",
-    userId: "user-1",
-    title: "shadcn/ui component customization",
-    pinned: false,
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "How do I customize shadcn/ui components?",
-  },
-
-  // Older (>30 days)
-  {
-    id: "conv-13",
-    userId: "user-1",
-    title: "Microservices architecture patterns",
-    pinned: false,
-    createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "Explain microservices architecture patterns",
-  },
-  {
-    id: "conv-14",
-    userId: "user-1",
-    title: "Docker container optimization",
-    pinned: false,
-    createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "How can I optimize my Docker containers?",
-  },
-  {
-    id: "conv-15",
-    userId: "user-1",
-    title: "Authentication best practices",
-    pinned: false,
-    createdAt: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "What are modern authentication best practices?",
-  },
-  {
-    id: "conv-16",
-    userId: "user-1",
-    title: "API design principles",
-    pinned: false,
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    preview: "What are RESTful API design principles?",
-  },
-];
 
 export const CATEGORIES: Category[] = [
   {
@@ -305,7 +146,7 @@ export function groupConversationsByRecency(
   const olderConvos: Conversation[] = [];
 
   unpinned.forEach((conv) => {
-    const date = new Date(conv.updatedAt);
+    const date = new Date(conv.updated_at);
     if (date >= today) {
       todayConvos.push(conv);
     } else if (date >= weekAgo) {

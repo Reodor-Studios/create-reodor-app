@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       messages: convertToModelMessages(messages),
       system:
         "You are a helpful AI assistant built with Vercel AI SDK and AI Elements. Provide clear, concise, and helpful responses.",
-      async onFinish({ response }) {
+      async onFinish({ response, text }) {
         // Only save if we have a conversationId
         if (!conversationId) {
           console.warn("No conversationId provided, messages not saved");
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
         messagesToSave.push({
           id: response.id || crypto.randomUUID(),
           role: "assistant",
-          parts: [{ type: "text", text: response.text }],
+          parts: [{ type: "text", text: text }],
           metadata: {},
         });
 

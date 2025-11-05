@@ -9,14 +9,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  groupConversationsByRecency,
-  searchConversations,
-  MOCK_CONVERSATIONS,
-} from "@/types/chat";
+import { groupConversationsByRecency, searchConversations } from "@/lib/chat";
 import { MessageSquareIcon, PinIcon } from "lucide-react";
+import { useConversations } from "@/hooks/use-conversations";
 
 interface ConversationSearchDialogProps {
+  userId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentConversationId?: string;
@@ -24,12 +22,17 @@ interface ConversationSearchDialogProps {
 }
 
 export function ConversationSearchDialog({
+  userId,
   open,
   onOpenChange,
   currentConversationId,
   onSelectConversation,
 }: ConversationSearchDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch conversations
+  const { data: conversationsData } = useConversations({ userId });
+  const conversations = conversationsData?.data || [];
 
   // Reset search when dialog closes
   useEffect(() => {
@@ -39,10 +42,7 @@ export function ConversationSearchDialog({
   }, [open]);
 
   // Filter conversations based on search
-  const filteredConversations = searchConversations(
-    MOCK_CONVERSATIONS,
-    searchQuery
-  );
+  const filteredConversations = searchConversations(conversations, searchQuery);
 
   // Group by recency
   const conversationGroups = groupConversationsByRecency(filteredConversations);

@@ -12,52 +12,104 @@ import { ChatEmptyState } from "@/components/chat/chat-empty-state";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import { type PromptInputMessage } from "@/components/ai-elements/prompt-input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  useCreateConversation,
+  useConversation,
+} from "@/hooks/use-conversations";
+import { useQueryClient } from "@tanstack/react-query";
+import { conversationKeys } from "@/hooks/use-conversations";
 
 interface ChatPageContentProps {
   userId: string;
 }
 
-function ChatContent() {
+interface ChatContentProps {
+  userId: string;
+}
+
+function ChatContent({ userId }: ChatContentProps) {
   const [input, setInput] = useState("");
   const [webSearch, setWebSearch] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | undefined
   >(undefined);
 
-  const { messages, sendMessage, status, regenerate } = useChat({
+  const queryClient = useQueryClient();
+  const createConversationMutation = useCreateConversation();
+
+  // Fetch current conversation with messages if one is selected
+  const { data: conversationData } = useConversation({
+    conversationId: currentConversationId,
+  });
+
+  const { messages, sendMessage, status, regenerate, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
     }),
+    onFinish: () => {
+      // Invalidate conversations list to show updated preview/timestamp
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.lists(),
+      });
+      // Invalidate current conversation to get updated messages
+      if (currentConversationId) {
+        queryClient.invalidateQueries({
+          queryKey: conversationKeys.detail(currentConversationId),
+        });
+      }
+    },
   });
+
+  // Load messages when conversation is selected
+  useEffect(() => {
+    if (conversationData?.messages) {
+      // Convert database messages to UIMessage format
+      const uiMessages: UIMessage[] = conversationData.messages.map((msg) => ({
+        id: msg.id,
+        role: msg.role as "user" | "assistant" | "system",
+        parts: msg.parts as any, // Type cast Json to UIMessagePart[]
+        metadata: (msg.metadata || {}) as Record<string, unknown>,
+      }));
+      setMessages(uiMessages);
+    }
+  }, [conversationData, setMessages]);
 
   const handleNewChat = () => {
     // Reset to empty state
     setCurrentConversationId(undefined);
     setInput("");
-    // In production, this would trigger conversation creation
+    setMessages([]);
   };
 
   const handleSelectConversation = (conversationId: string) => {
     setCurrentConversationId(conversationId);
-    // In production, this would load conversation messages from database
-    console.log("Load conversation:", conversationId);
   };
 
   const handleQuestionSelect = (question: string) => {
     setInput(question);
-    // Optionally auto-submit
-    // sendMessage(
-    //   { text: question },
-    //   {
-    //     body: { model, webSearch },
-    //   }
-    // );
   };
 
-  const handleSubmit = (message: PromptInputMessage) => {
+  const handleSubmit = async (message: PromptInputMessage) => {
+    // Create conversation if this is the first message
+    let conversationId = currentConversationId;
+
+    if (!conversationId) {
+      const result = await createConversationMutation.mutateAsync({
+        title: "New conversation",
+      });
+
+      if (result.error || !result.data) {
+        return;
+      }
+
+      conversationId = result.data.id;
+      setCurrentConversationId(conversationId);
+    }
+
+    // Send message with conversationId
     sendMessage(
       {
         text: message.text || "Sent with attachments",
@@ -66,6 +118,7 @@ function ChatContent() {
       {
         body: {
           webSearch,
+          conversationId,
         },
       }
     );
@@ -76,6 +129,7 @@ function ChatContent() {
   return (
     <>
       <ChatSidebar
+        userId={userId}
         currentConversationId={currentConversationId}
         onNewChat={handleNewChat}
         onSelectConversation={handleSelectConversation}
@@ -148,7 +202,7 @@ export function ChatPageContent({ userId }: ChatPageContentProps) {
     >
       {/* Full height container accounting for navbar (h-16 = 64px) */}
       <div className="flex w-full" style={{ height: "calc(100vh - 64px)" }}>
-        <ChatContent />
+        <ChatContent userId={userId} />
       </div>
     </SidebarProvider>
   );
