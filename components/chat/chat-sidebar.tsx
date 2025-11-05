@@ -98,8 +98,11 @@ export function ChatSidebar({
         onNewChatClick={handleNewChatClick}
       />
 
-      <Sidebar collapsible={collapsibleBehavior}>
-        <SidebarHeader className="border-b p-4 md:pt-20">
+      <Sidebar
+        collapsible={collapsibleBehavior}
+        className="border-r shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_8px_-2px_rgba(0,0,0,0.3)]"
+      >
+        <SidebarHeader className="border-b p-4">
           <div className="flex items-center gap-2">
             {/* Only show toggle on mobile - on desktop, sidebar is always visible */}
             {isMobile && <SidebarTrigger className="-ml-1" />}
