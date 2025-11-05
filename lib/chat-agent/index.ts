@@ -1,27 +1,29 @@
 import {
+  Experimental_Agent as Agent,
+  Experimental_InferAgentUIMessage as InferAgentUIMessage,
+  stepCountIs,
+} from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
+import {
   getCurrentDateTime,
   getRelativeDate,
   getDateRange,
 } from "./tools/datetime";
 
 /**
- * Chat agent configuration
- * Defines all available tools and agent settings
+ * Chat agent using the Vercel AI SDK Agent class
+ * Handles multi-step tool execution with automatic loop control
  */
-export const chatAgent = {
+export const chatAgent = new Agent({
   /**
-   * All available tools for the chat agent
+   * Model configuration
    */
-  tools: {
-    getCurrentDateTime,
-    getRelativeDate,
-    getDateRange,
-  },
+  model: anthropic("claude-sonnet-4-5-20250929"),
 
   /**
    * System prompt for the agent
    */
-  systemPrompt: `You are a helpful AI assistant built with Vercel AI SDK and AI Elements.
+  system: `You are a helpful AI assistant built with Vercel AI SDK and AI Elements.
 
 You have access to tools that help you provide accurate and helpful responses. When you need information that requires using a tool, use it proactively.
 
@@ -37,12 +39,21 @@ You have access to tools that help you provide accurate and helpful responses. W
 - Be conversational and natural in your responses`,
 
   /**
-   * Maximum number of steps for multi-step tool calls
+   * All available tools for the chat agent
    */
-  maxSteps: 5,
-} as const;
+  tools: {
+    getCurrentDateTime,
+    getRelativeDate,
+    getDateRange,
+  },
+
+  /**
+   * Stop condition - allow up to 5 steps for multi-step tool calls
+   */
+  stopWhen: stepCountIs(5),
+});
 
 /**
  * Type exports for use in the application
  */
-export type ChatAgentTools = typeof chatAgent.tools;
+export type ChatAgentUIMessage = InferAgentUIMessage<typeof chatAgent>;

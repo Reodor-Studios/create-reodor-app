@@ -1,5 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
-import { convertToModelMessages, streamText, type UIMessage, stepCountIs } from "ai";
+import { convertToModelMessages, type UIMessage } from "ai";
 import {
   generateConversationTitle,
   saveMessages,
@@ -18,14 +17,18 @@ export async function POST(req: Request) {
       conversationId?: string;
     };
 
-    // Stream the response using Anthropic Claude with agent tools
-    const result = streamText({
-      model: anthropic("claude-sonnet-4-5-20250929"),
+    // Use the agent's stream method to get the streaming response
+    const result = await chatAgent.stream({
       messages: convertToModelMessages(messages),
-      system: chatAgent.systemPrompt,
-      tools: chatAgent.tools,
-      stopWhen: stepCountIs(chatAgent.maxSteps), // Enable multi-step tool calls
-      async onFinish({ response, text }) {
+    });
+
+    // Return streaming response with onFinish callback for message persistence
+    return result.toUIMessageStreamResponse({
+      async onFinish({ responseMessage }) {
+        const text = responseMessage.parts
+          .filter((p: any) => p.type === "text")
+          .map((p: any) => ("text" in p ? p.text : ""))
+          .join("");
         // Only save if we have a conversationId
         if (!conversationId) {
           console.warn("No conversationId provided, messages not saved");
@@ -43,7 +46,7 @@ export async function POST(req: Request) {
 
         // Add the assistant's response
         messagesToSave.push({
-          id: response.id || crypto.randomUUID(),
+          id: crypto.randomUUID(),
           role: "assistant",
           parts: [{ type: "text", text: text }],
           metadata: {},
@@ -78,11 +81,6 @@ export async function POST(req: Request) {
           }
         }
       },
-    });
-
-    // Return streaming response with optional sources
-    return result.toUIMessageStreamResponse({
-      sendSources: webSearch,
     });
   } catch (error) {
     console.error("Chat API error:", error);

@@ -48,13 +48,14 @@ export function ChatMessage({
     isLast &&
     message.parts.some((part) => part.type === "reasoning");
 
-  // Filter tool call parts
+  // Filter tool call parts (with type assertion for tool-specific properties)
   const toolCallParts = message.parts.filter(
     (part) => part.type === "tool-call"
-  );
+  ) as unknown as Array<{ type: "tool-call"; toolCallId: string; toolName: string; input: any }>;
+
   const toolResultParts = message.parts.filter(
     (part) => part.type === "tool-result"
-  );
+  ) as unknown as Array<{ type: "tool-result"; toolCallId: string; output: any }>;
 
   const handleCopy = async (text: string) => {
     await toast.promise(navigator.clipboard.writeText(text), {

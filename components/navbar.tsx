@@ -83,9 +83,9 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center">
             {navigationItems
               .filter((item) => {
-                // Only show /oppgaver if user is authenticated
-                if (item.href === "/oppgaver") {
-                  return !!user;
+                // Filter out items that require authentication if user is not authenticated
+                if (item.requiresAuth && !user) {
+                  return false;
                 }
                 return true;
               })
@@ -189,9 +189,9 @@ export const Navbar = () => {
                     </h3>
                     {navigationItems
                       .filter((item) => {
-                        // Only show /oppgaver if user is authenticated
-                        if (item.href === "/oppgaver") {
-                          return !!user;
+                        // Filter out items that require authentication if user is not authenticated
+                        if (item.requiresAuth && !user) {
+                          return false;
                         }
                         return true;
                       })
