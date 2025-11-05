@@ -33,7 +33,7 @@ export const createPlan = tool({
   - The request involves multiple todos or complex filtering
 
   After asking questions, you can suggest a concrete action for the user to approve.`,
-  parameters: z.object({
+  inputSchema: z.object({
     summary: z
       .string()
       .describe("A brief summary of what you understand the user wants"),
@@ -89,7 +89,7 @@ export const finalizePlan = tool({
   description: `Finalize a plan after the user has answered your questions.
   Use this to transition from planning mode to action mode.
   This will present the final action for user confirmation.`,
-  parameters: z.object({
+  inputSchema: z.object({
     planSummary: z
       .string()
       .describe("Summary of the finalized plan based on user answers"),
@@ -140,7 +140,7 @@ export const askClarification = tool({
   description: `Ask the user for clarification on a specific point.
   Use this for simple questions that don't need a full planning phase.
   Examples: "Which todo did you mean?", "What priority should this have?"`,
-  parameters: z.object({
+  inputSchema: z.object({
     question: z.string().describe("The clarification question to ask"),
     context: z
       .string()

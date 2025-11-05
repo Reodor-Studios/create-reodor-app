@@ -1,11 +1,11 @@
 import { tool } from "ai";
 import { z } from "zod";
 import {
-  getTodos,
-  getTodo,
-  upsertTodo,
   deleteTodo,
+  getTodo,
+  getTodos,
   type TodoFilters,
+  upsertTodo,
 } from "@/server/todo.actions";
 import type { DatabaseTables } from "@/types";
 
@@ -36,7 +36,7 @@ function createConfirmationRequest(
   description: string,
   details: Record<string, any>,
   impact: string,
-  data?: any
+  data?: any,
 ): ConfirmationRequest {
   return {
     requiresConfirmation: true,
@@ -57,7 +57,7 @@ export const listTodos = tool({
   description: `List and search todos with advanced filtering options.
   Use this to help users find, organize, and analyze their todos.
   Supports search, filtering by completion status, priority, and sorting.`,
-  parameters: z.object({
+  inputSchema: z.object({
     userId: z.string().describe("The user ID to fetch todos for"),
     search: z.string().optional().describe("Search term for title/description"),
     completed: z.boolean().optional().describe("Filter by completion status"),
@@ -69,8 +69,8 @@ export const listTodos = tool({
       .enum(["newest", "oldest", "due_date", "priority"])
       .optional()
       .describe("Sort order"),
-    page: z.number().optional().default(1).describe("Page number for pagination"),
-    limit: z.number().optional().default(10).describe("Items per page"),
+    page: z.number().default(1).describe("Page number for pagination"),
+    limit: z.number().default(10).describe("Items per page"),
   }),
   execute: async ({ userId, ...filters }) => {
     const result = await getTodos(userId, filters);
@@ -97,7 +97,7 @@ export const listTodos = tool({
  */
 export const getSingleTodo = tool({
   description: "Get detailed information about a specific todo by its ID",
-  parameters: z.object({
+  inputSchema: z.object({
     todoId: z.string().describe("The ID of the todo to retrieve"),
   }),
   execute: async ({ todoId }) => {
@@ -124,7 +124,7 @@ export const createTodo = tool({
   description: `Create a new todo item. This action requires user confirmation.
   Use this when the user explicitly wants to create a todo.
   Before calling this, ensure you understand what todo they want to create.`,
-  parameters: z.object({
+  inputSchema: z.object({
     userId: z.string().describe("The user ID creating the todo"),
     title: z.string().describe("The todo title"),
     description: z.string().optional().describe("Optional description"),
@@ -167,7 +167,7 @@ export const createTodo = tool({
           dueDate: dueDate || "No due date",
         },
         "This will create a new todo item in your list.",
-        todoData
+        todoData,
       );
     }
 
@@ -193,9 +193,10 @@ export const createTodo = tool({
  * Update an existing todo (requires confirmation)
  */
 export const updateTodo = tool({
-  description: `Update an existing todo item. This action requires user confirmation.
+  description:
+    `Update an existing todo item. This action requires user confirmation.
   Use this when the user wants to modify a todo's details, mark it complete/incomplete, or change its priority.`,
-  parameters: z.object({
+  inputSchema: z.object({
     userId: z.string().describe("The user ID updating the todo"),
     todoId: z.string().describe("The ID of the todo to update"),
     title: z.string().optional().describe("Updated title"),
@@ -233,8 +234,9 @@ export const updateTodo = tool({
     const existing = existingResult.data[0];
     const updates: DatabaseTables["todos"]["Update"] = {
       title: title !== undefined ? title : existing.title,
-      description:
-        description !== undefined ? description : existing.description,
+      description: description !== undefined
+        ? description
+        : existing.description,
       completed: completed !== undefined ? completed : existing.completed,
       priority: priority !== undefined ? priority : existing.priority,
       due_date: dueDate !== undefined ? dueDate : existing.due_date,
@@ -249,16 +251,21 @@ export const updateTodo = tool({
     // If confirmation is needed, return confirmation request
     if (needsConfirmation) {
       const changes: Record<string, { from: any; to: any }> = {};
-      if (title !== undefined && title !== existing.title)
+      if (title !== undefined && title !== existing.title) {
         changes.title = { from: existing.title, to: title };
-      if (description !== undefined && description !== existing.description)
+      }
+      if (description !== undefined && description !== existing.description) {
         changes.description = { from: existing.description, to: description };
-      if (completed !== undefined && completed !== existing.completed)
+      }
+      if (completed !== undefined && completed !== existing.completed) {
         changes.completed = { from: existing.completed, to: completed };
-      if (priority !== undefined && priority !== existing.priority)
+      }
+      if (priority !== undefined && priority !== existing.priority) {
         changes.priority = { from: existing.priority, to: priority };
-      if (dueDate !== undefined && dueDate !== existing.due_date)
+      }
+      if (dueDate !== undefined && dueDate !== existing.due_date) {
         changes.dueDate = { from: existing.due_date, to: dueDate };
+      }
 
       return createConfirmationRequest(
         "update_todo",
@@ -269,7 +276,7 @@ export const updateTodo = tool({
           changes,
         },
         `This will update ${Object.keys(changes).length} field(s) of the todo.`,
-        todoData
+        todoData,
       );
     }
 
@@ -295,9 +302,10 @@ export const updateTodo = tool({
  * Delete a todo (requires confirmation)
  */
 export const deleteTodoTool = tool({
-  description: `Delete a todo item permanently. This action requires user confirmation.
+  description:
+    `Delete a todo item permanently. This action requires user confirmation.
   Use this when the user explicitly wants to remove a todo from their list.`,
-  parameters: z.object({
+  inputSchema: z.object({
     todoId: z.string().describe("The ID of the todo to delete"),
     needsConfirmation: z
       .boolean()
@@ -328,7 +336,7 @@ export const deleteTodoTool = tool({
           completed: existing.completed,
         },
         "This action cannot be undone. The todo will be permanently deleted.",
-        { todoId }
+        { todoId },
       );
     }
 
@@ -353,9 +361,10 @@ export const deleteTodoTool = tool({
  * Bulk update todos (requires confirmation)
  */
 export const bulkUpdateTodos = tool({
-  description: `Update multiple todos at once (e.g., mark all as complete, change priority for several items).
+  description:
+    `Update multiple todos at once (e.g., mark all as complete, change priority for several items).
   This action requires user confirmation and shows the impact of the bulk operation.`,
-  parameters: z.object({
+  inputSchema: z.object({
     userId: z.string().describe("The user ID performing the bulk update"),
     todoIds: z.array(z.string()).describe("Array of todo IDs to update"),
     updates: z.object({
@@ -370,7 +379,7 @@ export const bulkUpdateTodos = tool({
   execute: async ({ userId, todoIds, updates, needsConfirmation }) => {
     // Get all todos to show what will change
     const todosToUpdate = await Promise.all(
-      todoIds.map((id) => getTodo(id))
+      todoIds.map((id) => getTodo(id)),
     );
 
     const validTodos = todosToUpdate
@@ -402,7 +411,7 @@ export const bulkUpdateTodos = tool({
           updates,
         },
         `This will update ${validTodos.length} todo(s) with the specified changes.`,
-        { userId, todoIds, updates }
+        { userId, todoIds, updates },
       );
     }
 
@@ -418,7 +427,7 @@ export const bulkUpdateTodos = tool({
           priority: updates.priority ?? todo.priority,
           due_date: todo.due_date,
         })
-      )
+      ),
     );
 
     const successful = results.filter((r) => !r.error).length;
@@ -426,7 +435,8 @@ export const bulkUpdateTodos = tool({
 
     return {
       success: true,
-      message: `Bulk update complete: ${successful} successful, ${failed} failed`,
+      message:
+        `Bulk update complete: ${successful} successful, ${failed} failed`,
       successful,
       failed,
     };
