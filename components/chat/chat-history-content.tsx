@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { MessageSquarePlusIcon } from "lucide-react";
 import { BlurFade } from "@/components/ui/blur-fade";
+import { Button } from "@/components/ui/button";
 
 interface ChatHistoryContentProps {
   userId: string;
@@ -87,9 +88,13 @@ export function ChatHistoryContent({ userId }: ChatHistoryContentProps) {
                     <h3 className="text-lg font-semibold mb-2">
                       No conversations yet
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mb-6">
                       Start a new chat to begin
                     </p>
+                    <Button onClick={handleNewChat} size="lg">
+                      <MessageSquarePlusIcon className="size-4 mr-2" />
+                      Start New Chat
+                    </Button>
                   </div>
                 </BlurFade>
               ) : (
