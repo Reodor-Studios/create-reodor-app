@@ -12,7 +12,7 @@ export const ProfileLayout = ({
   children,
 }: ProfileLayoutProps) => {
   return (
-    <div className="min-h-[calc(100vh-2rem)] pt-2">
+    <div className="min-h-[calc(100vh-2rem)] pt-16">
       <div className="flex">
         {/* Desktop sidebar - hidden on mobile */}
         <div className="hidden md:block">

@@ -387,7 +387,6 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
                 webSearch={webSearch}
                 onWebSearchChange={setWebSearch}
                 status={status}
-                disabled={status === "submitted" || status === "streaming"}
               />
             </div>
           </div>
