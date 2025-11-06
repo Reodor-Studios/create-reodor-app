@@ -40,7 +40,9 @@ export function useConversations({
   filters?: ConversationFilters;
 }) {
   console.log("[useConversations] Called with:", { userId, filters });
-  return useQuery({
+  console.log("[useConversations] Query key:", conversationKeys.list(userId, filters));
+
+  const query = useQuery({
     queryKey: conversationKeys.list(userId, filters),
     queryFn: async () => {
       console.log("[useConversations] queryFn executing with:", { userId, filters });
@@ -53,6 +55,15 @@ export function useConversations({
     },
     enabled: !!userId,
   });
+
+  console.log("[useConversations] Query state:", {
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    data: query.data,
+    error: query.error
+  });
+
+  return query;
 }
 
 /**
@@ -121,9 +132,14 @@ export function useUpdateConversation() {
         queryKey: conversationKeys.detail(variables.id),
       });
 
-      // Invalidate conversations list
+      // Invalidate conversations list (sidebar)
       queryClient.invalidateQueries({
         queryKey: conversationKeys.lists(),
+      });
+
+      // Invalidate chat history page
+      queryClient.invalidateQueries({
+        queryKey: ["chat-history"],
       });
 
       toast.success("Conversation updated");
