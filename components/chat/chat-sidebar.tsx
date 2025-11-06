@@ -31,6 +31,7 @@ import {
   MoreVerticalIcon,
   Trash2Icon,
   PencilIcon,
+  HistoryIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -55,6 +56,7 @@ import {
 } from "@/hooks/use-conversations";
 import type { Conversation } from "@/lib/chat";
 import { BlurFade } from "../ui/blur-fade";
+import Link from "next/link";
 
 interface ChatSidebarProps {
   userId: string;
@@ -266,16 +268,29 @@ export function ChatSidebar({
         </SidebarContent>
 
         <SidebarFooter className="border-t p-4">
-          <Button
-            onClick={() => setDeleteAllDialogOpen(true)}
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground hover:text-destructive"
-            disabled={conversations.length === 0}
-          >
-            <Trash2Icon className="size-4" />
-            <span>Delete all conversations</span>
-          </Button>
+          <div className="space-y-1">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-muted-foreground"
+            >
+              <Link href="/chat/history">
+                <HistoryIcon className="size-4" />
+                <span>Chat history</span>
+              </Link>
+            </Button>
+            <Button
+              onClick={() => setDeleteAllDialogOpen(true)}
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-muted-foreground hover:text-destructive"
+              disabled={conversations.length === 0}
+            >
+              <Trash2Icon className="size-4" />
+              <span>Delete all conversations</span>
+            </Button>
+          </div>
         </SidebarFooter>
       </Sidebar>
 

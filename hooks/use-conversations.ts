@@ -39,10 +39,13 @@ export function useConversations({
   userId: string;
   filters?: ConversationFilters;
 }) {
+  console.log("[useConversations] Called with:", { userId, filters });
   return useQuery({
     queryKey: conversationKeys.list(userId, filters),
     queryFn: async () => {
+      console.log("[useConversations] queryFn executing with:", { userId, filters });
       const result = await getConversations(userId, filters);
+      console.log("[useConversations] Result:", result);
       if (result.error) {
         throw new Error(result.error);
       }
