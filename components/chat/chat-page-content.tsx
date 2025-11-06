@@ -57,8 +57,33 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
     transport: new DefaultChatTransport({
       api: "/api/chat",
     }),
-    onFinish: () => {
+    onFinish: ({ message }) => {
       console.log("[Chat] useChat onFinish called");
+
+      // Check for web search errors in the assistant's response
+      if (message.role === "assistant") {
+        const toolCalls = message.parts.filter(
+          (p: any) => p.type === "tool-call"
+        ) as any[];
+
+        for (const toolCall of toolCalls) {
+          const toolName = toolCall.toolName;
+          if (
+            toolName === "webSearch" ||
+            toolName === "multiWebSearch" ||
+            toolName === "domainWebSearch"
+          ) {
+            const result = toolCall.result;
+            if (result && !result.success && result.userMessage) {
+              console.log("[Chat] Web search error detected:", result.userMessage);
+              toast.error("Web Search Unavailable", {
+                description: result.userMessage,
+              });
+              break; // Only show one error toast
+            }
+          }
+        }
+      }
 
       // Invalidate conversations list to show updated preview/timestamp
       queryClient.invalidateQueries({

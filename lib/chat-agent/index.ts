@@ -1,21 +1,14 @@
-import {
-  Experimental_Agent as Agent,
-  stepCountIs,
-} from "ai";
+import { Experimental_Agent as Agent, stepCountIs } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import {
   getCurrentDateTime,
-  getRelativeDate,
   getDateRange,
+  getRelativeDate,
 } from "./tools/datetime";
-import { planApproach, evaluateResponse } from "./tools/meta-cognitive";
+import { evaluateResponse, planApproach } from "./tools/meta-cognitive";
 import { createTodoCrudTools } from "./tools/todo-crud";
-import {
-  createPlan,
-  finalizePlan,
-  askClarification,
-} from "./tools/planning";
-import { webSearch, multiWebSearch, domainWebSearch } from "./tools/web-search";
+import { askClarification, createPlan, finalizePlan } from "./tools/planning";
+import { domainWebSearch, multiWebSearch, webSearch } from "./tools/web-search";
 
 export type ChatAgentConfig = {
   userId: string;
@@ -26,9 +19,11 @@ export type ChatAgentConfig = {
  * Create a chat agent for a specific user
  * The agent has access to user-specific tools with the userId baked in
  */
-export function createChatAgent({ userId, webSearchEnabled = false }: ChatAgentConfig) {
-  console.log('🤖 [Chat Agent] Creating agent for user:', userId);
-  console.log('🔍 [Chat Agent] Web search enabled:', webSearchEnabled);
+export function createChatAgent(
+  { userId, webSearchEnabled = false }: ChatAgentConfig,
+) {
+  console.log("🤖 [Chat Agent] Creating agent for user:", userId);
+  console.log("🔍 [Chat Agent] Web search enabled:", webSearchEnabled);
 
   // Create todo CRUD tools with userId baked in
   const todoCrudTools = createTodoCrudTools({ userId });
@@ -42,7 +37,8 @@ export function createChatAgent({ userId, webSearchEnabled = false }: ChatAgentC
     /**
      * System prompt for the agent
      */
-    system: `You are a helpful AI assistant built with Vercel AI SDK and AI Elements.
+    system:
+      `You are a helpful AI assistant built with Vercel AI SDK and AI Elements.
 
 **Communication Style:**
 - NEVER use emojis in your responses
@@ -53,30 +49,15 @@ export function createChatAgent({ userId, webSearchEnabled = false }: ChatAgentC
 User Context:
 - Current user ID: ${userId}
 - You have access to this user's personal todos and data
-${webSearchEnabled ? "- Web search is ENABLED - you can search the internet for current information" : ""}
+${
+        webSearchEnabled
+          ? "- Web search is ENABLED - the user wants you to use web search tools when needed"
+          : ""
+      }
 
 You have access to tools that help you provide accurate and helpful responses. When you need information that requires using a tool, use it proactively.
 
-${webSearchEnabled ? `**Web Search Capabilities:**
-When web search is enabled, you can use these tools:
-- webSearch: Search the web for current information (use when user mentions URLs, asks about news/current events, or needs real-time data)
-- multiWebSearch: Execute multiple related searches simultaneously (for comprehensive research)
-- domainWebSearch: Search within specific domains or authoritative sources
-
-Use web search when:
-- User asks about recent events, news, or current information
-- User mentions URLs, domains, or web content
-- Query requires real-time or time-sensitive data
-- User explicitly asks to search online
-- You need to verify facts or find authoritative sources
-
-DO NOT use web search for:
-- General knowledge you can answer confidently
-- Historical facts that don't change
-- Basic definitions or concepts
-- Math or logic problems
-
-` : ""}**Todo Management Tools:**
+**Todo Management Tools:**
 You can help users manage their todos with full CRUD capabilities:
 - List and search todos with advanced filtering (listTodos)
 - Get details about a specific todo (getSingleTodo)
@@ -195,14 +176,9 @@ User: "Clean up my old todos"
       createPlan,
       finalizePlan,
       askClarification,
-      // Web search (conditionally included)
-      ...(webSearchEnabled
-        ? {
-            webSearch,
-            multiWebSearch,
-            domainWebSearch,
-          }
-        : {}),
+      webSearch,
+      multiWebSearch,
+      domainWebSearch,
     },
 
     /**
@@ -211,9 +187,12 @@ User: "Clean up my old todos"
     stopWhen: stepCountIs(10),
   });
 
-  console.log('✅ [Chat Agent] Agent created with tools:', Object.keys(agent.tools || {}));
-  console.log('✅ [Chat Agent] Model:', 'claude-sonnet-4-5-20250929');
-  console.log('✅ [Chat Agent] Max steps: 10');
+  console.log(
+    "✅ [Chat Agent] Agent created with tools:",
+    Object.keys(agent.tools || {}),
+  );
+  console.log("✅ [Chat Agent] Model:", "claude-sonnet-4-5-20250929");
+  console.log("✅ [Chat Agent] Max steps: 10");
 
   return agent;
 }
@@ -222,6 +201,6 @@ User: "Clean up my old todos"
  * Type helper to infer the agent's UIMessage type
  * Use this for type-safe message handling in UI components
  */
-export type ChatAgentMessage = ReturnType<typeof createChatAgent> extends Agent<infer Tools>
-  ? Tools
+export type ChatAgentMessage = ReturnType<typeof createChatAgent> extends
+  Agent<infer Tools> ? Tools
   : never;

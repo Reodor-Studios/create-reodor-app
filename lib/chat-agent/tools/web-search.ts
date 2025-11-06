@@ -110,6 +110,16 @@ Do NOT use for:
           return {
             success: false,
             error: "Web search is not configured. Please add PERPLEXITY_API_KEY to your environment variables.",
+            userMessage: "Web search is currently unavailable due to missing API configuration.",
+          };
+        }
+
+        // Check for authentication errors (401)
+        if (error.message.includes("401")) {
+          return {
+            success: false,
+            error: "Web search authentication failed (401).",
+            userMessage: "Web search is currently unavailable. Please try again later.",
           };
         }
       }
@@ -120,6 +130,7 @@ Do NOT use for:
           error instanceof Error
             ? error.message
             : "Failed to execute web search",
+        userMessage: "Web search is currently unavailable. Please try again later.",
       };
     }
   },
@@ -204,6 +215,16 @@ Maximum 5 queries per request.`,
         return {
           success: false,
           error: "Web search is not configured. Please add PERPLEXITY_API_KEY to your environment variables.",
+          userMessage: "Web search is currently unavailable due to missing API configuration.",
+        };
+      }
+
+      // Check for authentication errors (401)
+      if (error instanceof Error && error.message.includes("401")) {
+        return {
+          success: false,
+          error: "Web search authentication failed (401).",
+          userMessage: "Web search is currently unavailable. Please try again later.",
         };
       }
 
@@ -213,6 +234,7 @@ Maximum 5 queries per request.`,
           error instanceof Error
             ? error.message
             : "Failed to execute multi-query web search",
+        userMessage: "Web search is currently unavailable. Please try again later.",
       };
     }
   },
@@ -294,6 +316,16 @@ Maximum 20 domains per search.`,
         return {
           success: false,
           error: "Web search is not configured.",
+          userMessage: "Web search is currently unavailable due to missing API configuration.",
+        };
+      }
+
+      // Check for authentication errors (401)
+      if (error instanceof Error && error.message.includes("401")) {
+        return {
+          success: false,
+          error: "Web search authentication failed (401).",
+          userMessage: "Web search is currently unavailable. Please try again later.",
         };
       }
 
@@ -301,6 +333,7 @@ Maximum 20 domains per search.`,
         success: false,
         error:
           error instanceof Error ? error.message : "Failed to execute domain search",
+        userMessage: "Web search is currently unavailable. Please try again later.",
       };
     }
   },
