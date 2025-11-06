@@ -27,20 +27,15 @@ import { toast } from "sonner";
 
 interface ChatPageContentProps {
   userId: string;
-  chatId?: string;
+  conversationId?: string;
 }
 
-interface ChatContentProps {
-  userId: string;
-  chatId?: string;
-}
-
-function ChatContent({ userId, chatId }: ChatContentProps) {
+function ChatContent({ userId, conversationId }: ChatPageContentProps) {
   const [input, setInput] = useState("");
   const [webSearch, setWebSearch] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<
     string | undefined
-  >(chatId);
+  >(conversationId);
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -75,7 +70,10 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
           ) {
             const result = toolCall.result;
             if (result && !result.success && result.userMessage) {
-              console.log("[Chat] Web search error detected:", result.userMessage);
+              console.log(
+                "[Chat] Web search error detected:",
+                result.userMessage
+              );
               toast.error("Web Search Unavailable", {
                 description: result.userMessage,
               });
@@ -91,7 +89,10 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
       });
       // Invalidate current conversation to get updated messages
       if (currentConversationId) {
-        console.log("[Chat] Invalidating conversation queries for:", currentConversationId);
+        console.log(
+          "[Chat] Invalidating conversation queries for:",
+          currentConversationId
+        );
         queryClient.invalidateQueries({
           queryKey: conversationKeys.detail(currentConversationId),
         });
@@ -142,12 +143,14 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
       // This handles: initial load after navigation, switching conversations
       if (conversationData.messages.length > messages.length) {
         // Convert database messages to UIMessage format
-        const uiMessages: UIMessage[] = conversationData.messages.map((msg) => ({
-          id: msg.id,
-          role: msg.role as "user" | "assistant" | "system",
-          parts: msg.parts as any, // Type cast Json to UIMessagePart[]
-          metadata: (msg.metadata || {}) as Record<string, unknown>,
-        }));
+        const uiMessages: UIMessage[] = conversationData.messages.map(
+          (msg) => ({
+            id: msg.id,
+            role: msg.role as "user" | "assistant" | "system",
+            parts: msg.parts as any, // Type cast Json to UIMessagePart[]
+            metadata: (msg.metadata || {}) as Record<string, unknown>,
+          })
+        );
 
         console.log("[Chat] Loading messages from DB:", {
           count: uiMessages.length,
@@ -155,9 +158,15 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
 
         setMessages(uiMessages);
       } else {
-        console.log("[Chat] Skipping DB sync - local state is current or ahead");
+        console.log(
+          "[Chat] Skipping DB sync - local state is current or ahead"
+        );
       }
-    } else if (conversationData.messages && conversationData.messages.length === 0 && messages.length === 0) {
+    } else if (
+      conversationData.messages &&
+      conversationData.messages.length === 0 &&
+      messages.length === 0
+    ) {
       // Only clear messages if both DB and local are empty (new/empty conversation)
       console.log("[Chat] Empty conversation - clearing messages");
       setMessages([]);
@@ -388,7 +397,10 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
   );
 }
 
-export function ChatPageContent({ userId, chatId }: ChatPageContentProps) {
+export function ChatPageContent({
+  userId,
+  conversationId,
+}: ChatPageContentProps) {
   return (
     <SidebarProvider
       style={
@@ -399,7 +411,7 @@ export function ChatPageContent({ userId, chatId }: ChatPageContentProps) {
       }
     >
       <div className="flex w-full">
-        <ChatContent userId={userId} chatId={chatId} />
+        <ChatContent userId={userId} conversationId={conversationId} />
       </div>
     </SidebarProvider>
   );

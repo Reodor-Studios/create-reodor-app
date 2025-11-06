@@ -9,7 +9,7 @@ export const metadata = {
 
 interface ChatPageProps {
   params: Promise<{
-    chatId: string;
+    conversationId: string;
   }>;
 }
 
@@ -26,7 +26,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
     redirect("/auth/login");
   }
 
-  const { chatId } = await params;
+  const { conversationId } = await params;
 
-  return <ChatPageContent userId={user.id} chatId={chatId} />;
+  return <ChatPageContent userId={user.id} conversationId={conversationId} />;
 }
