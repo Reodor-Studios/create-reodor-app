@@ -116,38 +116,53 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
 
   // Load messages when conversation is selected
   useEffect(() => {
-    console.log("[Chat] Conversation data changed:", {
-      hasData: !!conversationData,
-      messageCount: conversationData?.messages?.length,
+    console.log("[Chat] Effect triggered:", {
+      hasConversationData: !!conversationData,
       conversationId: conversationData?.id,
-      currentMessagesCount: messages.length,
+      dbMessageCount: conversationData?.messages?.length,
+      localMessageCount: messages.length,
+      status,
     });
 
-    // Only load from DB if we have conversation data AND:
-    // 1. We have no messages yet (initial load), OR
-    // 2. We have messages in DB (not empty conversation)
-    // This prevents clearing messages during active chat session
-    if (conversationData?.messages && conversationData.messages.length > 0) {
-      // Convert database messages to UIMessage format
-      const uiMessages: UIMessage[] = conversationData.messages.map((msg) => ({
-        id: msg.id,
-        role: msg.role as "user" | "assistant" | "system",
-        parts: msg.parts as any, // Type cast Json to UIMessagePart[]
-        metadata: (msg.metadata || {}) as Record<string, unknown>,
-      }));
+    // Don't sync if we don't have conversation data yet (query still loading)
+    if (!conversationData) {
+      console.log("[Chat] Skipping DB sync - no conversation data yet");
+      return;
+    }
 
-      console.log("[Chat] Setting messages from DB:", {
-        count: uiMessages.length,
-        messages: uiMessages,
-      });
+    // Don't sync from DB while actively streaming - preserve local state
+    if (status === "streaming" || status === "submitted") {
+      console.log("[Chat] Skipping DB sync - currently streaming");
+      return;
+    }
 
-      setMessages(uiMessages);
-    } else if (conversationData?.messages && conversationData.messages.length === 0 && messages.length === 0) {
-      // Only clear messages if both DB and local are empty (switching to empty conversation)
-      console.log("[Chat] Both DB and local messages are empty, clearing state");
+    // Only sync from DB if we have messages in the database
+    if (conversationData.messages && conversationData.messages.length > 0) {
+      // Only update if DB has more messages than local state
+      // This handles: initial load after navigation, switching conversations
+      if (conversationData.messages.length > messages.length) {
+        // Convert database messages to UIMessage format
+        const uiMessages: UIMessage[] = conversationData.messages.map((msg) => ({
+          id: msg.id,
+          role: msg.role as "user" | "assistant" | "system",
+          parts: msg.parts as any, // Type cast Json to UIMessagePart[]
+          metadata: (msg.metadata || {}) as Record<string, unknown>,
+        }));
+
+        console.log("[Chat] Loading messages from DB:", {
+          count: uiMessages.length,
+        });
+
+        setMessages(uiMessages);
+      } else {
+        console.log("[Chat] Skipping DB sync - local state is current or ahead");
+      }
+    } else if (conversationData.messages && conversationData.messages.length === 0 && messages.length === 0) {
+      // Only clear messages if both DB and local are empty (new/empty conversation)
+      console.log("[Chat] Empty conversation - clearing messages");
       setMessages([]);
     }
-  }, [conversationData, setMessages, messages.length]);
+  }, [conversationData, setMessages, status]);
 
   const handleNewChat = () => {
     // Reset to empty state
@@ -173,6 +188,7 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
 
     // Create conversation if this is the first message
     let conversationId = currentConversationId;
+    let isNewConversation = false;
 
     if (!conversationId) {
       console.log("[Chat] Creating new conversation");
@@ -188,9 +204,7 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
       conversationId = result.data.id;
       console.log("[Chat] Conversation created:", conversationId);
       setCurrentConversationId(conversationId);
-
-      // Navigate to the chat page with the conversation ID (soft navigation)
-      router.push(`/chat/${conversationId}`);
+      isNewConversation = true;
     }
 
     console.log("[Chat] Sending message with conversationId:", conversationId);
@@ -210,6 +224,12 @@ function ChatContent({ userId, chatId }: ChatContentProps) {
     );
 
     console.log("[Chat] Message sent");
+
+    // Navigate to the chat page AFTER message is sent (only for new conversations)
+    if (isNewConversation) {
+      console.log("[Chat] Navigating to new conversation:", conversationId);
+      router.push(`/chat/${conversationId}`);
+    }
   };
 
   // Callback for handling confirmation responses

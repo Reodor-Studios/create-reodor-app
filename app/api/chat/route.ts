@@ -108,11 +108,11 @@ export async function POST(req: Request) {
           messagesToSave.push(lastUserMessage);
         }
 
-        // Add the assistant's response
+        // Add the assistant's response with full parts to preserve tool calls, reasoning, sources
         messagesToSave.push({
           id: crypto.randomUUID(),
           role: "assistant",
-          parts: [{ type: "text", text: text }],
+          parts: responseMessage.parts, // Save full parts array
           metadata: {},
         });
 
