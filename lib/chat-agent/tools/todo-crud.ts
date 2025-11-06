@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import {
-  deleteTodo,
+  deleteTodo as deleteTodoAction,
   getTodo,
   getTodos,
   type TodoFilters,
@@ -67,7 +67,9 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
     Use this to help users find, organize, and analyze their todos.
     Supports search, filtering by completion status, priority, and sorting.`,
     inputSchema: z.object({
-      search: z.string().optional().describe("Search term for title/description"),
+      search: z.string().optional().describe(
+        "Search term for title/description",
+      ),
       completed: z.boolean().optional().describe("Filter by completion status"),
       priority: z
         .enum(["low", "medium", "high"])
@@ -129,7 +131,8 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
    * Create a new todo (requires confirmation)
    */
   const createTodo = tool({
-    description: `Create a new todo item. This action requires user confirmation.
+    description:
+      `Create a new todo item. This action requires user confirmation.
     Use this when the user explicitly wants to create a todo.
     Before calling this, ensure you understand what todo they want to create.`,
     inputSchema: z.object({
@@ -241,7 +244,9 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
         id: todoId,
         user_id: userId,
         title: title !== undefined ? title : existing.title,
-        description: description !== undefined ? description : existing.description,
+        description: description !== undefined
+          ? description
+          : existing.description,
         completed: completed !== undefined ? completed : existing.completed,
         priority: priority !== undefined ? priority : existing.priority,
         due_date: dueDate !== undefined ? dueDate : existing.due_date,
@@ -274,7 +279,9 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
             currentTitle: existing.title,
             changes,
           },
-          `This will update ${Object.keys(changes).length} field(s) of the todo.`,
+          `This will update ${
+            Object.keys(changes).length
+          } field(s) of the todo.`,
           todoData,
         );
       }
@@ -300,7 +307,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
   /**
    * Delete a todo (requires confirmation)
    */
-  const deleteTodoTool = tool({
+  const deleteTodo = tool({
     description:
       `Delete a todo item permanently. This action requires user confirmation.
     Use this when the user explicitly wants to remove a todo from their list.`,
@@ -340,7 +347,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
       }
 
       // Execute the action
-      const result = await deleteTodo(todoId);
+      const result = await deleteTodoAction(todoId);
 
       if (result.error) {
         return {
@@ -446,7 +453,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
     getSingleTodo,
     createTodo,
     updateTodo,
-    deleteTodoTool,
+    deleteTodo,
     bulkUpdateTodos,
   };
 }
