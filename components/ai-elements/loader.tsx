@@ -27,7 +27,8 @@ export const Loader = ({ className, ...props }: LoaderProps) => {
       className={cn("text-muted-foreground text-sm", className)}
       {...props}
     >
-      <Shimmer as="span">{`Agent is thinking${dots}`}</Shimmer>
+      <Shimmer as="span">Agent is thinking</Shimmer>
+      <span className="inline-block w-6">{dots}</span>
     </div>
   );
 };
