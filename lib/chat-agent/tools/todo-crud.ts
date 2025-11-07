@@ -1,11 +1,12 @@
 import { tool } from "ai";
 import { z } from "zod";
 import {
+  bulkInsertTodos as bulkInsertTodosAction,
   deleteTodo as deleteTodoAction,
-  getTodo,
-  getTodos,
+  getTodo as getTodoAction,
+  getTodos as getTodosAction,
   type TodoFilters,
-  upsertTodo,
+  upsertTodo as upsertTodoAction,
 } from "@/server/todo.actions";
 import type { DatabaseTables } from "@/types";
 
@@ -15,7 +16,12 @@ import type { DatabaseTables } from "@/types";
 export type ConfirmationRequest = {
   requiresConfirmation: true;
   action: {
-    type: "create_todo" | "update_todo" | "delete_todo" | "list_todos";
+    type:
+      | "create_todo"
+      | "update_todo"
+      | "delete_todo"
+      | "list_todos"
+      | "bulk_insert_todos";
     description: string;
     details: Record<string, any>;
     impact: string;
@@ -83,7 +89,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
       limit: z.number().default(10).describe("Items per page"),
     }),
     execute: async (filters) => {
-      const result = await getTodos(userId, filters);
+      const result = await getTodosAction(userId, filters);
 
       if (result.error) {
         return {
@@ -111,7 +117,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
       todoId: z.string().describe("The ID of the todo to retrieve"),
     }),
     execute: async ({ todoId }) => {
-      const result = await getTodo(todoId);
+      const result = await getTodoAction(todoId);
 
       if (result.error) {
         return {
@@ -181,7 +187,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
       }
 
       // Execute the action
-      const result = await upsertTodo(todoData);
+      const result = await upsertTodoAction(todoData);
 
       if (result.error) {
         return {
@@ -230,7 +236,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
       needsConfirmation,
     }) => {
       // First get the existing todo to show what's changing
-      const existingResult = await getTodo(todoId);
+      const existingResult = await getTodoAction(todoId);
       if (existingResult.error || !existingResult.data) {
         return {
           success: false,
@@ -287,7 +293,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
       }
 
       // Execute the action
-      const result = await upsertTodo(todoData);
+      const result = await upsertTodoAction(todoData);
 
       if (result.error) {
         return {
@@ -320,7 +326,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
     }),
     execute: async ({ todoId, needsConfirmation }) => {
       // First get the todo to show what will be deleted
-      const existingResult = await getTodo(todoId);
+      const existingResult = await getTodoAction(todoId);
       if (existingResult.error || !existingResult.data) {
         return {
           success: false,
@@ -384,7 +390,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
     execute: async ({ todoIds, updates, needsConfirmation }) => {
       // Get all todos to show what will change
       const todosToUpdate = await Promise.all(
-        todoIds.map((id) => getTodo(id)),
+        todoIds.map((id) => getTodoAction(id)),
       );
 
       const validTodos = todosToUpdate
@@ -423,7 +429,7 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
       // Execute the bulk update
       const results = await Promise.all(
         validTodos.map((todo) =>
-          upsertTodo({
+          upsertTodoAction({
             id: todo.id,
             user_id: userId,
             title: todo.title,
@@ -448,6 +454,92 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
     },
   });
 
+  /**
+   * Bulk insert todos from natural language description (requires confirmation)
+   */
+  const bulkInsertTodos = tool({
+    description:
+      `Create multiple todos at once from a natural language description or list.
+    Use this when the user wants to create several todos in one go.
+    Examples: "Add todos for washing dishes, laundry, and groceries" or "Create a todo list for my weekly tasks".
+    This action requires user confirmation and shows all todos that will be created.`,
+    inputSchema: z.object({
+      todos: z
+        .array(
+          z.object({
+            title: z.string().describe("The todo title"),
+            description: z.string().optional().describe("Optional description"),
+            priority: z
+              .enum(["low", "medium", "high"])
+              .optional()
+              .describe("Priority level"),
+            dueDate: z.string().optional().describe("Due date in ISO format"),
+          }),
+        )
+        .describe("Array of todos to create"),
+      needsConfirmation: z
+        .boolean()
+        .default(true)
+        .describe("Whether this action needs user confirmation"),
+    }),
+    execute: async ({ todos, needsConfirmation }) => {
+      if (todos.length === 0) {
+        return {
+          success: false,
+          error: "No todos provided",
+        };
+      }
+
+      // Prepare todo data for insertion
+      const todosData: Array<DatabaseTables["todos"]["Insert"]> = todos.map(
+        (todo) => ({
+          user_id: userId,
+          title: todo.title,
+          description: todo.description || null,
+          priority: todo.priority || null,
+          due_date: todo.dueDate || null,
+          completed: false,
+        }),
+      );
+
+      // If confirmation is needed, return confirmation request
+      if (needsConfirmation) {
+        return createConfirmationRequest(
+          "bulk_insert_todos",
+          `Create ${todos.length} new todo(s)`,
+          {
+            count: todos.length,
+            todos: todos.map((t) => ({
+              title: t.title,
+              description: t.description || "No description",
+              priority: t.priority || "Not set",
+              dueDate: t.dueDate || "No due date",
+            })),
+          },
+          `This will create ${todos.length} new todo item(s) in your list.`,
+          todosData,
+        );
+      }
+
+      // Execute the bulk insert
+      const result = await bulkInsertTodosAction(todosData);
+
+      if (result.error) {
+        return {
+          success: false,
+          error: result.error,
+        };
+      }
+
+      return {
+        success: true,
+        message: `Successfully created ${todos.length} todo(s)`,
+        todos: result.data,
+        count: todos.length,
+      };
+    },
+  });
+
   return {
     listTodos,
     getSingleTodo,
@@ -455,5 +547,6 @@ export function createTodoCrudTools({ userId }: TodoCrudToolsConfig) {
     updateTodo,
     deleteTodo,
     bulkUpdateTodos,
+    bulkInsertTodos,
   };
 }

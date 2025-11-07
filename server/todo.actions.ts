@@ -213,6 +213,38 @@ export async function upsertTodo(todo: DatabaseTables["todos"]["Insert"] & { id?
   }
 }
 
+export async function bulkInsertTodos(
+  todos: Array<DatabaseTables["todos"]["Insert"]>,
+) {
+  const supabase = await createClient();
+
+  // Get current user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (!user || userError) {
+    return { error: "User not authenticated", data: null };
+  }
+
+  // Ensure all todos have the authenticated user's ID
+  const todosWithUserId = todos.map((todo) => ({
+    ...todo,
+    user_id: user.id,
+  }));
+
+  const { data, error } = await supabase
+    .from("todos")
+    .insert(todosWithUserId)
+    .select();
+
+  if (error) {
+    return { error: error.message, data: null };
+  }
+
+  return { error: null, data };
+}
+
 export async function deleteTodoAttachment(attachmentId: string) {
   const supabase = await createClient();
 
