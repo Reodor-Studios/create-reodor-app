@@ -24,6 +24,7 @@ import { conversationKeys } from "@/hooks/use-conversations";
 import { useRouter } from "next/navigation";
 import { useAgentStore } from "@/stores/agent-store";
 import { toast } from "sonner";
+import type { ChatRequestBody } from "@/types/chat";
 
 interface ChatPageContentProps {
   userId: string;
@@ -228,7 +229,7 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
         body: {
           webSearch,
           conversationId,
-        },
+        } satisfies Omit<ChatRequestBody, "messages">,
       }
     );
 
@@ -277,7 +278,7 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
           // Send confirmation data in body for API to access
           confirmationData: confirmed ? confirmationData : undefined,
           autoAcceptEnabled: autoAccept,
-        },
+        } satisfies Omit<ChatRequestBody, "messages">,
       }
     );
   };
@@ -302,7 +303,7 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
         body: {
           webSearch,
           conversationId: currentConversationId,
-        },
+        } satisfies Omit<ChatRequestBody, "messages">,
       }
     );
   };
@@ -315,7 +316,7 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
         body: {
           webSearch,
           conversationId: currentConversationId,
-        },
+        } satisfies Omit<ChatRequestBody, "messages">,
       }
     );
   };

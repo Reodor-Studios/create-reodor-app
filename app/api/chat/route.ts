@@ -5,6 +5,7 @@ import {
 } from "@/server/conversation.actions";
 import { createChatAgent } from "@/lib/chat-agent";
 import { createClient } from "@/lib/supabase/server";
+import { validateChatRequestBody } from "@/types/chat";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -31,13 +32,27 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
-    const { messages, webSearch, conversationId, confirmationData } = body as {
-      messages: UIMessage[];
-      webSearch?: boolean;
-      conversationId?: string;
-      confirmationData?: unknown;
-    };
+    const rawBody = await req.json();
+
+    // Validate request body structure
+    const validationResult = validateChatRequestBody(rawBody);
+    if (!validationResult.success) {
+      console.error("[Chat API] Invalid request body:", validationResult.error);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request body",
+          message: validationResult.error,
+          field: validationResult.field,
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const { messages, webSearch, conversationId, confirmationData, autoAcceptEnabled } =
+      validationResult.data;
 
     console.log("[Chat API] Received request:", {
       userId: user.id,
@@ -45,6 +60,7 @@ export async function POST(req: Request) {
       conversationId,
       webSearch,
       confirmationData: confirmationData ? "present" : "none",
+      autoAcceptEnabled,
       lastMessage: messages[messages.length - 1],
     });
 
@@ -60,12 +76,18 @@ export async function POST(req: Request) {
     // If confirmationData is present in the body, add it to the system context
     if (confirmationData) {
       // Inject confirmation data into the message for the agent to see
-      console.log("[Chat API] Detected confirmation data in request body:", confirmationData);
+      console.log(
+        "[Chat API] Detected confirmation data in request body:",
+        confirmationData,
+      );
 
       // Add system message with confirmation context
       convertedMessages.push({
         role: "system",
-        content: `CONFIRMATION CONTEXT: The user has confirmed an action. The confirmation data is: ${JSON.stringify(confirmationData)}. You MUST now execute the confirmed action by calling the appropriate tool with needsConfirmation: false and the data from confirmationData.`,
+        content:
+          `CONFIRMATION CONTEXT: The user has confirmed an action. The confirmation data is: ${
+            JSON.stringify(confirmationData)
+          }. You MUST now execute the confirmed action by calling the appropriate tool with needsConfirmation: false and the data from confirmationData.`,
       });
     }
 
@@ -93,11 +115,16 @@ export async function POST(req: Request) {
 
         // Only save if we have a conversationId
         if (!conversationId) {
-          console.warn("[Chat API] No conversationId provided, messages not saved");
+          console.warn(
+            "[Chat API] No conversationId provided, messages not saved",
+          );
           return;
         }
 
-        console.log("[Chat API] Saving messages to conversation:", conversationId);
+        console.log(
+          "[Chat API] Saving messages to conversation:",
+          conversationId,
+        );
 
         // Combine user message(s) with assistant response
         const messagesToSave: UIMessage[] = [];
@@ -127,7 +154,10 @@ export async function POST(req: Request) {
         // Save messages to database
         const saveResult = await saveMessages(conversationId, messagesToSave);
         if (saveResult.error) {
-          console.error("[Chat API] Failed to save messages:", saveResult.error);
+          console.error(
+            "[Chat API] Failed to save messages:",
+            saveResult.error,
+          );
           return;
         }
 
@@ -152,7 +182,10 @@ export async function POST(req: Request) {
               firstUserMessageText,
             );
             if (titleResult.error) {
-              console.error("[Chat API] Failed to generate title:", titleResult.error);
+              console.error(
+                "[Chat API] Failed to generate title:",
+                titleResult.error,
+              );
             } else {
               console.log("[Chat API] Title generated successfully");
             }
