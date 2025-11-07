@@ -1,9 +1,21 @@
 import { Sparkles } from "@/components/animate-ui/icons/sparkles";
-import { Compass } from "@/components/animate-ui/icons/compass";
-import { Terminal } from "@/components/animate-ui/icons/terminal";
+import { ListChecks } from "@/components/animate-ui/icons/list-checks";
+import { Search } from "@/components/animate-ui/icons/search";
 import { Lightbulb } from "@/components/animate-ui/icons/lightbulb";
 import type { ComponentType } from "react";
 import type { DatabaseTables } from "@/types";
+import { List } from "@/components/animate-ui/icons/list";
+
+/**
+ * Icons are from Animate UI - animated Lucide icons with Motion
+ * Documentation: https://animate-ui.com/docs/icons
+ *
+ * To add new icons:
+ * 1. Visit https://animate-ui.com/docs/icons to browse available icons
+ * 2. Create a new icon component in components/animate-ui/icons/
+ * 3. Follow the pattern from existing icon files (sparkles.tsx, search.tsx, etc.)
+ * 4. Import and use in this file
+ */
 
 // ============================================================================
 // Core Types
@@ -44,51 +56,51 @@ export interface Model {
 
 export const CATEGORIES: Category[] = [
   {
-    id: "create",
-    name: "Create",
-    icon: Sparkles,
-    description: "Generate content, code, and creative ideas",
+    id: "tasks",
+    name: "Tasks",
+    icon: List,
+    description: "Manage your todos with full CRUD operations",
     questions: [
-      "Write a blog post about sustainable technology",
-      "Create a React component for a kanban board",
-      "Generate realistic test data for user profiles",
-      "Design a PostgreSQL schema for an e-commerce platform",
+      "Show me all my high priority todos",
+      "Create todos for: buy groceries, do laundry, and finish project report",
+      "What todos do I have due this week?",
+      "Mark my 'finish project report' todo as complete",
     ],
   },
   {
-    id: "explore",
-    name: "Explore",
-    icon: Compass,
-    description: "Research, analyze, and learn new concepts",
+    id: "research",
+    name: "Research",
+    icon: Search,
+    description: "Search the web for up-to-date information",
     questions: [
-      "Explain how quantum computing works",
-      "Compare React Server Components vs traditional SSR",
-      "Research the history of functional programming",
-      "Analyze the pros and cons of microservices architecture",
+      "Search the web for latest Next.js 15 features",
+      "Find information about TypeScript 5.3 release notes",
+      "What are the current AI developments from Anthropic's website?",
+      "Search for React Server Components best practices",
     ],
   },
   {
-    id: "code",
-    name: "Code",
-    icon: Terminal,
-    description: "Debug, refactor, and optimize your code",
-    questions: [
-      "Debug this TypeScript type error",
-      "Refactor this function to be more efficient",
-      "Explain this algorithm's time complexity",
-      "Write comprehensive unit tests for this module",
-    ],
-  },
-  {
-    id: "learn",
-    name: "Learn",
+    id: "planning",
+    name: "Planning",
     icon: Lightbulb,
-    description: "Educational content and step-by-step guides",
+    description: "Complex problem-solving with guided clarification",
     questions: [
-      "Teach me about machine learning fundamentals",
-      "How does OAuth 2.0 authentication work?",
-      "What is the difference between TCP and UDP?",
-      "Explain design patterns with real-world examples",
+      "Help me organize my project tasks for next week",
+      "I need to clean up old todos - help me decide what to keep",
+      "Plan a study schedule for learning TypeScript",
+      "What should I focus on first: urgent or important tasks?",
+    ],
+  },
+  {
+    id: "chat",
+    name: "Chat",
+    icon: Sparkles,
+    description: "General conversation and assistance",
+    questions: [
+      "Tell me about how this AI assistant works",
+      "What can you help me with?",
+      "Explain how the todo confirmation system works",
+      "What's today's date and what todos are overdue?",
     ],
   },
 ];
