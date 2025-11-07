@@ -20,6 +20,15 @@ import {
   ChainOfThoughtHeader,
   ChainOfThoughtStep,
 } from "@/components/ai-elements/chain-of-thought";
+import {
+  Plan,
+  PlanHeader,
+  PlanTitle,
+  PlanDescription,
+  PlanContent,
+  PlanTrigger,
+  PlanAction,
+} from "@/components/ai-elements/plan";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { Button } from "@/components/ui/button";
 import {
@@ -469,22 +478,22 @@ export function ChatMessage({
       {message.role === "assistant" && planningRequests.length > 0 && (
         <>
           {planningRequests.map((req, i) => (
-            <Card
+            <Plan
               key={`${message.id}-planning-${i}`}
+              defaultOpen={true}
+              isStreaming={status === "streaming" && isLast}
               className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30"
             >
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <HelpCircleIcon className="size-5 text-purple-600 dark:text-purple-400" />
-                  <CardTitle className="text-purple-900 dark:text-purple-100">
-                    Planning Phase
-                  </CardTitle>
+              <PlanHeader>
+                <div className="flex-1 space-y-1.5">
+                  <PlanTitle>Planning Phase</PlanTitle>
+                  <PlanDescription>{req.plan.summary}</PlanDescription>
                 </div>
-                <CardDescription className="text-purple-800 dark:text-purple-200">
-                  {req.plan.summary}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                <PlanAction>
+                  <PlanTrigger />
+                </PlanAction>
+              </PlanHeader>
+              <PlanContent className="space-y-4">
                 {/* Questions */}
                 <div className="space-y-3">
                   <div className="text-sm font-medium text-purple-900 dark:text-purple-100">
@@ -560,11 +569,12 @@ export function ChatMessage({
                     </div>
                   </div>
                 )}
-              </CardContent>
-              <CardFooter className="text-sm text-purple-700 dark:text-purple-300">
-                Please answer these questions in the chat to proceed.
-              </CardFooter>
-            </Card>
+
+                <div className="text-sm text-purple-700 dark:text-purple-300 pt-2 border-t">
+                  Please answer these questions in the chat to proceed.
+                </div>
+              </PlanContent>
+            </Plan>
           ))}
         </>
       )}

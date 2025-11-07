@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { HTMLAttributes } from "react";
 import { useEffect, useState } from "react";
+import { Shimmer } from "./shimmer";
 
 export type LoaderProps = HTMLAttributes<HTMLDivElement>;
 
@@ -26,7 +27,7 @@ export const Loader = ({ className, ...props }: LoaderProps) => {
       className={cn("text-muted-foreground text-sm", className)}
       {...props}
     >
-      Agent is thinking{dots}
+      <Shimmer as="span">{`Agent is thinking${dots}`}</Shimmer>
     </div>
   );
 };
