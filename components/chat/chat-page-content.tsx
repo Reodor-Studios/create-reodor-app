@@ -339,45 +339,42 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
         onSelectConversation={handleSelectConversation}
       />
 
-      <SidebarInset className="flex pt-8 flex-col flex-1 min-w-0">
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-4xl px-4 md:px-6 py-6">
-            {showEmptyState ? (
-              <div
-                className="flex items-center justify-center"
-                style={{ minHeight: "calc(100vh - 250px)" }}
-              >
-                <ChatEmptyState onQuestionSelect={handleQuestionSelect} />
-              </div>
-            ) : (
-              <Conversation>
-                <ConversationContent>
-                  {messages.map((message, index) => (
-                    <ChatMessage
-                      key={message.id}
-                      message={message}
-                      isLast={index === messages.length - 1}
-                      status={status}
-                      onRegenerate={regenerate}
-                      onConfirmation={handleConfirmation}
-                      onPlanningResponse={handlePlanningResponse}
-                      onClarification={handleClarification}
-                    />
-                  ))}
-
-                  {(status === "submitted" || status === "streaming") &&
-                    messages.length > 0 &&
-                    messages[messages.length - 1].role === "user" && <Loader />}
-                </ConversationContent>
-                <ConversationScrollButton />
-              </Conversation>
-            )}
+      <SidebarInset className="flex flex-col flex-1 min-w-0 pt-4 h-screen">
+        {showEmptyState ? (
+          <div
+            className="flex items-center justify-center flex-1 pt-8"
+            style={{ minHeight: "calc(100vh - 250px)" }}
+          >
+            <div className="mx-auto w-full max-w-4xl px-4 md:px-6">
+              <ChatEmptyState onQuestionSelect={handleQuestionSelect} />
+            </div>
           </div>
-        </div>
+        ) : (
+          <Conversation className="flex-1 pt-8 min-h-0">
+            <ConversationContent className="mx-auto w-full max-w-4xl px-4 md:px-6">
+              {messages.map((message, index) => (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  isLast={index === messages.length - 1}
+                  status={status}
+                  onRegenerate={regenerate}
+                  onConfirmation={handleConfirmation}
+                  onPlanningResponse={handlePlanningResponse}
+                  onClarification={handleClarification}
+                />
+              ))}
+
+              {(status === "submitted" || status === "streaming") &&
+                messages.length > 0 &&
+                messages[messages.length - 1].role === "user" && <Loader />}
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+        )}
 
         {/* Input at bottom */}
-        <div className="flex-shrink-0 bg-background">
+        <div className="flex-shrink-0 bg-background border-t">
           <div className="mx-auto w-full max-w-4xl px-4 md:px-6 py-4">
             <div className="bg-background border rounded-lg shadow-lg">
               <ChatInput
