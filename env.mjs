@@ -30,6 +30,9 @@ export const env = createEnv({
     // Anthropic API for scaffold script (optional - only needed if using bun run scaffold)
     ANTHROPIC_API_KEY: z.string().optional(),
 
+    // Perplexity API for web search (optional - only needed if using web search)
+    PERPLEXITY_API_KEY: z.string().optional(),
+
     // JWT secret for account deletion tokens
     JWT_SECRET: z.string().min(32).default("fallback-secret-key-change-in-production"),
 
@@ -65,6 +68,7 @@ export const env = createEnv({
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
     NODE_ENV: process.env.NODE_ENV,
 

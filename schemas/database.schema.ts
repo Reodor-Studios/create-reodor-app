@@ -10,7 +10,14 @@ import { type Json } from "./../types/database.types";
 export const MediaTypeSchema = z.union([
   z.literal("avatar"),
   z.literal("todo_attachment"),
+  z.literal("chat_attachment"),
   z.literal("other"),
+]);
+
+export const MessageRoleSchema = z.union([
+  z.literal("user"),
+  z.literal("assistant"),
+  z.literal("system"),
 ]);
 
 export const PriorityLevelSchema = z.union([
@@ -36,7 +43,51 @@ export const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
     .nullable(),
 );
 
+export const ConversationsRowSchema = z.object({
+  created_at: z.string(),
+  fts_weighted: z.unknown().nullable(),
+  id: z.string(),
+  pinned: z.boolean(),
+  preview: z.string().nullable(),
+  title: z.string(),
+  updated_at: z.string(),
+  user_id: z.string(),
+});
+
+export const ConversationsInsertSchema = z.object({
+  created_at: z.string().optional(),
+  fts_weighted: z.unknown().optional().nullable(),
+  id: z.string().optional(),
+  pinned: z.boolean().optional(),
+  preview: z.string().optional().nullable(),
+  title: z.string().optional(),
+  updated_at: z.string().optional(),
+  user_id: z.string(),
+});
+
+export const ConversationsUpdateSchema = z.object({
+  created_at: z.string().optional(),
+  fts_weighted: z.unknown().optional().nullable(),
+  id: z.string().optional(),
+  pinned: z.boolean().optional(),
+  preview: z.string().optional().nullable(),
+  title: z.string().optional(),
+  updated_at: z.string().optional(),
+  user_id: z.string().optional(),
+});
+
+export const ConversationsRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("conversations_user_id_fkey"),
+    columns: z.tuple([z.literal("user_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
 export const MediaRowSchema = z.object({
+  conversation_id: z.string().nullable(),
   created_at: z.string(),
   file_path: z.string(),
   id: z.string(),
@@ -47,6 +98,7 @@ export const MediaRowSchema = z.object({
 });
 
 export const MediaInsertSchema = z.object({
+  conversation_id: z.string().optional().nullable(),
   created_at: z.string().optional(),
   file_path: z.string(),
   id: z.string().optional(),
@@ -57,6 +109,7 @@ export const MediaInsertSchema = z.object({
 });
 
 export const MediaUpdateSchema = z.object({
+  conversation_id: z.string().optional().nullable(),
   created_at: z.string().optional(),
   file_path: z.string().optional(),
   id: z.string().optional(),
@@ -67,6 +120,13 @@ export const MediaUpdateSchema = z.object({
 });
 
 export const MediaRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("media_conversation_id_fkey"),
+    columns: z.tuple([z.literal("conversation_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("conversations"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
   z.object({
     foreignKeyName: z.literal("media_owner_id_fkey"),
     columns: z.tuple([z.literal("owner_id")]),
@@ -79,6 +139,49 @@ export const MediaRelationshipsSchema = z.tuple([
     columns: z.tuple([z.literal("todo_id")]),
     isOneToOne: z.literal(false),
     referencedRelation: z.literal("todos"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const MessagesRowSchema = z.object({
+  conversation_id: z.string(),
+  created_at: z.string(),
+  fts: z.unknown().nullable(),
+  id: z.string(),
+  metadata: jsonSchema.nullable(),
+  parts: jsonSchema,
+  role: MessageRoleSchema,
+  sequence_number: z.number(),
+});
+
+export const MessagesInsertSchema = z.object({
+  conversation_id: z.string(),
+  created_at: z.string().optional(),
+  fts: z.unknown().optional().nullable(),
+  id: z.string().optional(),
+  metadata: jsonSchema.optional().nullable(),
+  parts: jsonSchema,
+  role: MessageRoleSchema,
+  sequence_number: z.number(),
+});
+
+export const MessagesUpdateSchema = z.object({
+  conversation_id: z.string().optional(),
+  created_at: z.string().optional(),
+  fts: z.unknown().optional().nullable(),
+  id: z.string().optional(),
+  metadata: jsonSchema.optional().nullable(),
+  parts: jsonSchema.optional(),
+  role: MessageRoleSchema.optional(),
+  sequence_number: z.number().optional(),
+});
+
+export const MessagesRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("messages_conversation_id_fkey"),
+    columns: z.tuple([z.literal("conversation_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("conversations"),
     referencedColumns: z.tuple([z.literal("id")]),
   }),
 ]);
@@ -162,6 +265,12 @@ export const TodosRelationshipsSchema = z.tuple([
   }),
 ]);
 
+export const ExtractMessageTextArgsSchema = z.object({
+  parts: jsonSchema,
+});
+
+export const ExtractMessageTextReturnsSchema = z.string();
+
 export const GetUserTodoStatsArgsSchema = z.object({
   user_uuid: z.string(),
 });
@@ -180,3 +289,104 @@ export const GetUserTodoStatsReturnsSchema = z.array(
     user_id: z.string(),
   }),
 );
+
+export const GtrgmCompressArgsSchema = z.object({
+  "": z.unknown(),
+});
+
+export const GtrgmCompressReturnsSchema = z.unknown();
+
+export const GtrgmDecompressArgsSchema = z.object({
+  "": z.unknown(),
+});
+
+export const GtrgmDecompressReturnsSchema = z.unknown();
+
+export const GtrgmInArgsSchema = z.object({
+  "": z.unknown(),
+});
+
+export const GtrgmInReturnsSchema = z.unknown();
+
+export const GtrgmOptionsArgsSchema = z.object({
+  "": z.unknown(),
+});
+
+export const GtrgmOptionsReturnsSchema = z.undefined();
+
+export const GtrgmOutArgsSchema = z.object({
+  "": z.unknown(),
+});
+
+export const GtrgmOutReturnsSchema = z.unknown();
+
+export const SearchConversationsArgsSchema = z.object({
+  search_text: z.string(),
+  user_uuid: z.string(),
+});
+
+export const SearchConversationsReturnsSchema = z.array(
+  z.object({
+    created_at: z.string(),
+    id: z.string(),
+    pinned: z.boolean(),
+    preview: z.string(),
+    rank: z.number(),
+    title: z.string(),
+    updated_at: z.string(),
+    user_id: z.string(),
+  }),
+);
+
+export const SearchConversationsByMessagesArgsSchema = z.object({
+  search_text: z.string(),
+  user_uuid: z.string(),
+});
+
+export const SearchConversationsByMessagesReturnsSchema = z.array(
+  z.object({
+    created_at: z.string(),
+    id: z.string(),
+    matching_message_count: z.number(),
+    pinned: z.boolean(),
+    preview: z.string(),
+    rank: z.number(),
+    title: z.string(),
+    updated_at: z.string(),
+    user_id: z.string(),
+  }),
+);
+
+export const SearchMessagesInConversationArgsSchema = z.object({
+  conversation_uuid: z.string(),
+  search_text: z.string(),
+});
+
+export const SearchMessagesInConversationReturnsSchema = z.array(
+  z.object({
+    conversation_id: z.string(),
+    created_at: z.string(),
+    id: z.string(),
+    metadata: jsonSchema,
+    parts: jsonSchema,
+    rank: z.number(),
+    role: MessageRoleSchema,
+    sequence_number: z.number(),
+  }),
+);
+
+export const SetLimitArgsSchema = z.object({
+  "": z.number(),
+});
+
+export const SetLimitReturnsSchema = z.number();
+
+export const ShowLimitArgsSchema = z.object({});
+
+export const ShowLimitReturnsSchema = z.number();
+
+export const ShowTrgmArgsSchema = z.object({
+  "": z.string(),
+});
+
+export const ShowTrgmReturnsSchema = z.array(z.string());

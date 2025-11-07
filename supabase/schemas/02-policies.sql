@@ -1,6 +1,8 @@
 -- Enable Row Level Security
 alter table public.profiles enable row level security;
 alter table public.todos enable row level security;
+alter table public.conversations enable row level security;
+alter table public.messages enable row level security;
 alter table public.media enable row level security;
 
 -- Profiles policies
@@ -33,6 +35,42 @@ create policy "Users can delete their own todos"
   on public.todos for delete
   using (auth.uid() = user_id);
 
+-- Conversations policies
+create policy "Users can view their own conversations"
+  on public.conversations for select
+  using (auth.uid() = user_id);
+
+create policy "Users can create their own conversations"
+  on public.conversations for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own conversations"
+  on public.conversations for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete their own conversations"
+  on public.conversations for delete
+  using (auth.uid() = user_id);
+
+-- Messages policies (access through conversation ownership)
+create policy "Users can view messages in their conversations"
+  on public.messages for select
+  using (
+    conversation_id in (
+      select id from public.conversations where user_id = auth.uid()
+    )
+  );
+
+create policy "Users can create messages in their conversations"
+  on public.messages for insert
+  with check (
+    conversation_id in (
+      select id from public.conversations where user_id = auth.uid()
+    )
+  );
+
+-- Note: Messages are immutable once created (no update/delete policies)
+
 -- Media policies
 -- Avatar media is viewable by everyone (public)
 create policy "Avatar media is viewable by everyone"
@@ -49,6 +87,16 @@ create policy "Todo attachments are viewable by todo owner"
     )
   );
 
+-- Chat attachments are viewable by conversation owner
+create policy "Chat attachments are viewable by conversation owner"
+  on public.media for select
+  using (
+    media_type = 'chat_attachment'
+    and conversation_id in (
+      select id from public.conversations where user_id = auth.uid()
+    )
+  );
+
 -- Users can upload their own media
 create policy "Users can insert their own media"
   on public.media for insert
@@ -59,8 +107,12 @@ create policy "Users can insert their own media"
       (media_type = 'todo_attachment' and todo_id in (
         select id from public.todos where user_id = auth.uid()
       ))
+      -- For chat attachments, verify the user owns the conversation
+      or (media_type = 'chat_attachment' and conversation_id in (
+        select id from public.conversations where user_id = auth.uid()
+      ))
       -- For other media types (avatar, etc), just check ownership
-      or media_type != 'todo_attachment'
+      or (media_type != 'todo_attachment' and media_type != 'chat_attachment')
     )
   );
 

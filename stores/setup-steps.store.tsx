@@ -297,6 +297,39 @@ const stepDefinitions: Omit<SetupStep, "completed">[] = [
     category: "initial",
   },
   {
+    id: "understand-ai-agent-architecture",
+    title: "Understand AI Agent CRUD Architecture",
+    description: (
+      <>
+        Explore how this template provides a production-ready AI agent that can
+        safely perform database operations through natural language. Check out{" "}
+        <InlineCode>lib/chat-agent/</InlineCode> for the agent configuration,{" "}
+        <InlineCode>lib/chat-agent/tools/todo-crud.ts</InlineCode> for CRUD
+        operations with confirmation flows, and{" "}
+        <InlineCode>components/chat/</InlineCode> for the chat interface. This
+        system demonstrates agentic CRUD—the AI agent uses tools to list,
+        create, update, and delete todos, but always asks for user confirmation
+        before making changes. It includes planning mode for complex requests,
+        bulk operations, and auto-accept mode for power users. This is a{" "}
+        <strong>game-changer for rapid prototyping</strong>: imagine building a
+        ticket management system—simply rename <InlineCode>todos</InlineCode>{" "}
+        to <InlineCode>tickets</InlineCode>, add fields like{" "}
+        <InlineCode>assignee_id</InlineCode>,{" "}
+        <InlineCode>reporter_id</InlineCode>, <InlineCode>status</InlineCode>,
+        and <InlineCode>labels</InlineCode>, and your AI agent can immediately
+        handle requests like &quot;Assign all P1 tickets to John&quot;,
+        &quot;Show tickets I reported this week&quot;, or &quot;Create tickets
+        from this bug list&quot;. The confirmation flow, planning mode, and
+        security patterns are already production-ready. See{" "}
+        <InlineCode>docs/technical/ai-agent-crud-tools.md</InlineCode> for
+        implementation details and{" "}
+        <InlineCode>docs/business/ai-agent-todo-management.md</InlineCode> for
+        the value proposition.
+      </>
+    ),
+    category: "initial",
+  },
+  {
     id: "setup-supabase",
     title: "Set Up Supabase Project",
     description: (

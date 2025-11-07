@@ -13,13 +13,7 @@ import { AuthDialog } from "@/components/auth-dialog";
 import { UserDropdown } from "@/components/nav/user-dropdown";
 import { navigationItems } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Menu,
-  LogOut,
-  ShoppingCart,
-  MessageCircle,
-  ChevronRight,
-} from "lucide-react";
+import { Menu, LogOut, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,7 +22,6 @@ import { adminSidebarItems } from "./admin-sidebar";
 import { isAdmin } from "@/lib/permissions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCurrentUserImage } from "@/hooks/use-current-user-image";
-import { cn } from "@/lib/utils";
 import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
 import { Spinner } from "./ui/spinner";
 import { companyConfig } from "@/lib/brand";
@@ -83,9 +76,9 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center">
             {navigationItems
               .filter((item) => {
-                // Only show /oppgaver if user is authenticated
-                if (item.href === "/oppgaver") {
-                  return !!user;
+                // Filter out items that require authentication if user is not authenticated
+                if (item.requiresAuth && !user) {
+                  return false;
                 }
                 return true;
               })
@@ -189,9 +182,9 @@ export const Navbar = () => {
                     </h3>
                     {navigationItems
                       .filter((item) => {
-                        // Only show /oppgaver if user is authenticated
-                        if (item.href === "/oppgaver") {
-                          return !!user;
+                        // Filter out items that require authentication if user is not authenticated
+                        if (item.requiresAuth && !user) {
+                          return false;
                         }
                         return true;
                       })

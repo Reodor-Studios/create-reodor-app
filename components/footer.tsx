@@ -9,12 +9,18 @@ import { navigationItems } from "@/lib/navigation";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { profile, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   // Build company links from navigationItems plus standard company pages
   const companyLinks = [
     ...navigationItems
-      .filter((item) => item.href) // Only include items with href
+      .filter((item) => {
+        // Only include items with href
+        if (!item.href) return false;
+        // Filter out items that require authentication if user is not authenticated
+        if (item.requiresAuth && !user) return false;
+        return true;
+      })
       .map((item) => ({ name: item.title, href: item.href! })),
     { name: "Om oss", href: "/om-oss" },
     { name: "Kontakt", href: "/kontakt" },

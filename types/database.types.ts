@@ -9,8 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      conversations: {
+        Row: {
+          created_at: string
+          fts_weighted: unknown | null
+          id: string
+          pinned: boolean
+          preview: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fts_weighted?: unknown | null
+          id?: string
+          pinned?: boolean
+          preview?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fts_weighted?: unknown | null
+          id?: string
+          pinned?: boolean
+          preview?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media: {
         Row: {
+          conversation_id: string | null
           created_at: string
           file_path: string
           id: string
@@ -20,6 +62,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          conversation_id?: string | null
           created_at?: string
           file_path: string
           id?: string
@@ -29,6 +72,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          conversation_id?: string | null
           created_at?: string
           file_path?: string
           id?: string
@@ -38,6 +82,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "media_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "media_owner_id_fkey"
             columns: ["owner_id"]
@@ -50,6 +101,47 @@ export type Database = {
             columns: ["todo_id"]
             isOneToOne: false
             referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          fts: unknown | null
+          id: string
+          metadata: Json | null
+          parts: Json
+          role: Database["public"]["Enums"]["message_role"]
+          sequence_number: number
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          fts?: unknown | null
+          id?: string
+          metadata?: Json | null
+          parts: Json
+          role: Database["public"]["Enums"]["message_role"]
+          sequence_number: number
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          fts?: unknown | null
+          id?: string
+          metadata?: Json | null
+          parts?: Json
+          role?: Database["public"]["Enums"]["message_role"]
+          sequence_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -136,6 +228,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      extract_message_text: {
+        Args: { parts: Json }
+        Returns: string
+      }
       get_user_todo_stats: {
         Args: { user_uuid: string }
         Returns: {
@@ -151,9 +247,82 @@ export type Database = {
           user_id: string
         }[]
       }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      search_conversations: {
+        Args: { search_text: string; user_uuid: string }
+        Returns: {
+          created_at: string
+          id: string
+          pinned: boolean
+          preview: string
+          rank: number
+          title: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      search_conversations_by_messages: {
+        Args: { search_text: string; user_uuid: string }
+        Returns: {
+          created_at: string
+          id: string
+          matching_message_count: number
+          pinned: boolean
+          preview: string
+          rank: number
+          title: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      search_messages_in_conversation: {
+        Args: { conversation_uuid: string; search_text: string }
+        Returns: {
+          conversation_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          parts: Json
+          rank: number
+          role: Database["public"]["Enums"]["message_role"]
+          sequence_number: number
+        }[]
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
+      }
     }
     Enums: {
-      media_type: "avatar" | "todo_attachment" | "other"
+      media_type: "avatar" | "todo_attachment" | "chat_attachment" | "other"
+      message_role: "user" | "assistant" | "system"
       priority_level: "low" | "medium" | "high"
       user_role: "user" | "admin"
     }
@@ -283,7 +452,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      media_type: ["avatar", "todo_attachment", "other"],
+      media_type: ["avatar", "todo_attachment", "chat_attachment", "other"],
+      message_role: ["user", "assistant", "system"],
       priority_level: ["low", "medium", "high"],
       user_role: ["user", "admin"],
     },

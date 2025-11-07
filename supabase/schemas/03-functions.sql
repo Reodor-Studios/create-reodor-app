@@ -25,6 +25,12 @@ create trigger media_updated_at
   for each row
   execute function public.handle_updated_at();
 
+-- Trigger for conversations updated_at
+create trigger conversations_updated_at
+  before update on public.conversations
+  for each row
+  execute function public.handle_updated_at();
+
 -- Function to automatically create profile on user signup
 create or replace function public.handle_new_user()
 returns trigger as $$
@@ -115,5 +121,133 @@ begin
     end as completion_rate
   from public.todos t
   where t.user_id = user_uuid;
+end;
+$$ language plpgsql security definer;
+
+-- ============================================================================
+-- Full Text Search Functions
+-- ============================================================================
+
+/**
+ * Search conversations using full text search with ranking
+ * Searches both title and preview with weighted ranking (title: A, preview: B)
+ *
+ * @param user_uuid - The UUID of the user whose conversations to search
+ * @param search_text - The search query (supports web search syntax: quotes, OR, -)
+ * @returns Conversations matching the search query, ranked by relevance
+ */
+create or replace function public.search_conversations(
+  user_uuid uuid,
+  search_text text
+)
+returns table (
+  id uuid,
+  user_id uuid,
+  title text,
+  pinned boolean,
+  preview text,
+  created_at timestamptz,
+  updated_at timestamptz,
+  rank real
+) as $$
+begin
+  return query
+  select
+    c.id,
+    c.user_id,
+    c.title,
+    c.pinned,
+    c.preview,
+    c.created_at,
+    c.updated_at,
+    ts_rank(c.fts_weighted, websearch_to_tsquery('english', search_text)) as rank
+  from public.conversations c
+  where c.user_id = user_uuid
+    and c.fts_weighted @@ websearch_to_tsquery('english', search_text)
+  order by rank desc, c.updated_at desc;
+end;
+$$ language plpgsql security definer;
+
+/**
+ * Search messages within conversations using full text search
+ * Useful for finding specific messages within a conversation
+ *
+ * @param conversation_uuid - The UUID of the conversation to search within
+ * @param search_text - The search query (supports web search syntax)
+ * @returns Messages matching the search query, ranked by relevance
+ */
+create or replace function public.search_messages_in_conversation(
+  conversation_uuid uuid,
+  search_text text
+)
+returns table (
+  id uuid,
+  conversation_id uuid,
+  role message_role,
+  parts jsonb,
+  metadata jsonb,
+  created_at timestamptz,
+  sequence_number integer,
+  rank real
+) as $$
+begin
+  return query
+  select
+    m.id,
+    m.conversation_id,
+    m.role,
+    m.parts,
+    m.metadata,
+    m.created_at,
+    m.sequence_number,
+    ts_rank(m.fts, websearch_to_tsquery('english', search_text)) as rank
+  from public.messages m
+  where m.conversation_id = conversation_uuid
+    and m.fts @@ websearch_to_tsquery('english', search_text)
+  order by rank desc, m.sequence_number asc;
+end;
+$$ language plpgsql security definer;
+
+/**
+ * Search messages across all user's conversations
+ * Returns conversations that contain matching messages
+ *
+ * @param user_uuid - The UUID of the user
+ * @param search_text - The search query (supports web search syntax)
+ * @returns Conversations containing matching messages, with highest ranked message
+ */
+create or replace function public.search_conversations_by_messages(
+  user_uuid uuid,
+  search_text text
+)
+returns table (
+  id uuid,
+  user_id uuid,
+  title text,
+  pinned boolean,
+  preview text,
+  created_at timestamptz,
+  updated_at timestamptz,
+  rank real,
+  matching_message_count bigint
+) as $$
+begin
+  return query
+  select
+    c.id,
+    c.user_id,
+    c.title,
+    c.pinned,
+    c.preview,
+    c.created_at,
+    c.updated_at,
+    max(ts_rank(m.fts, websearch_to_tsquery('english', search_text))) as rank,
+    count(m.id) as matching_message_count
+  from public.conversations c
+  inner join public.messages m on m.conversation_id = c.id
+  where c.user_id = user_uuid
+    and m.fts @@ websearch_to_tsquery('english', search_text)
+  group by c.id, c.user_id, c.title, c.pinned, c.preview, c.created_at, c.updated_at
+  order by rank desc, c.updated_at desc;
 end;
 $$ language plpgsql security definer;
