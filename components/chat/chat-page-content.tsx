@@ -9,6 +9,7 @@ import {
 import { Loader } from "@/components/ai-elements/loader";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { ChatEmptyState } from "@/components/chat/chat-empty-state";
+import { ChatLoadingSkeleton } from "@/components/chat/chat-loading-skeleton";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { useChat } from "@ai-sdk/react";
@@ -45,9 +46,10 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
     useAgentStore();
 
   // Fetch current conversation with messages if one is selected
-  const { data: conversationData } = useConversation({
-    conversationId: currentConversationId,
-  });
+  const { data: conversationData, isLoading: isLoadingConversation } =
+    useConversation({
+      conversationId: currentConversationId,
+    });
 
   const { messages, sendMessage, status, regenerate, setMessages } = useChat({
     transport: new DefaultChatTransport({
@@ -321,14 +323,20 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
     );
   };
 
-  // Don't show empty state if we're submitting or streaming (prevents flash)
-  const showEmptyState = messages.length === 0 && status === "ready";
+  // Show loading skeleton when we have a conversationId but data is still loading
+  const showLoadingSkeleton = currentConversationId && isLoadingConversation;
+
+  // Only show empty state when we're not loading and have no messages
+  const showEmptyState =
+    !showLoadingSkeleton && messages.length === 0 && status === "ready";
 
   console.log("[Chat] Render state:", {
     messagesCount: messages.length,
     status,
+    showLoadingSkeleton,
     showEmptyState,
     currentConversationId,
+    isLoadingConversation,
   });
 
   return (
@@ -341,7 +349,11 @@ function ChatContent({ userId, conversationId }: ChatPageContentProps) {
       />
 
       <SidebarInset className="flex flex-col flex-1 min-w-0 pt-4 h-screen">
-        {showEmptyState ? (
+        {showLoadingSkeleton ? (
+          <Conversation className="flex-1 pt-8 min-h-0">
+            <ChatLoadingSkeleton />
+          </Conversation>
+        ) : showEmptyState ? (
           <div
             className="flex items-center justify-center flex-1 pt-8"
             style={{ minHeight: "calc(100vh - 250px)" }}
