@@ -203,6 +203,7 @@ export function TodoForm({ existingTodo, onSuccess, onCancel }: TodoFormProps) {
 
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       queryClient.invalidateQueries({ queryKey: ["todo"] });
+      queryClient.invalidateQueries({ queryKey: ["todos-collection"] }); // TanStack DB collection
       form.reset();
       setUploadedFiles([]);
       onSuccess?.();
@@ -225,6 +226,7 @@ export function TodoForm({ existingTodo, onSuccess, onCancel }: TodoFormProps) {
       toast.success("Oppgave slettet!");
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       queryClient.invalidateQueries({ queryKey: ["todo"] });
+      queryClient.invalidateQueries({ queryKey: ["todos-collection"] }); // TanStack DB collection
       onSuccess?.();
     },
     onError: (error) => {

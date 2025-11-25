@@ -245,6 +245,38 @@ export async function bulkInsertTodos(
   return { error: null, data };
 }
 
+/**
+ * Get all todos for a user without pagination.
+ * Used by TanStack DB collection for live queries/dashboard.
+ */
+export async function getAllTodos(userId: string) {
+  const supabase = await createClient();
+
+  // Get current user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (!user || userError || user.id !== userId) {
+    return {
+      error: "Unauthorized access",
+      data: null,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("todos")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return { error: error.message, data: null };
+  }
+
+  return { data, error: null };
+}
+
 export async function deleteTodoAttachment(attachmentId: string) {
   const supabase = await createClient();
 

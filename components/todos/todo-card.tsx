@@ -79,6 +79,7 @@ export function TodoCard({ todo }: TodoCardProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
+      queryClient.invalidateQueries({ queryKey: ["todos-collection"] }); // TanStack DB collection
       toast.success(
         todo.completed ? "Oppgave markert som uferdig" : "Oppgave fullført!"
       );
