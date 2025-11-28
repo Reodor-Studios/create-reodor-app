@@ -1,15 +1,40 @@
 #!/usr/bin/env bun
 
-import { existsSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { spawn } from "child_process";
+import { randomBytes } from "crypto";
 
 // Constants
 const PROJECT_ROOT = process.cwd();
 const PATHS = {
   envLocal: path.join(PROJECT_ROOT, ".env.local"),
+  envExample: path.join(PROJECT_ROOT, ".env.example"),
   scaffoldState: path.join(PROJECT_ROOT, ".scaffold-state.json"),
 };
+
+// Mapping from supabase status output to our env var names
+const SUPABASE_ENV_MAPPING: Record<string, string> = {
+  API_URL: "NEXT_PUBLIC_SUPABASE_URL",
+  ANON_KEY: "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY",
+  SERVICE_ROLE_KEY: "SUPABASE_SECRET_KEY",
+  DB_URL: "DATABASE_URL",
+};
+
+// Env vars that can be auto-generated
+const AUTO_GENERATED_VARS = ["CRON_SECRET", "JWT_SECRET"];
+
+// Env vars that must be manually configured (from Bitwarden, etc.)
+const MANUAL_VARS = [
+  "SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID",
+  "SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET",
+  "DEV_EMAIL_FROM",
+  "DEV_EMAIL_TO",
+  "PROD_EMAIL_FROM",
+  "RESEND_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "PERPLEXITY_API_KEY",
+];
 
 // Color codes for terminal output
 const c = {
@@ -21,7 +46,224 @@ const c = {
   yellow: "\x1b[33m",
   blue: "\x1b[34m",
   magenta: "\x1b[35m",
+  red: "\x1b[31m",
 };
+
+// Generate a secure random string (base64)
+function generateSecret(): string {
+  return randomBytes(32).toString("base64");
+}
+
+// Parse env file content into key-value pairs
+function parseEnvFile(content: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  const lines = content.split("\n");
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Skip empty lines and comments
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const eqIndex = trimmed.indexOf("=");
+    if (eqIndex === -1) continue;
+
+    const key = trimmed.slice(0, eqIndex).trim();
+    let value = trimmed.slice(eqIndex + 1).trim();
+
+    // Remove surrounding quotes if present
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    result[key] = value;
+  }
+
+  return result;
+}
+
+// Check if a value is a placeholder (not set)
+function isPlaceholder(value: string): boolean {
+  const placeholders = [
+    "your-",
+    "your_",
+    "placeholder",
+    "changeme",
+    "xxx",
+    "TODO",
+  ];
+  const lowerValue = value.toLowerCase();
+  return placeholders.some((p) => lowerValue.includes(p)) || value === "";
+}
+
+// Get supabase status env vars
+async function getSupabaseEnvVars(): Promise<Record<string, string> | null> {
+  return new Promise((resolve) => {
+    const child = spawn("supabase", ["status", "-o", "env"], { stdio: "pipe" });
+
+    let output = "";
+    let errorOutput = "";
+
+    child.stdout?.on("data", (data) => {
+      output += data.toString();
+    });
+
+    child.stderr?.on("data", (data) => {
+      errorOutput += data.toString();
+    });
+
+    child.on("close", (code) => {
+      if (code !== 0 || !output.trim()) {
+        resolve(null);
+        return;
+      }
+
+      const envVars: Record<string, string> = {};
+      const lines = output.split("\n");
+
+      for (const line of lines) {
+        // Match KEY="value" or KEY=value patterns
+        const match = line.match(/^([A-Z_]+)=["']?(.+?)["']?$/);
+        if (match) {
+          envVars[match[1]] = match[2];
+        }
+      }
+
+      resolve(envVars);
+    });
+
+    child.on("error", () => {
+      resolve(null);
+    });
+  });
+}
+
+// Check if Supabase is running
+async function isSupabaseRunning(): Promise<boolean> {
+  const envVars = await getSupabaseEnvVars();
+  return envVars !== null && Object.keys(envVars).length > 0;
+}
+
+// Setup environment variables
+async function setupEnvironmentVariables(): Promise<{
+  configured: string[];
+  generated: string[];
+  needsManual: string[];
+  skipped: string[];
+}> {
+  const result = {
+    configured: [] as string[],
+    generated: [] as string[],
+    needsManual: [] as string[],
+    skipped: [] as string[],
+  };
+
+  // Read existing .env.local if it exists
+  let existingEnv: Record<string, string> = {};
+  if (existsSync(PATHS.envLocal)) {
+    existingEnv = parseEnvFile(readFileSync(PATHS.envLocal, "utf-8"));
+  }
+
+  // Read .env.example to get all expected keys and their comments
+  const exampleContent = existsSync(PATHS.envExample)
+    ? readFileSync(PATHS.envExample, "utf-8")
+    : "";
+
+  // Get supabase env vars
+  const supabaseEnv = await getSupabaseEnvVars();
+
+  // Build new env content
+  const newEnv: Record<string, string> = { ...existingEnv };
+
+  // 1. Map supabase env vars
+  if (supabaseEnv) {
+    for (const [supabaseKey, ourKey] of Object.entries(SUPABASE_ENV_MAPPING)) {
+      const value = supabaseEnv[supabaseKey];
+      if (value) {
+        // Only set if not already configured with a real value
+        if (!existingEnv[ourKey] || isPlaceholder(existingEnv[ourKey])) {
+          newEnv[ourKey] = value;
+          result.configured.push(ourKey);
+        } else {
+          result.skipped.push(ourKey);
+        }
+      }
+    }
+  }
+
+  // 2. Auto-generate secrets if not set
+  for (const key of AUTO_GENERATED_VARS) {
+    if (!existingEnv[key] || isPlaceholder(existingEnv[key])) {
+      newEnv[key] = generateSecret();
+      result.generated.push(key);
+    } else {
+      result.skipped.push(key);
+    }
+  }
+
+  // 3. Check which manual vars are still needed
+  for (const key of MANUAL_VARS) {
+    if (!newEnv[key] || isPlaceholder(newEnv[key])) {
+      result.needsManual.push(key);
+    }
+  }
+
+  // Write the new .env.local file preserving comments from .env.example
+  const outputLines: string[] = [];
+  const processedKeys = new Set<string>();
+
+  // Process .env.example line by line to preserve structure and comments
+  const exampleLines = exampleContent.split("\n");
+  for (const line of exampleLines) {
+    const trimmed = line.trim();
+
+    // Keep comments and empty lines
+    if (!trimmed || trimmed.startsWith("#")) {
+      outputLines.push(line);
+      continue;
+    }
+
+    // Extract key from the line
+    const eqIndex = trimmed.indexOf("=");
+    if (eqIndex === -1) {
+      outputLines.push(line);
+      continue;
+    }
+
+    const key = trimmed.slice(0, eqIndex).trim();
+    processedKeys.add(key);
+
+    // Use our new value or keep the placeholder
+    const value = newEnv[key];
+    if (value !== undefined) {
+      // Quote values that contain spaces, special characters, or are auto-generated secrets
+      const needsQuotes =
+        value.includes(" ") ||
+        value.includes("#") ||
+        AUTO_GENERATED_VARS.includes(key);
+      outputLines.push(`${key}=${needsQuotes ? `'${value}'` : value}`);
+    } else {
+      outputLines.push(line);
+    }
+  }
+
+  // Add any keys from newEnv that weren't in .env.example
+  for (const [key, value] of Object.entries(newEnv)) {
+    if (!processedKeys.has(key)) {
+      const needsQuotes =
+        value.includes(" ") ||
+        value.includes("#") ||
+        AUTO_GENERATED_VARS.includes(key);
+      outputLines.push(`${key}=${needsQuotes ? `'${value}'` : value}`);
+    }
+  }
+
+  writeFileSync(PATHS.envLocal, outputLines.join("\n"));
+
+  return result;
+}
 
 async function isPortInUse(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -96,6 +338,7 @@ async function checkOnboardingStatus() {
   const isPort3000InUse = await isPortInUse(3000);
   const dockerRunning = await isDockerRunning();
   const nodeVersion = await getNodeVersion();
+  const supabaseRunning = await isSupabaseRunning();
 
   return {
     hasEnvFile,
@@ -103,6 +346,7 @@ async function checkOnboardingStatus() {
     isPort3000InUse,
     dockerRunning,
     nodeVersion,
+    supabaseRunning,
     isFullyOnboarded: hasEnvFile && hasScaffoldState,
   };
 }
@@ -149,7 +393,7 @@ async function main() {
   console.log(`   ${c.dim}Dependencies installed successfully!${c.reset}\n`);
 
   // Step 2: Start Supabase
-  const supabaseColor = status.dockerRunning ? c.green : c.yellow;
+  const supabaseColor = status.supabaseRunning ? c.green : c.yellow;
   console.log(
     `${supabaseColor}Step 2:${c.reset} ${c.bright}Start local Supabase database${c.reset}`,
   );
@@ -158,26 +402,82 @@ async function main() {
     console.log(
       `   ${c.dim}Requires Docker running. Database at http://127.0.0.1:54321${c.reset}\n`,
     );
-  } else {
+  } else if (!status.supabaseRunning) {
     console.log(`   ${c.cyan}bun db:start${c.reset}`);
     console.log(
       `   ${c.dim}Docker is running. Run command to start Supabase${c.reset}\n`,
     );
-  }
-
-  // Step 3: Setup environment variables
-  const envColor = status.hasEnvFile ? c.green : c.yellow;
-  console.log(
-    `${envColor}Step 3:${c.reset} ${c.bright}Setup environment variables${c.reset}`,
-  );
-  if (!status.hasEnvFile) {
-    console.log(`   ${c.cyan}cp .env.example .env.local${c.reset}`);
-    console.log(
-      `   ${c.dim}Then edit .env.local with your actual values${c.reset}\n`,
-    );
   } else {
     console.log(
-      `   ${c.dim}.env.local exists - verify all values are set${c.reset}\n`,
+      `   ${c.green}Supabase is running${c.reset} ${c.dim}at http://127.0.0.1:54321${c.reset}\n`,
+    );
+  }
+
+  // Step 3: Setup environment variables (auto-configured when Supabase is running)
+  console.log(
+    `${c.bright}Step 3:${c.reset} ${c.bright}Setup environment variables${c.reset}`,
+  );
+
+  if (status.supabaseRunning) {
+    // Auto-setup environment variables
+    console.log(`   ${c.dim}Auto-configuring from Supabase...${c.reset}`);
+    const envResult = await setupEnvironmentVariables();
+
+    if (envResult.configured.length > 0) {
+      console.log(
+        `   ${c.green}Configured from Supabase:${c.reset} ${envResult.configured.join(", ")}`,
+      );
+    }
+    if (envResult.generated.length > 0) {
+      console.log(
+        `   ${c.green}Auto-generated:${c.reset} ${envResult.generated.join(", ")}`,
+      );
+    }
+    if (envResult.skipped.length > 0) {
+      console.log(
+        `   ${c.dim}Already set:${c.reset} ${envResult.skipped.join(", ")}`,
+      );
+    }
+
+    // Filter out optional vars for the "needs manual" display
+    const requiredManual = envResult.needsManual.filter(
+      (v) =>
+        ![
+          "SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID",
+          "SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET",
+          "ANTHROPIC_API_KEY",
+          "PERPLEXITY_API_KEY",
+        ].includes(v),
+    );
+    const optionalManual = envResult.needsManual.filter((v) =>
+      [
+        "SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID",
+        "SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET",
+        "ANTHROPIC_API_KEY",
+        "PERPLEXITY_API_KEY",
+      ].includes(v),
+    );
+
+    if (requiredManual.length > 0) {
+      console.log(
+        `   ${c.yellow}Still needs manual setup:${c.reset} ${requiredManual.join(", ")}`,
+      );
+      console.log(
+        `   ${c.dim}Get these from Bitwarden or your credentials manager${c.reset}`,
+      );
+    }
+    if (optionalManual.length > 0) {
+      console.log(
+        `   ${c.dim}Optional (not required):${c.reset} ${optionalManual.join(", ")}`,
+      );
+    }
+    console.log();
+  } else {
+    console.log(
+      `   ${c.yellow}Start Supabase first${c.reset} ${c.dim}to auto-configure database env vars${c.reset}`,
+    );
+    console.log(
+      `   ${c.dim}Run ${c.cyan}bun db:start${c.dim} then re-run ${c.cyan}bun onboarding${c.reset}\n`,
     );
   }
 
@@ -232,13 +532,13 @@ async function main() {
   // Next action recommendation
   console.log("=".repeat(70));
   console.log(`${c.bright}${c.magenta}Next step:${c.reset}`);
-  if (!status.hasEnvFile) {
+  if (!status.dockerRunning) {
     console.log(
-      `${c.cyan}cp .env.example .env.local${c.reset} ${c.dim}→${c.reset} ${c.cyan}bun db:start${c.reset}`,
+      `${c.dim}Start Docker, then run ${c.cyan}bun db:start${c.reset}`,
     );
-  } else if (!status.dockerRunning) {
+  } else if (!status.supabaseRunning) {
     console.log(
-      `${c.cyan}bun db:start${c.reset} ${c.dim}(requires Docker running)${c.reset}`,
+      `${c.cyan}bun db:start${c.reset} ${c.dim}→${c.reset} ${c.cyan}bun onboarding${c.reset} ${c.dim}(to auto-configure .env.local)${c.reset}`,
     );
   } else if (!status.isPort3000InUse) {
     console.log(
